@@ -1,0 +1,33 @@
+Sheet,Fields,Field Definition,Guidance and Instructions
+Budget,Ser #,Prepopulated field,These are not editable and are populated automatically.
+Budget,Date,Insert Current Date Automatically / record creation date in this column - DD/MM/YYYY,These are not editable and are populated automatically.
+Budget,Department,Select the Department from the dropdown list,"These are editable and must be entered manually.
+Select the appropriate unit or department from the dropdown menu."
+Budget,ID,Will generate the ID automatically upon select of the department name,These are not editable and are populated automatically.
+Budget,Exp. Head,Select the expense type from the dropdown list,"These are editable and must be entered manually.
+ Select the specific expense type from the dropdown list."
+Budget,Topic,Mention a broader topic under which this particular cost will reside,"These are editable and must be entered manually.
+Type in the specific reason or broader category for the expense."
+Budget,Vendor,Mention the partner / vendor name if available at the time of budgeting otherwise TBD,"These are editable and must be entered manually.
+Enter the name of the partner or vendor, if currently known"
+Budget,Description,Reasonable details about the cost / transaction for which the funds are planned,"These are editable and must be entered manually.
+Provide a detailed description of what the expense covers."
+Budget,Cost Type,Select the cost type from the dropdown list,"These are editable and must be entered manually.
+Select the cost type from the dropdown list."
+Budget,Unit Type,Select the unit type from the dropdown list,"These are editable and must be entered manually.
+Select the appropriate unit of measure."
+Budget,Unit(s),Specify the number of units required under this cost line,"These are editable and must be entered manually.
+Type in the total number of units"
+Budget,Unit Price,Specify the per unit price - As mentioned in proposal or estimated,"These are editable and must be entered manually.
+Type in the total number of units"
+Budget,Base CY,Select the currency from the dropdown list - The proposal/estimate currency,"These are editable and must be entered manually.
+Select the currency used for the price/estimate."
+Budget,Amt. FCY,Calculates automatically - Units * Unit Price in Proposal/estimate Currency,These are not editable and are populated automatically.
+Budget,Amt. LCY,Calculates automatically - Convert FCY to AED,These are not editable and are populated automatically.
+Budget,Cont. %,"Contingency / buffer if any, specify a percentage number","These are optional; you don't have to enter data here.
+Enter the percentage of variation to be used as a contingency buffer."
+Budget,Final Amt LCY,Calculates automatically - total value in AED,These are not editable and are populated automatically.
+Budget,Yearly Recurrence,"If this cost will be paid annually on recurring basis please select number of years, else if one time select 1","These are editable and must be entered manually.
+If the expense repeats annually, enter the total number of years; otherwise, enter 1."
+Budget,Comments,Mention any comment relevant to elaborate more about the cost requested,These are optional; you don't have to enter data here.
+,Attachment,Multiple attachments for the supporting Documents,

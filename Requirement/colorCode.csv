@@ -1,0 +1,8 @@
+﻿Panel / Grid,Purpose,Header Color,Background Color,Border Color
+Spend Request Details,Main Request Information,#2F5597,#F5F9FF,#B4C7E7
+Budget Line Items,Budget Details,#548235,#F6FBF4,#C6E0B4
+Budget / Invoice,Invoice Details,#C55A11,#FFF8F2,#F4B183
+Approval History,Workflow History,#7F6000,#FFFBEA,#FFE699
+Comments,User Comments,#5B5B5B,#FAFAFA,#D9D9D9
+Attachments,Uploaded Documents,#1F4E78,#F3F9FD,#9DC3E6
+Audit Trail,System Logs,#7030A0,#FAF5FF,#D9C2E9

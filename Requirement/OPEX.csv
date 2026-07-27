@@ -1,0 +1,8 @@
+﻿Type,ID,Description,Budget,Utilization,Available Budget,Locked Amt,Budget after Locked Amt,Claim Amt,Net Balance
+Opex,OPEX-CET-0001,MDS Procurement of VDI Licenses 2026,"12,00,000.00","84,000.00","11,16,000.00",0,"11,16,000.00",0,"11,16,000.00"
+Opex,OPEX-CET-0002,ATM CDM Platform Operational support,"9,50,000.00",0,"9,50,000.00",0,"9,50,000.00",0,"9,50,000.00"
+Opex,OPEX-CET-0003,"Miscellaneous - Infra Upgrades , Adhoc Operations Management","6,03,000.00","1,96,896.00","4,06,104.00",0,"4,06,104.00",0,"4,06,104.00"
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,
+,,,,,,,,,

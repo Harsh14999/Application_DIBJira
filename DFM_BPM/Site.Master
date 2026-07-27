@@ -1,0 +1,285 @@
+<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.Master.cs" Inherits="DFM_BPM.SiteMaster" %>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title><%: Page.Title %> – Falcon</title>
+    <link href="<%= ResolveUrl("~/Content/bootstrap.min.css") %>" rel="stylesheet" />
+    <link href="<%= ResolveUrl("~/Content/bootstrap-icons.css") %>" rel="stylesheet" />
+    <link href="<%= ResolveUrl("~/Content/Site.css") %>" rel="stylesheet" />
+    <style>
+        /* ---- Global Page Loader ---- */
+        #globalLoader { display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:99999; }
+        #globalLoader .gl-overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,.55); }
+        #globalLoader .gl-box { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center; }
+        #globalLoader .gl-spinner { width:48px; height:48px; border:5px solid rgba(255,255,255,.3); border-top-color:#60a5fa; border-radius:50%; animation:gl-spin .8s linear infinite; margin:0 auto 10px; }
+        @keyframes gl-spin { to { transform:rotate(360deg); } }
+        #globalLoader .gl-text { color:#f1f5f9; font-size:.85em; margin:0; }
+        /* ---- Dev Toolbar ---- */
+        #devBar { position:fixed; bottom:0; left:0; right:0; z-index:88888; background:#7c3aed; color:#fff; display:flex; align-items:center; gap:10px; padding:5px 14px; font-size:.78em; box-shadow:0 -2px 8px rgba(0,0,0,.3); }
+        #devBar .dev-badge { background:#fff; color:#7c3aed; font-weight:700; border-radius:4px; padding:2px 7px; font-size:.85em; margin-right:4px; }
+        #devBar select { font-size:.78em; border-radius:4px; border:1px solid #c4b5fd; padding:2px 6px; background:#6d28d9; color:#fff; }
+        #devBar select option { background:#4c1d95; color:#fff; }
+        #devBar .dev-info { color:#ddd6fe; font-size:.75em; margin-left:auto; }
+        /* ---- Notification dropdown ---- */
+        #notifDropdown { display:none; position:absolute; top:50px; right:70px; z-index:9999; background:#fff;
+            border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.12); width:340px; max-height:420px; overflow-y:auto; }
+        .notif-hdr { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #e2e8f0; }
+        .notif-hdr strong { font-size:.88em; color:#1e293b; }
+        .notif-hdr a { font-size:.78em; color:#2563eb; text-decoration:none; }
+        .notif-item { display:flex; align-items:flex-start; gap:6px; padding:9px 14px; border-bottom:1px solid #f1f5f9; }
+        .notif-item.unread { background:#f0f9ff; }
+        .notif-link { flex:1; text-align:left; text-decoration:none !important; color:#1e293b; border:none; background:none; padding:0; display:block; }
+        .notif-item.unread .notif-subject { font-weight:700; }
+        .notif-subject { font-size:.84em; }
+        .notif-date { color:#94a3b8; font-size:.78em; margin-top:2px; display:block; }
+        .notif-del { color:#94a3b8 !important; text-decoration:none !important; font-size:1em; padding:2px 4px; }
+        .notif-empty { padding:20px; text-align:center; color:#94a3b8; font-size:.85em; }
+    </style>
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server" />
+    <script src="<%= ResolveUrl("~/Scripts/jquery.min.js") %>"></script>
+    <script src="<%= ResolveUrl("~/Scripts/bootstrap.min.js") %>"></script>
+    <script src="<%= ResolveUrl("~/Scripts/select2.min.js") %>"></script>
+</head>
+<body>
+<form id="form1" runat="server">
+<div class="wrapper">
+    <!-- ===== Sidebar ===== -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <i class="bi bi-bank2" style="color:#60a5fa;font-size:22px;"></i>
+            <span class="brand-text">Falcon</span>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">MAIN</div>
+            <a href="<%= ResolveUrl("~/Default.aspx") %>" class="nav-item <%= IsActive("Default") %>">
+                <i class="bi bi-house"></i><span>Home</span></a>
+            <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>" class="nav-item <%= IsActive("ProjectRegistration") %>">
+                <i class="bi bi-folder-plus"></i><span>Project Registration</span></a>
+            <a href="<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>" class="nav-item <%= IsActive("PetWorkflow") %>">
+                <i class="bi bi-file-earmark-text"></i><span>Spend Request</span></a>
+            <a href="<%= ResolveUrl("~/Forms/MyApprovals.aspx") %>" class="nav-item <%= IsActive("MyApprovals") %>">
+                <i class="bi bi-check2-all"></i><span>My Approvals</span></a>
+            <a href="<%= ResolveUrl("~/Admin/PortfolioHierarchy.aspx") %>" class="nav-item <%= IsActive("PortfolioHierarchy") %>">
+                <i class="bi bi-diagram-3"></i><span>Portfolio Hierarchy</span></a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">MASTERS (Editable)</div>
+            <a href="<%= ResolveUrl("~/Admin/CapexMaster.aspx") %>" class="nav-item <%= IsActive("CapexMaster") %>">
+                <i class="bi bi-currency-dollar"></i><span>CAPEX</span></a>
+            <a href="<%= ResolveUrl("~/Admin/OpexMaster.aspx") %>" class="nav-item <%= IsActive("OpexMaster") %>">
+                <i class="bi bi-receipt"></i><span>OPEX</span></a>
+            <a href="<%= ResolveUrl("~/Admin/GLMaster.aspx") %>" class="nav-item <%= IsActive("GLMaster") %>">
+                <i class="bi bi-journal-bookmark"></i><span>GL Master</span></a>
+            <a href="<%= ResolveUrl("~/Admin/VendorMaster.aspx") %>" class="nav-item <%= IsActive("VendorMaster") %>">
+                <i class="bi bi-building"></i><span>Vendor</span></a>
+            <a href="<%= ResolveUrl("~/Admin/PlatformMaster.aspx") %>" class="nav-item <%= IsActive("PlatformMaster") %>">
+                <i class="bi bi-hdd-stack"></i><span>Platform</span></a>
+            <a href="<%= ResolveUrl("~/Admin/EngineerMaster.aspx") %>" class="nav-item <%= IsActive("EngineerMaster") %>">
+                <i class="bi bi-person-gear"></i><span>Engineers</span></a>
+        </div>
+
+        <% if (IsAdminUser) { %>
+        <div class="nav-section">
+            <div class="nav-section-title">ADMIN</div>
+            <a href="<%= ResolveUrl("~/Admin/UserManagement.aspx") %>" class="nav-item <%= IsActive("UserManagement") %>">
+                <i class="bi bi-people"></i><span>User Management</span></a>
+            <a href="<%= ResolveUrl("~/Admin/EmailConfig.aspx") %>" class="nav-item <%= IsActive("EmailConfig") %>">
+                <i class="bi bi-gear"></i><span>Email Config</span></a>
+            <a href="<%= ResolveUrl("~/Admin/EmailLog.aspx") %>" class="nav-item <%= IsActive("EmailLog") %>">
+                <i class="bi bi-envelope-open"></i><span>Email Log</span></a>
+            <a href="<%= ResolveUrl("~/Forms/JiraIntegration.aspx") %>" class="nav-item <%= IsActive("JiraIntegration") %>">
+                <i class="bi bi-arrow-repeat"></i><span>JIRA Sync</span></a>
+        </div>
+        <% } %>
+
+        <div style="flex:1"></div>
+        <div style="padding:12px 16px;border-top:1px solid #2a5080;">
+            <div style="font-size:.72em;color:#94a3b8;padding:4px 0;">Windows Auth</div>
+            <a href="<%= ResolveUrl("~/Default.aspx?signout=1") %>" class="nav-item" style="padding:8px 0;">
+                <i class="bi bi-box-arrow-right"></i><span>Sign Out</span></a>
+        </div>
+    </div><!-- /sidebar -->
+
+    <!-- ===== Main ===== -->
+    <div class="main-wrap">
+        <!-- Topbar -->
+        <div class="topbar">
+            <button type="button" class="topbar-toggle" onclick="DFM.toggleSidebar()" title="Toggle sidebar">
+                <i class="bi bi-list"></i>
+            </button>
+            <span class="topbar-title"><%: Page.Title %></span>
+
+            <!-- Notification bell -->
+            <span class="notif-bell-trigger" style="position:relative;cursor:pointer;" onclick="DFM.toggleNotif()">
+                <i class="bi bi-bell" style="font-size:18px;color:#64748b;"></i>
+                <% if (UnreadNotifCount > 0) { %>
+                <span class="badge" style="position:absolute;top:-6px;right:-6px;background:#dc2626;font-size:.65em;padding:2px 5px;">
+                    <%= UnreadNotifCount %></span>
+                <% } %>
+            </span>
+            <div id="notifDropdown">
+                <div class="notif-hdr">
+                    <strong>Notifications</strong>
+                    <asp:LinkButton ID="btnClearAllNotif" runat="server" OnClick="btnClearAllNotif_Click" CausesValidation="false">Clear All</asp:LinkButton>
+                </div>
+                <asp:Repeater ID="rptNotifications" runat="server" OnItemCommand="rptNotifications_ItemCommand">
+                    <ItemTemplate>
+                        <div class='notif-item <%# (bool)Eval("IsRead") ? "" : "unread" %>'>
+                            <asp:LinkButton runat="server" CssClass="notif-link" CommandName="OpenNotif" CommandArgument='<%# Eval("NotificationID") %>'>
+                                <span class="notif-subject"><%# Eval("Subject") %></span>
+                                <span class="notif-date"><%# Eval("CreatedDate", "{0:dd-MMM-yyyy HH:mm}") %></span>
+                            </asp:LinkButton>
+                            <asp:LinkButton runat="server" CssClass="notif-del" CommandName="DelNotif" CommandArgument='<%# Eval("NotificationID") %>' ToolTip="Dismiss">&times;</asp:LinkButton>
+                        </div>
+                    </ItemTemplate>
+                </asp:Repeater>
+                <asp:Panel ID="pnlNoNotif" runat="server" CssClass="notif-empty">No notifications</asp:Panel>
+            </div>
+
+            <!-- User menu -->
+            <div class="topbar-user" onclick="DFM.toggleUserMenu()">
+                <div class="avatar"><%= UserInitials %></div>
+                <span style="font-size:.85em;font-weight:600;color:#374151;"><%= CurrentFullName %></span>
+                <i class="bi bi-chevron-down" style="font-size:.75em;color:#64748b;"></i>
+            </div>
+            <div id="userMenu" style="display:none;position:absolute;top:50px;right:20px;z-index:9999;background:#fff;border:1px solid #e2e8f0;border-radius:8px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:180px;padding:6px 0;">
+                <div style="padding:8px 14px;font-size:.78em;color:#94a3b8;">Signed in as <strong><%= CurrentUser %></strong></div>
+                <hr style="margin:4px 0;" />
+                <a href="<%= ResolveUrl("~/Default.aspx?signout=1") %>" style="display:block;padding:8px 14px;color:#dc2626;font-size:.85em;text-decoration:none;">
+                    <i class="bi bi-box-arrow-right"></i> Sign Out
+                </a>
+            </div>
+
+            <div style="font-size:.75em;color:#94a3b8;margin-left:auto;">Last sync: <%= LastSyncLabel %></div>
+        </div><!-- /topbar -->
+
+        <!-- Main content -->
+        <div class="main-content">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </div>
+    </div><!-- /main-wrap -->
+</div><!-- /wrapper -->
+
+<!-- ===== Global Page Loader ===== -->
+<div id="globalLoader">
+    <div class="gl-overlay"></div>
+    <div class="gl-box">
+        <div class="gl-spinner"></div>
+        <p class="gl-text">Loading...</p>
+    </div>
+</div>
+
+<% if (IsDev) { %>
+<!-- ===== Dev Toolbar ===== -->
+<div id="devBar">
+    <span class="dev-badge"><i class="bi bi-code-square"></i> DEV</span>
+    <span>User:</span>
+    <asp:DropDownList ID="ddlDevUser" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ddlDevUser_Changed" />
+    <span>Role:</span>
+    <asp:DropDownList ID="ddlDevRole" runat="server" AutoPostBack="true" OnSelectedIndexChanged="ddlDevRole_Changed">
+        <asp:ListItem Value="">(DB Role)</asp:ListItem>
+        <asp:ListItem Value="Requestor">Requestor</asp:ListItem>
+        <asp:ListItem Value="Reviewer">Reviewer</asp:ListItem>
+        <asp:ListItem Value="Approver">Approver</asp:ListItem>
+        <asp:ListItem Value="Admin">Admin</asp:ListItem>
+    </asp:DropDownList>
+    <asp:Label ID="lblDevInfo" runat="server" CssClass="dev-info" />
+</div>
+<% } %>
+
+</form>
+<script>
+var DFM = window.DFM || {};
+DFM.toggleSidebar = function() {
+    document.getElementById('sidebar').classList.toggle('collapsed');
+};
+DFM.toggleNotif = function() {
+    var m = document.getElementById('userMenu');
+    if (m) m.style.display = 'none';
+    var n = document.getElementById('notifDropdown');
+    if (n) n.style.display = (!n.style.display || n.style.display === 'none') ? 'block' : 'none';
+};
+DFM.toggleUserMenu = function() {
+    var m = document.getElementById('userMenu');
+    if (m) m.style.display = m.style.display === 'none' ? 'block' : 'none';
+};
+DFM.togglePanel = function(bodyId, chevId) {
+    var b = document.getElementById(bodyId);
+    if (!b) return;
+    var show = b.style.display !== 'block';
+    b.style.display = show ? 'block' : 'none';
+    var c = document.getElementById(chevId);
+    if (c) { if (show) c.classList.add('open'); else c.classList.remove('open'); }
+};
+// Tracker section expand/collapse
+$(document).on('click', '.tracker-hdr', function() {
+    $(this).next('.tracker-body').toggleClass('show');
+});
+$(document).on('click', '.tracker-sub-hdr', function() {
+    $(this).next('.tracker-sub-body').toggleClass('show');
+});
+// Hierarchy expand/collapse
+$(document).on('click', '.hier-toggle', function() {
+    var next = $(this).closest('tr').nextUntil('tr[data-level="' + $(this).closest('tr').data('level') + '"]');
+    var hidden = next.filter(':hidden').length > 0;
+    if (hidden) next.show(); else next.hide();
+    $(this).text(hidden ? '▼' : '▶');
+});
+// Close user menu on outside click
+$(document).on('click', function(e) {
+    if (!$(e.target).closest('.topbar-user, #userMenu').length) {
+        $('#userMenu').hide();
+    }
+    if (!$(e.target).closest('#notifDropdown, .notif-bell-trigger').length) {
+        $('#notifDropdown').hide();
+    }
+});
+
+// ---- Global Page Loader ----
+var _glTimer = null;
+function showLoader() {
+    clearTimeout(_glTimer);
+    document.getElementById('globalLoader').style.display = 'block';
+    // Safety: auto-hide after 20 seconds
+    _glTimer = setTimeout(hideLoader, 20000);
+}
+function hideLoader() {
+    clearTimeout(_glTimer);
+    document.getElementById('globalLoader').style.display = 'none';
+}
+// ASP.NET WebForms hook - fires after every page load including partial postbacks
+function pageLoad(sender, args) { hideLoader(); }
+// Show loader on navigation links (not buttons with __doPostBack for same-page events)
+$(document).on('click', 'a[href]', function() {
+    var href = $(this).attr('href');
+    if (href && href.charAt(0) !== '#' && href.indexOf('javascript') < 0 && href.indexOf('signout') < 0) {
+        showLoader();
+    }
+});
+// Show loader on full-form submit buttons (except Dev toolbar dropdowns)
+$(document).on('click', 'input[type=submit], button[type=submit]', function(e) {
+    var id = $(this).attr('id') || '';
+    if (id.indexOf('devBar') < 0 && $(this).closest('#devBar').length === 0) {
+        // Buttons that only open a confirmation modal (OnClientClick="...;return false;", e.g. "Delete This
+        // PET") cancel the real postback, so no navigation ever happens to hide the loader again. Skip those.
+        if (e.isDefaultPrevented()) return;
+        showLoader();
+    }
+});
+// Hook into ASP.NET UpdatePanel partial postbacks
+if (typeof Sys !== 'undefined' && Sys.WebForms && Sys.WebForms.PageRequestManager) {
+    Sys.WebForms.PageRequestManager.getInstance().add_beginRequest(function() { showLoader(); });
+    Sys.WebForms.PageRequestManager.getInstance().add_endRequest(function() { hideLoader(); });
+}
+// Defensive fix: some browsers restore a page from bfcache (back/forward navigation) with the loader
+// overlay still visible from just before the user left the page. Force it closed in that case, and on
+// every fresh DOM parse, so a manual "force refresh" is never required to dismiss it.
+window.addEventListener('pageshow', function(evt) { if (evt.persisted) hideLoader(); });
+document.addEventListener('DOMContentLoaded', function() { hideLoader(); });
+</script>
+</body>
+</html>

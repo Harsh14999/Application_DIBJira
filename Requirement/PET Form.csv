@@ -1,0 +1,8 @@
+Department,ID,Exp. Head,Topic,Vendor,Description,Cost Type,Unit Type,Unit(s),Unit Price,Base CY,Amt. FCY ,Amt. LCY,Cont. %,Final Amt LCY ,Yearly Recurrence
+Core,COR - 1,Capex,Project Genesis,Wipro,Design & ReEngineerinng,UAT Functional Testing,Man Days,8,"19,500",AED,"19,500","19,500",,"19,500",1
+Core,COR - 2,Capex,Project Genesis,Wipro,Design & ReEngineerinng,UAT Functional Testing,Man Days,8,"19,500",AED,"19,500","19,500",,"19,500",2
+Core,COR - 3,Capex,Project Genesis,Wipro,Design & ReEngineerinng,UAT Functional Testing,Man Days,8,"19,500",AED,"19,500","19,500",,"19,500",3
+Core,COR - 4,Capex,Project Genesis,Wipro,Design & ReEngineerinng,UAT Functional Testing,Man Days,8,"19,500",AED,"19,500","19,500",,"19,500",4
+Core,COR - 5,Capex,Project Genesis,Wipro,Design & ReEngineerinng,UAT Functional Testing,Man Days,8,"19,500",AED,"19,500","19,500",,"19,500",5
+Test Gov.,TEST - 6,Capex,Project Genesis,Wipro,Design & ReEngineerinng,UAT Functional Testing,Man Days,8,"19,500",AED,"19,500","19,500",,"19,500",6
+Data,DAT - 7,Capex,Project Genesis,Wipro,Design & ReEngineerinng,UAT Functional Testing,Man Days,8,"19,500",AED,"19,500","19,500",,"19,500",7

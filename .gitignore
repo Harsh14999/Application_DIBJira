@@ -1,0 +1,26 @@
+# Visual Studio user-specific files
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# VS Code and Visual Studio folders
+.vs/
+.vscode/
+
+# Build output directories
+**/bin/
+**/obj/
+
+# NuGet temporary files
+*.nupkg
+*.snupkg
+
+# Logs and temp files
+*.log
+*.tmp
+*.temp
+
+# OS-generated files
+.DS_Store
+Thumbs.db
