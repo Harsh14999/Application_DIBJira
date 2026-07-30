@@ -709,7 +709,7 @@ namespace DFM_BPM.Forms
             string projectId = ddlProject.SelectedValue;
             if (string.IsNullOrEmpty(projectId))
             {
-                ShowMsg("A registered Project is required. Register it first via the Project Registration page.");
+                ShowMsg("A registered Project is required. Register it first via the Project Portfolio page.");
                 return;
             }
 

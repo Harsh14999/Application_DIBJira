@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using DFM_BPM.App_Code.DAL;
@@ -16,6 +17,13 @@ namespace DFM_BPM.Forms
         }
 
         protected bool IsExistingProject { get { return !string.IsNullOrEmpty(CurrentProjectId); } }
+
+        private const int PortfolioPageSize = 15;
+        private int CurrentPortfolioPage
+        {
+            get { int v; return int.TryParse(ViewState["portfolioPage"] as string, out v) ? v : 1; }
+            set { ViewState["portfolioPage"] = value.ToString(); }
+        }
 
         /// <summary>Delete is only offered for an already-registered project, when no active Spend Request
         /// references it yet (ProjectDAL.HasPetForms is the hard-delete safety net), and only to Admins or
@@ -37,6 +45,7 @@ namespace DFM_BPM.Forms
             if (!IsPostBack)
             {
                 LoadDropdowns();
+                LoadPortfolioDropdowns();
 
                 string pid = Request.QueryString["pid"];
                 if (!string.IsNullOrEmpty(pid))
@@ -50,6 +59,8 @@ namespace DFM_BPM.Forms
                     pnlProjectDetails.Visible = false;
                     pnlNoProject.Visible = true;
                 }
+
+                LoadProjectPortfolio();
             }
             else
             {
@@ -62,6 +73,327 @@ namespace DFM_BPM.Forms
         {
             BindJiraDropdown();
             BindHierarchyDropdowns();
+        }
+
+        private void LoadPortfolioDropdowns()
+        {
+            LoadPortfolioJiraProjects();
+            LoadPortfolioLeadFilter(ddlPortfolioAccountableExecLeadFilter, ProjectDAL.GetDistinctAccountableExecLeads(), "All Accountable Exec Leads");
+            LoadPortfolioLeadFilter(ddlPortfolioSmeLeadFilter, ProjectDAL.GetDistinctSmeLeads(), "All SME Leads");
+        }
+
+        private void LoadPortfolioJiraProjects()
+        {
+            try
+            {
+                DataTable dt = MastersDAL.GetJiraDropdown();
+                ddlPortfolioProjectFilter.Items.Clear();
+                ddlPortfolioProjectFilter.Items.Add(new ListItem("All Projects", "ALL"));
+                foreach (DataRow r in dt.Rows)
+                    ddlPortfolioProjectFilter.Items.Add(new ListItem(r["DisplayName"].ToString(), r["JiraID"].ToString()));
+            }
+            catch { }
+        }
+
+        private static void LoadPortfolioLeadFilter(DropDownList ddl, DataTable dt, string allText)
+        {
+            ddl.Items.Clear();
+            ddl.Items.Add(new ListItem(allText, "ALL"));
+            foreach (DataRow r in dt.Rows)
+            {
+                string leadName = r["LeadName"] == DBNull.Value ? "" : r["LeadName"].ToString();
+                if (!string.IsNullOrWhiteSpace(leadName)) ddl.Items.Add(new ListItem(leadName, leadName));
+            }
+        }
+
+        private void LoadProjectPortfolio()
+        {
+            try
+            {
+                string search = txtPortfolioProjectSearch.Text.Trim();
+                string jiraFilter = ddlPortfolioProjectFilter.SelectedValue == "ALL" ? null : ddlPortfolioProjectFilter.SelectedValue;
+                string typeFilter = ddlPortfolioTypeFilter.SelectedValue == "ALL" ? null : ddlPortfolioTypeFilter.SelectedValue;
+                string statFilter = ddlPortfolioStatusFilter.SelectedValue == "ALL" ? null : ddlPortfolioStatusFilter.SelectedValue;
+                string accountableExecLead = ddlPortfolioAccountableExecLeadFilter.SelectedValue == "ALL" ? null : ddlPortfolioAccountableExecLeadFilter.SelectedValue;
+                string smeLead = ddlPortfolioSmeLeadFilter.SelectedValue == "ALL" ? null : ddlPortfolioSmeLeadFilter.SelectedValue;
+                string viewFilter = ddlPortfolioViewFilter.SelectedValue;
+                string viewUser = AuthHelper.CurrentUserShort;
+                DateTime? fromDate = null, toDate = null;
+                DateTime dt;
+                if (DateTime.TryParse(txtPortfolioFromDate.Text, out dt)) fromDate = dt;
+                if (DateTime.TryParse(txtPortfolioToDate.Text, out dt)) toDate = dt;
+
+                DataTable projects = ProjectDAL.GetProjects(string.IsNullOrEmpty(search) ? null : search,
+                    null, accountableExecLead, smeLead, jiraFilter);
+                DataTable allForms = WorkflowDAL.GetPetFormsDashboard(jiraFilter, typeFilter, statFilter,
+                    fromDate, toDate, viewFilter, viewUser, accountableExecLead, smeLead);
+
+                var groups = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<DataRow>>(StringComparer.OrdinalIgnoreCase);
+                foreach (DataRow r in allForms.Rows)
+                {
+                    string projectId = r["ProjectID"] == DBNull.Value ? "" : r["ProjectID"].ToString();
+                    if (!groups.ContainsKey(projectId)) groups[projectId] = new System.Collections.Generic.List<DataRow>();
+                    groups[projectId].Add(r);
+                }
+
+                int totalProjects = projects.Rows.Count;
+                int totalRequests = allForms.Rows.Count;
+                int pages = Math.Max(1, (int)Math.Ceiling(totalProjects / (double)PortfolioPageSize));
+                if (CurrentPortfolioPage > pages) CurrentPortfolioPage = pages;
+                litPortfolioProjectsCount.Text = totalProjects.ToString();
+                litPortfolioPageInfo.Text = string.Format(
+                    "<span style='font-size:.85em;color:#64748b;padding:0 8px;'>Page {0} of {1} ({2} registered project(s), {3} matching request(s))</span>",
+                    CurrentPortfolioPage, pages, totalProjects, totalRequests);
+                btnPortfolioPrevPage.Enabled = CurrentPortfolioPage > 1;
+                btnPortfolioNextPage.Enabled = CurrentPortfolioPage < pages;
+
+                int skip = (CurrentPortfolioPage - 1) * PortfolioPageSize;
+                var sb = new StringBuilder();
+                for (int pi = skip; pi < Math.Min(skip + PortfolioPageSize, projects.Rows.Count); pi++)
+                {
+                    DataRow p = projects.Rows[pi];
+                    string projectId = Val(p, "ProjectID");
+                    string projectName = Val(p, "ProjectName");
+                    string projectManager = Val(p, "ProjectManager");
+                    string requestor = Val(p, "CreatedBy");
+                    string accLead = Val(p, "AccountableExecLead");
+                    string sme = Val(p, "SmeLead");
+                    string projectSize = Val(p, "ProjectSize");
+                    string createdDate = p["CreatedDate"] == DBNull.Value ? "" : Convert.ToDateTime(p["CreatedDate"]).ToString("dd-MMM-yyyy");
+                    bool isNonJira = p["IsNonJiraProject"] != DBNull.Value && Convert.ToBoolean(p["IsNonJiraProject"]);
+                    bool isActive = p["IsActive"] == DBNull.Value || Convert.ToBoolean(p["IsActive"]);
+
+                    System.Collections.Generic.List<DataRow> petRows;
+                    if (!groups.TryGetValue(projectId, out petRows)) petRows = new System.Collections.Generic.List<DataRow>();
+                    petRows.Sort(delegate (DataRow a, DataRow b) {
+                        int ia = Convert.ToInt32(a["PetFormID"]);
+                        int ib = Convert.ToInt32(b["PetFormID"]);
+                        return ia.CompareTo(ib);
+                    });
+
+                    decimal projectTotal = 0m;
+                    foreach (DataRow pr in petRows)
+                        if (pr.Table.Columns.Contains("TotalRequestedAED") && pr["TotalRequestedAED"] != DBNull.Value)
+                            projectTotal += Convert.ToDecimal(pr["TotalRequestedAED"]);
+
+                    string safeId = "pp" + Math.Abs(projectId.GetHashCode() & 0x7FFFFFFF).ToString();
+                    string projectEsc = System.Web.HttpUtility.JavaScriptStringEncode(projectId);
+                    string openProjectUrl = ResolveUrl("~/Forms/ProjectRegistration.aspx") + "?pid=" + Server.UrlEncode(projectId);
+                    string toggle = petRows.Count > 0
+                        ? "<span class='tree-toggle' onclick='ppTog(\"" + safeId + "\")' data-tog='" + safeId + "' style='cursor:pointer;color:#2563eb;font-size:1.1em;margin-right:6px;'>&#9658;</span>"
+                        : "<span style='color:#cbd5e1;font-size:1.1em;margin-right:6px;'>&#9675;</span>";
+                    string statusBadge = isActive ? "<span class='badge-success'>Active</span>" : "<span class='badge-danger'>Inactive</span>";
+                    string sizeBadge = ProjectSizeBadge(projectSize);
+
+                    sb.AppendFormat(
+                        "<tr style='background:#e8f0fe;'><td colspan='12' style='border-bottom:1px solid #c7d2fe;'>" +
+                        "{0}<i class='bi bi-folder2-open' style='color:#2563eb;margin-right:5px;'></i>" +
+                        "<strong>{1}</strong> <span style='color:#64748b;font-size:.82em;'>-- {2}</span>" +
+                        "<span style='color:#64748b;font-weight:400;font-size:.82em;margin-left:10px;'>{3} | {4} | {5} PET(s) | Total AED: <strong style=\"color:#1a3c5e;\">{6}</strong></span>" +
+                        "<span style='color:#64748b;font-weight:400;font-size:.82em;margin-left:10px;'>Manager: {7} | Requestor: {8} | Created: {9}</span>" +
+                        "<span style='display:block;margin-top:6px;color:#64748b;font-size:.82em;'>Accountable Exec Lead: <strong>{10}</strong> | SME Lead: <strong>{11}</strong></span>" +
+                        "<span style='display:block;margin-top:7px;'>" +
+                        "<a href='{12}' class='btn btn-xs btn-primary'><i class='bi bi-arrow-right-circle'></i> Open Project</a> " +
+                        "<button type='button' class='proj-action-btn btn-sr' onclick=\"ppShowSR('{13}');\"><i class='bi bi-file-earmark-text'></i> Spend Request</button>" +
+                        "<button type='button' class='proj-action-btn btn-bgt' onclick=\"ppShowBgt('{13}');\"><i class='bi bi-cash-coin'></i> Budget</button>" +
+                        "<button type='button' class='proj-action-btn btn-inv' onclick=\"ppShowInv('{13}');\"><i class='bi bi-receipt'></i> Invoice</button>" +
+                        "</span></td></tr>",
+                        toggle, Html(projectName), Html(projectId), isNonJira ? "Non-JIRA" : "JIRA", statusBadge, sizeBadge,
+                        projectTotal.ToString("N0"), Html(projectManager), Html(requestor), Html(createdDate), Html(accLead), Html(sme),
+                        openProjectUrl, projectEsc);
+
+                    for (int vi = 0; vi < petRows.Count; vi++)
+                    {
+                        DataRow r = petRows[vi];
+                        string status = r["Status"].ToString();
+                        string badgeCss = status == "Draft" ? "st-draft"
+                                        : status == "PendingReview" ? "st-review"
+                                        : status == "PendingApproval" ? "st-pending"
+                                        : status == "Approved" ? "st-approved"
+                                        : status == "Rejected" ? "st-rejected"
+                                        : "st-sent";
+                        string petId = r["PetFormID"].ToString();
+                        string refNo = r["PetRefNo"] == DBNull.Value ? "#" + petId : r["PetRefNo"].ToString();
+                        string type = r["CapexOpexType"] == DBNull.Value ? "" : r["CapexOpexType"].ToString();
+                        string src = r["BudgetSourceID"] == DBNull.Value ? "" : r["BudgetSourceID"].ToString();
+                        string approver = r["ApproverUsername"] == DBNull.Value ? "" : r["ApproverUsername"].ToString();
+                        string by = r["CreatedBy"] == DBNull.Value ? "" : r["CreatedBy"].ToString();
+                        decimal reqAmt = r.Table.Columns.Contains("TotalRequestedAED") && r["TotalRequestedAED"] != DBNull.Value
+                                          ? Convert.ToDecimal(r["TotalRequestedAED"]) : 0m;
+                        string submitted = r["SubmittedDate"] == DBNull.Value ? "" : Convert.ToDateTime(r["SubmittedDate"]).ToString("dd-MMM-yy");
+                        string typeColor = type == "CAPEX" ? "#2563eb" : (type == "OPEX" ? "#059669" : "#64748b");
+                        string delBtn = WorkflowDAL.IsPetDeletable(status)
+                            ? "<button type='button' class='btn btn-xs btn-danger' onclick=\"ppPetDel('" + petId + "','" + System.Web.HttpUtility.JavaScriptStringEncode(refNo) + "');\"><i class='bi bi-trash'></i></button>"
+                            : "";
+
+                        sb.AppendFormat(
+                            "<tr class='tree-row tree-hidden {0}'>" +
+                            "<td style='padding-left:26px;color:#64748b;'>v{1}</td>" +
+                            "<td><a href='PetWorkflow.aspx?id={2}' style='font-weight:700;color:#1a3c5e;'>{3}</a></td>" +
+                            "<td><span class='pet-status {4}' style='display:block;margin-top:2px;text-align:center;'>{5}</span></td>" +
+                            "<td><span style='font-weight:700;color:{6};'>{7}</span></td>" +
+                            "<td style='color:#475569;'>{8}</td>" +
+                            "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{9}</td>" +
+                            "<td>{10}</td><td>{11}</td><td style='color:#64748b;'>{12}</td><td></td><td></td>" +
+                            "<td><div class='gv-acts'><a href='PetWorkflow.aspx?id={2}' class='btn btn-xs btn-primary'><i class='bi bi-arrow-right-circle'></i></a>{13}</div></td></tr>",
+                            safeId, vi + 1, petId, Html(refNo), badgeCss, Html(status), typeColor, Html(type), Html(src),
+                            reqAmt > 0 ? reqAmt.ToString("N0") : "", Html(approver), Html(by), submitted, delBtn);
+                    }
+                }
+
+                if (sb.Length == 0)
+                    sb.Append("<tr><td colspan='12' style='text-align:center;padding:18px;color:#94a3b8;'>No registered projects found for the selected filters.</td></tr>");
+
+                litPortfolioProjectTree.Text = sb.ToString();
+            }
+            catch (Exception ex)
+            {
+                litPortfolioProjectTree.Text = "<tr><td colspan='12' style='padding:14px;color:#dc2626;'>Error loading data: " +
+                    System.Web.HttpUtility.HtmlEncode(ex.Message) + "</td></tr>";
+            }
+        }
+
+        private static string Val(DataRow r, string col)
+        {
+            return r.Table.Columns.Contains(col) && r[col] != DBNull.Value ? r[col].ToString() : "";
+        }
+
+        private static string Html(string value)
+        {
+            return System.Web.HttpUtility.HtmlEncode(value ?? "");
+        }
+
+        private static string ProjectSizeBadge(string size)
+        {
+            if (string.IsNullOrEmpty(size)) return "<span style='color:#94a3b8;'>--</span>";
+            return "<span class='ps-size-badge size-" + Html(size.ToLower()) + "'>" + Html(size) + "</span>";
+        }
+
+        protected void PortfolioFilter_Changed(object sender, EventArgs e)
+        {
+            CurrentPortfolioPage = 1;
+            LoadProjectPortfolio();
+        }
+
+        protected void btnPortfolioReset_Click(object sender, EventArgs e)
+        {
+            ddlPortfolioProjectFilter.SelectedValue = "ALL";
+            ddlPortfolioTypeFilter.SelectedValue = "ALL";
+            ddlPortfolioAccountableExecLeadFilter.SelectedValue = "ALL";
+            ddlPortfolioSmeLeadFilter.SelectedValue = "ALL";
+            ddlPortfolioStatusFilter.SelectedValue = "ALL";
+            ddlPortfolioViewFilter.SelectedValue = "MYAPPROVAL";
+            txtPortfolioFromDate.Text = txtPortfolioToDate.Text = "";
+            CurrentPortfolioPage = 1;
+            LoadProjectPortfolio();
+        }
+
+        protected void btnPortfolioExport_Click(object sender, EventArgs e)
+        {
+            string jiraFilter = ddlPortfolioProjectFilter.SelectedValue == "ALL" ? null : ddlPortfolioProjectFilter.SelectedValue;
+            string typeFilter = ddlPortfolioTypeFilter.SelectedValue == "ALL" ? null : ddlPortfolioTypeFilter.SelectedValue;
+            string statFilter = ddlPortfolioStatusFilter.SelectedValue == "ALL" ? null : ddlPortfolioStatusFilter.SelectedValue;
+            string accountableExecLead = ddlPortfolioAccountableExecLeadFilter.SelectedValue == "ALL" ? null : ddlPortfolioAccountableExecLeadFilter.SelectedValue;
+            string smeLead = ddlPortfolioSmeLeadFilter.SelectedValue == "ALL" ? null : ddlPortfolioSmeLeadFilter.SelectedValue;
+            DateTime? fromDate = null, toDate = null;
+            DateTime dt;
+            if (DateTime.TryParse(txtPortfolioFromDate.Text, out dt)) fromDate = dt;
+            if (DateTime.TryParse(txtPortfolioToDate.Text, out dt)) toDate = dt;
+            DataTable data = WorkflowDAL.GetPetFormsDashboard(jiraFilter, typeFilter, statFilter, fromDate, toDate,
+                null, null, accountableExecLead, smeLead);
+            ExcelHelper.ExportDataTable(data, "Project_Portfolio", Response);
+        }
+
+        protected void btnPortfolioProjectSearch_Click(object sender, EventArgs e)
+        {
+            CurrentPortfolioPage = 1;
+            LoadProjectPortfolio();
+        }
+
+        protected void btnPortfolioProjectSearchReset_Click(object sender, EventArgs e)
+        {
+            txtPortfolioProjectSearch.Text = "";
+            CurrentPortfolioPage = 1;
+            LoadProjectPortfolio();
+        }
+
+        protected void btnPortfolioPrevPage_Click(object sender, EventArgs e)
+        {
+            if (CurrentPortfolioPage > 1) { CurrentPortfolioPage--; LoadProjectPortfolio(); }
+        }
+
+        protected void btnPortfolioNextPage_Click(object sender, EventArgs e)
+        {
+            CurrentPortfolioPage++;
+            LoadProjectPortfolio();
+        }
+
+        protected void btnPortfolioConfirmDeletePet_Click(object sender, EventArgs e)
+        {
+            int petId;
+            if (int.TryParse(hfPortfolioDeletePetId.Value, out petId) && petId > 0)
+            {
+                DataRow f = WorkflowDAL.GetPetForm(petId);
+                string status = f != null && f["Status"] != DBNull.Value ? f["Status"].ToString() : "";
+                if (f != null && WorkflowDAL.IsPetDeletable(status))
+                    WorkflowDAL.DeletePetForm(petId, AuthHelper.CurrentUserShort);
+            }
+            hfPortfolioDeletePetId.Value = "0";
+            CurrentPortfolioPage = 1;
+            LoadProjectPortfolio();
+        }
+
+        protected void btnPortfolioShowSpendRequests_Click(object sender, EventArgs e)
+        {
+            string projId = hfPortfolioActionProjectId.Value;
+            if (string.IsNullOrEmpty(projId)) return;
+            litPortfolioSRModalProject.Text = Server.HtmlEncode(projId);
+            gvPortfolioModalSpendRequests.DataSource = WorkflowDAL.GetPetFormsDashboard(projId, null, null, null, null);
+            gvPortfolioModalSpendRequests.DataBind();
+            gvPortfolioModalLineItems.DataSource = WorkflowDAL.GetPetLinesByProject(projId);
+            gvPortfolioModalLineItems.DataBind();
+            ScriptManager.RegisterStartupScript(this, GetType(), "showPortfolioSRModal", "$(function(){ $('#portfolioSpendRequestModal').modal('show'); });", true);
+        }
+
+        protected void btnPortfolioShowBudget_Click(object sender, EventArgs e)
+        {
+            string projId = hfPortfolioActionProjectId.Value;
+            if (string.IsNullOrEmpty(projId)) return;
+            litPortfolioBgtModalProject.Text = Server.HtmlEncode(projId);
+            pnlPortfolioBudgetInvoiceDetail.Visible = false;
+            gvPortfolioModalBudgetLines.DataSource = WorkflowDAL.GetBudgetLinesByProject(projId);
+            gvPortfolioModalBudgetLines.DataBind();
+            ScriptManager.RegisterStartupScript(this, GetType(), "showPortfolioBgtModal", "$(function(){ $('#portfolioBudgetActionModal').modal('show'); });", true);
+        }
+
+        protected void btnPortfolioShowInvoices_Click(object sender, EventArgs e)
+        {
+            string projId = hfPortfolioActionProjectId.Value;
+            if (string.IsNullOrEmpty(projId)) return;
+            litPortfolioInvModalProject.Text = Server.HtmlEncode(projId);
+            gvPortfolioModalInvoices.DataSource = WorkflowDAL.GetInvoicesByProject(projId);
+            gvPortfolioModalInvoices.DataBind();
+            ScriptManager.RegisterStartupScript(this, GetType(), "showPortfolioInvModal", "$(function(){ $('#portfolioInvoiceActionModal').modal('show'); });", true);
+        }
+
+        protected void gvPortfolioModalBudgetLines_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "ShowInvoice")
+            {
+                int budgetLineId = Convert.ToInt32(e.CommandArgument);
+                litPortfolioBgtInvLineId.Text = budgetLineId.ToString();
+                pnlPortfolioBudgetInvoiceDetail.Visible = true;
+                gvPortfolioModalBudgetInvoices.DataSource = WorkflowDAL.GetBudgetInvoices(budgetLineId);
+                gvPortfolioModalBudgetInvoices.DataBind();
+                string projId = hfPortfolioActionProjectId.Value;
+                if (!string.IsNullOrEmpty(projId))
+                {
+                    litPortfolioBgtModalProject.Text = Server.HtmlEncode(projId);
+                    gvPortfolioModalBudgetLines.DataSource = WorkflowDAL.GetBudgetLinesByProject(projId);
+                    gvPortfolioModalBudgetLines.DataBind();
+                }
+                ScriptManager.RegisterStartupScript(this, GetType(), "showPortfolioBgtModal", "$(function(){ $('#portfolioBudgetActionModal').modal('show'); });", true);
+            }
         }
 
         private void BindJiraDropdown()
@@ -492,7 +824,7 @@ namespace DFM_BPM.Forms
 
         protected void btnSizingSave_Click(object sender, EventArgs e)
         {
-            if (!IsExistingProject) { ShowMsg("Save the project registration first."); return; }
+            if (!IsExistingProject) { ShowMsg("Save the project portfolio first."); return; }
 
             decimal q1, q2, q3, q4, q5, q6, q7;
             if (!decimal.TryParse(hfSzQ1.Value, out q1) || !decimal.TryParse(hfSzQ2.Value, out q2) ||
