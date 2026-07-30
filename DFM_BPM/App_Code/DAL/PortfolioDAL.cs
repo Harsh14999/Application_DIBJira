@@ -152,8 +152,8 @@ option (maxrecursion 100)");
                 Db.P("@id", resourceId));
         }
 
-        /// <summary>All ResourceIDs in a resource's own sub-tree (itself + every descendant) -- used to give the
-        /// Dashboard's Portfolio filter "team roll-up" semantics instead of an exact single-node match.</summary>
+        /// <summary>All ResourceIDs in a resource's own sub-tree (itself + every descendant) -- used when a
+        /// Portfolio Hierarchy view needs team roll-up semantics instead of an exact single-node match.</summary>
         public static System.Collections.Generic.List<int> GetDescendantResourceIds(int resourceId)
         {
             DataTable dt = Db.Query(@"

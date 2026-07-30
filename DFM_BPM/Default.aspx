@@ -2,6 +2,7 @@
     CodeBehind="Default.aspx.cs" Inherits="DFM_BPM.DefaultPage" %>
 
 <asp:Content ID="HeadCt" ContentPlaceHolderID="HeadContent" runat="server">
+<link href="<%= ResolveUrl("~/Content/select2.min.css") %>" rel="stylesheet" />
 <style>
 /* ── sec toggle ── */
 .dash-section { margin-bottom:14px; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; background:#fff; }
@@ -101,14 +102,14 @@
             <div class="filter-grid">
                 <div class="form-group">
                     <label>Project</label>
-                    <asp:DropDownList ID="ddlProject" runat="server" CssClass="form-control"
+                    <asp:DropDownList ID="ddlProject" runat="server" CssClass="form-control select2-enable"
                         AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed">
                         <asp:ListItem Text="All Projects" Value="ALL" />
                     </asp:DropDownList>
                 </div>
                 <div class="form-group">
                     <label>Type</label>
-                    <asp:DropDownList ID="ddlType" runat="server" CssClass="form-control no-select2"
+                    <asp:DropDownList ID="ddlType" runat="server" CssClass="form-control select2-enable"
                         AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed">
                         <asp:ListItem Text="All" Value="ALL" />
                         <asp:ListItem Text="CAPEX" Value="CAPEX" />
@@ -116,15 +117,22 @@
                     </asp:DropDownList>
                 </div>
                 <div class="form-group">
-                    <label>Portfolio</label>
-                    <asp:DropDownList ID="ddlPortfolioFilter" runat="server" CssClass="form-control"
+                    <label>Accountable Exec Lead</label>
+                    <asp:DropDownList ID="ddlAccountableExecLeadFilter" runat="server" CssClass="form-control select2-enable"
                         AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed">
-                        <asp:ListItem Text="All Portfolios" Value="ALL" />
+                        <asp:ListItem Text="All Accountable Exec Leads" Value="ALL" />
+                    </asp:DropDownList>
+                </div>
+                <div class="form-group">
+                    <label>SME Lead</label>
+                    <asp:DropDownList ID="ddlSmeLeadFilter" runat="server" CssClass="form-control select2-enable"
+                        AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed">
+                        <asp:ListItem Text="All SME Leads" Value="ALL" />
                     </asp:DropDownList>
                 </div>
                 <div class="form-group">
                     <label>View</label>
-                    <asp:DropDownList ID="ddlView" runat="server" CssClass="form-control no-select2"
+                    <asp:DropDownList ID="ddlView" runat="server" CssClass="form-control select2-enable"
                         AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed">
                         <asp:ListItem Text="Pending My Action" Value="MYAPPROVAL" />
                         <asp:ListItem Text="My Requests" Value="MYREQUESTS" />
@@ -133,7 +141,7 @@
                 </div>
                 <div class="form-group">
                     <label>Status</label>
-                    <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-control no-select2"
+                    <asp:DropDownList ID="ddlStatus" runat="server" CssClass="form-control select2-enable"
                         AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed">
                         <asp:ListItem Text="All" Value="ALL" />
                         <asp:ListItem Text="Draft" Value="Draft" />
@@ -606,5 +614,11 @@ function dfmShowInv(projId) {
     document.getElementById('<%= hfActionProjectId.ClientID %>').value = projId;
     document.getElementById('<%= btnShowInvoices.ClientID %>').click();
 }
+jQuery(function() {
+    jQuery('.select2-enable').select2({
+        width: '100%',
+        minimumResultsForSearch: 0
+    });
+});
 </script>
 </asp:Content>

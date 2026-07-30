@@ -23,33 +23,28 @@ namespace DFM_BPM
             if (!IsPostBack)
             {
                 LoadJiraProjects();
-                LoadPortfolioFilter();
-
-                // Support redirect from Portfolio Hierarchy: ?resource=<id> pre-selects that Portfolio filter
-                string qsResource = Request.QueryString["resource"];
-                int qsRid;
-                if (!string.IsNullOrEmpty(qsResource) && int.TryParse(qsResource, out qsRid) && qsRid > 0)
-                {
-                    if (ddlPortfolioFilter.Items.FindByValue(qsRid.ToString()) != null)
-                        ddlPortfolioFilter.SelectedValue = qsRid.ToString();
-                }
+                LoadLeadFilters();
 
                 LoadAll();
             }
         }
 
-        private void LoadPortfolioFilter()
+        private void LoadLeadFilters()
         {
-            try
+            LoadLeadFilter(ddlAccountableExecLeadFilter, ProjectDAL.GetDistinctAccountableExecLeads(), "All Accountable Exec Leads");
+            LoadLeadFilter(ddlSmeLeadFilter, ProjectDAL.GetDistinctSmeLeads(), "All SME Leads");
+        }
+
+        private static void LoadLeadFilter(System.Web.UI.WebControls.DropDownList ddl, DataTable dt, string allText)
+        {
+            ddl.Items.Clear();
+            ddl.Items.Add(new System.Web.UI.WebControls.ListItem(allText, "ALL"));
+            foreach (DataRow r in dt.Rows)
             {
-                DataTable dt = PortfolioDAL.GetResourceDropdown();
-                ddlPortfolioFilter.Items.Clear();
-                ddlPortfolioFilter.Items.Add(new System.Web.UI.WebControls.ListItem("All Portfolios", "ALL"));
-                foreach (DataRow r in dt.Rows)
-                    ddlPortfolioFilter.Items.Add(new System.Web.UI.WebControls.ListItem(
-                        r["DisplayName"].ToString(), r["ResourceID"].ToString()));
+                string leadName = r["LeadName"] == DBNull.Value ? "" : r["LeadName"].ToString();
+                if (!string.IsNullOrWhiteSpace(leadName))
+                    ddl.Items.Add(new System.Web.UI.WebControls.ListItem(leadName, leadName));
             }
-            catch { /* no Portfolio data yet */ }
         }
 
         private void LoadJiraProjects()
@@ -78,18 +73,16 @@ namespace DFM_BPM
 
         /// <summary>Simple "one row per registered Project" grid shown before Pending Approvals & Requests —
         /// shows every JIRA or Non-JIRA project registered via the Project Registration module, regardless of
-        /// whether a Spend Request has ever been submitted/approved for it. Respects the Portfolio filter so
-        /// dashboard/reporting can slice by Portfolio Hierarchy ownership.</summary>
+        /// whether a Spend Request has ever been submitted/approved for it. Respects the dashboard's lead
+        /// filters so reporting can slice by Accountable Exec Lead and SME Lead ownership.</summary>
         private void LoadRegisteredProjects()
         {
             try
             {
-                int? resourceId = null;
-                int rid;
-                if (int.TryParse(ddlPortfolioFilter.SelectedValue, out rid) && rid > 0) resourceId = rid;
-
                 string search = txtProjectSearch.Text.Trim();
-                DataTable dt = ProjectDAL.GetProjects(string.IsNullOrEmpty(search) ? null : search, resourceId);
+                string accountableExecLead = ddlAccountableExecLeadFilter.SelectedValue == "ALL" ? null : ddlAccountableExecLeadFilter.SelectedValue;
+                string smeLead = ddlSmeLeadFilter.SelectedValue == "ALL" ? null : ddlSmeLeadFilter.SelectedValue;
+                DataTable dt = ProjectDAL.GetProjects(string.IsNullOrEmpty(search) ? null : search, null, accountableExecLead, smeLead);
                 gvRegisteredProjects.DataSource = dt;
                 gvRegisteredProjects.DataBind();
                 litRegisteredProjectsCount.Text = dt.Rows.Count.ToString();
@@ -147,6 +140,8 @@ namespace DFM_BPM
                 string jiraFilter = ddlProject.SelectedValue == "ALL" ? null : ddlProject.SelectedValue;
                 string typeFilter = ddlType.SelectedValue == "ALL" ? null : ddlType.SelectedValue;
                 string statFilter = ddlStatus.SelectedValue == "ALL" ? null : ddlStatus.SelectedValue;
+                string accountableExecLead = ddlAccountableExecLeadFilter.SelectedValue == "ALL" ? null : ddlAccountableExecLeadFilter.SelectedValue;
+                string smeLead = ddlSmeLeadFilter.SelectedValue == "ALL" ? null : ddlSmeLeadFilter.SelectedValue;
                 string viewFilter = ddlView.SelectedValue;
                 string viewUser = AuthHelper.CurrentUserShort;
                 DateTime? fromDate = null, toDate = null;
@@ -155,7 +150,8 @@ namespace DFM_BPM
                 if (DateTime.TryParse(txtToDate.Text, out dt)) toDate = dt;
 
                 DataTable allForms = WorkflowDAL.GetPetFormsDashboard(
-                    jiraFilter, typeFilter, statFilter, fromDate, toDate, viewFilter, viewUser);
+                    jiraFilter, typeFilter, statFilter, fromDate, toDate, viewFilter, viewUser,
+                    accountableExecLead, smeLead);
 
                 // ── Group by ProjectID ──────────────────────────────────────────
                 var groupOrder = new System.Collections.Generic.List<string>();
@@ -335,6 +331,8 @@ namespace DFM_BPM
         protected void Filter_Changed(object sender, EventArgs e)
         {
             CurrentPage = 1;
+            gvRegisteredProjects.PageIndex = 0;
+            LoadRegisteredProjects();
             LoadPendingTree();
             LoadKPIs();
         }
@@ -343,7 +341,8 @@ namespace DFM_BPM
         {
             ddlProject.SelectedValue = "ALL";
             ddlType.SelectedValue    = "ALL";
-            ddlPortfolioFilter.SelectedValue = "ALL";
+            ddlAccountableExecLeadFilter.SelectedValue = "ALL";
+            ddlSmeLeadFilter.SelectedValue = "ALL";
             ddlStatus.SelectedValue  = "ALL";
             ddlView.SelectedValue    = "MYAPPROVAL";
             txtFromDate.Text = txtToDate.Text = "";
@@ -358,11 +357,14 @@ namespace DFM_BPM
                 string jiraFilter = ddlProject.SelectedValue == "ALL" ? null : ddlProject.SelectedValue;
                 string typeFilter = ddlType.SelectedValue  == "ALL" ? null : ddlType.SelectedValue;
                 string statFilter = ddlStatus.SelectedValue == "ALL" ? null : ddlStatus.SelectedValue;
+                string accountableExecLead = ddlAccountableExecLeadFilter.SelectedValue == "ALL" ? null : ddlAccountableExecLeadFilter.SelectedValue;
+                string smeLead = ddlSmeLeadFilter.SelectedValue == "ALL" ? null : ddlSmeLeadFilter.SelectedValue;
                 DateTime? fromDate = null, toDate = null;
                 DateTime dt;
                 if (DateTime.TryParse(txtFromDate.Text, out dt)) fromDate = dt;
                 if (DateTime.TryParse(txtToDate.Text, out dt))   toDate   = dt;
-                DataTable data = WorkflowDAL.GetPetFormsDashboard(jiraFilter, typeFilter, statFilter, fromDate, toDate);
+                DataTable data = WorkflowDAL.GetPetFormsDashboard(jiraFilter, typeFilter, statFilter, fromDate, toDate,
+                    null, null, accountableExecLead, smeLead);
                 ExcelHelper.ExportDataTable(data, "PET_Dashboard", Response);
             }
             catch { }

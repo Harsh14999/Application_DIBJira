@@ -35,7 +35,8 @@ namespace DFM_BPM.App_Code.DAL
         public static DataTable GetPetFormsDashboard(
             string jiraFilter, string typeFilter, string statusFilter,
             DateTime? fromDate, DateTime? toDate,
-            string viewFilter = null, string viewUser = null)
+            string viewFilter = null, string viewUser = null,
+            string accountableExecLead = null, string smeLead = null)
         {
             string sql = @"SELECT p.PetFormID, p.PetRefNo, p.ProjectID, p.CapexOpexType,
                                   p.BudgetSourceID, p.Title, p.Status, p.CreatedBy,
@@ -45,10 +46,13 @@ namespace DFM_BPM.App_Code.DAL
                                           WHERE li.PetFormID=p.PetFormID),0) AS TotalRequestedAED
                            FROM dbo.PetForm p
                            LEFT JOIN dbo.JiraIssues j ON j.JiraID = p.ProjectID
+                           LEFT JOIN dbo.Project pr ON pr.ProjectID = p.ProjectID
                            WHERE 1=1";
             var ps = new System.Collections.Generic.List<System.Data.SqlClient.SqlParameter>();
             if (!string.IsNullOrEmpty(jiraFilter))  { sql += " AND p.ProjectID=@jp"; ps.Add(Db.P("@jp", jiraFilter)); }
             if (!string.IsNullOrEmpty(typeFilter))  { sql += " AND p.CapexOpexType=@tp"; ps.Add(Db.P("@tp", typeFilter)); }
+            if (!string.IsNullOrWhiteSpace(accountableExecLead)) { sql += " AND pr.AccountableExecLead=@ael"; ps.Add(Db.P("@ael", accountableExecLead.Trim())); }
+            if (!string.IsNullOrWhiteSpace(smeLead)) { sql += " AND pr.SmeLead=@sl"; ps.Add(Db.P("@sl", smeLead.Trim())); }
             if (string.IsNullOrEmpty(statusFilter))
                 sql += " AND p.Status<>'Deleted'";
             else

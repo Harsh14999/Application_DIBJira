@@ -14,7 +14,8 @@ namespace DFM_BPM.App_Code.DAL
         /// Project Registration listing -- one row per registered project, Portfolio resource resolved.
         /// The resource filter is "team roll-up" -- it includes the selected resource AND every descendant
         /// underneath it (so clicking a manager shows their whole team's projects, not just an exact match).</summary>
-        public static DataTable GetProjects(string search = null, int? resourceId = null)
+        public static DataTable GetProjects(string search = null, int? resourceId = null,
+            string accountableExecLead = null, string smeLead = null)
         {
             string sql = @"SELECT p.ProjectID, p.ProjectName, p.IsNonJiraProject, p.ProjectManager,
                                   p.ResourceID, r.ResourceName AS PortfolioName, p.IsActive,
@@ -42,8 +43,34 @@ namespace DFM_BPM.App_Code.DAL
                 }
                 sql += " AND p.ResourceID IN (" + string.Join(",", names.ToArray()) + ")";
             }
+            if (!string.IsNullOrWhiteSpace(accountableExecLead))
+            {
+                sql += " AND p.AccountableExecLead=@ael";
+                ps.Add(Db.P("@ael", accountableExecLead.Trim()));
+            }
+            if (!string.IsNullOrWhiteSpace(smeLead))
+            {
+                sql += " AND p.SmeLead=@sl";
+                ps.Add(Db.P("@sl", smeLead.Trim()));
+            }
             sql += " ORDER BY p.CreatedDate DESC";
             return Db.Query(sql, ps.ToArray());
+        }
+
+        public static DataTable GetDistinctAccountableExecLeads()
+        {
+            return Db.Query(@"SELECT DISTINCT AccountableExecLead AS LeadName
+                              FROM dbo.Project
+                              WHERE AccountableExecLead IS NOT NULL AND LTRIM(RTRIM(AccountableExecLead)) <> ''
+                              ORDER BY AccountableExecLead");
+        }
+
+        public static DataTable GetDistinctSmeLeads()
+        {
+            return Db.Query(@"SELECT DISTINCT SmeLead AS LeadName
+                              FROM dbo.Project
+                              WHERE SmeLead IS NOT NULL AND LTRIM(RTRIM(SmeLead)) <> ''
+                              ORDER BY SmeLead");
         }
 
         public static DataRow GetProjectById(string projectId)
