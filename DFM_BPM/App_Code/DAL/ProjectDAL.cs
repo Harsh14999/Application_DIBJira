@@ -15,7 +15,7 @@ namespace DFM_BPM.App_Code.DAL
         /// The resource filter is "team roll-up" -- it includes the selected resource AND every descendant
         /// underneath it (so clicking a manager shows their whole team's projects, not just an exact match).</summary>
         public static DataTable GetProjects(string search = null, int? resourceId = null,
-            string accountableExecLead = null, string smeLead = null)
+            string accountableExecLead = null, string smeLead = null, string projectId = null)
         {
             string sql = @"SELECT p.ProjectID, p.ProjectName, p.IsNonJiraProject, p.ProjectManager,
                                   p.ResourceID, r.ResourceName AS PortfolioName, p.IsActive,
@@ -29,6 +29,11 @@ namespace DFM_BPM.App_Code.DAL
             {
                 sql += " AND (p.ProjectID LIKE @s OR p.ProjectName LIKE @s OR p.AccountableExecLead LIKE @s OR p.SmeLead LIKE @s OR p.ProjectManager LIKE @s OR p.CreatedBy LIKE @s)";
                 ps.Add(Db.P("@s", "%" + search.Trim() + "%"));
+            }
+            if (!string.IsNullOrWhiteSpace(projectId))
+            {
+                sql += " AND p.ProjectID=@pid";
+                ps.Add(Db.P("@pid", projectId.Trim()));
             }
             if (resourceId.HasValue)
             {

@@ -16,7 +16,6 @@
 /* Section header colors — light bg, dark colorful text */
 #sec-filters .dash-sec-hdr  { background:#f8fafc; color:#475569; }
 #sec-projects .dash-sec-hdr { background:#F3F9FD; color:#1F4E78; }
-#sec-pending .dash-sec-hdr  { background:#F5F9FF; color:#2F5597; }
 #sec-myforms .dash-sec-hdr  { background:#F5F9FF; color:#2F5597; }
 #sec-budget .dash-sec-hdr   { background:#F6FBF4; color:#548235; }
 /* ── filter ── */
@@ -228,74 +227,25 @@
                 OnClick="btnProjectSearchReset_Click" CausesValidation="false" />
         </div>
         <div class="card-panel" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
-            <asp:GridView ID="gvRegisteredProjects" runat="server" AutoGenerateColumns="false"
-                CssClass="dfm-table" GridLines="None" EmptyDataText="No projects registered yet."
-                AllowPaging="true" PageSize="5" OnPageIndexChanging="gvRegisteredProjects_PageIndexChanging">
-                <PagerStyle CssClass="dfm-pager" HorizontalAlign="Center" />
-                <PagerSettings Mode="NumericFirstLast" PageButtonCount="5" FirstPageText="&amp;laquo;" LastPageText="&amp;raquo;" />
-                <Columns>
-                    <asp:TemplateField HeaderText="Project Name">
-                        <ItemTemplate>
-                            <strong><%# Eval("ProjectName") %></strong>
-                            <br /><small style="color:#64748b;"><%# Eval("ProjectID") %></small>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                    <asp:TemplateField HeaderText="Project Type">
-                        <ItemTemplate><%# Convert.ToBoolean(Eval("IsNonJiraProject")) ? "Non-JIRA" : "JIRA" %></ItemTemplate>
-                    </asp:TemplateField>
-                    <asp:BoundField DataField="AccountableExecLead" HeaderText="Accountable Exec Lead" />
-                    <asp:BoundField DataField="SmeLead"             HeaderText="SME Lead" />
-                    <asp:TemplateField HeaderText="Project Size">
-                        <ItemTemplate>
-                            <%# string.IsNullOrEmpty(Convert.ToString(Eval("ProjectSize"))) ? "<span style='color:#94a3b8;'>--</span>" : "<span class='ps-size-badge size-" + Eval("ProjectSize").ToString().ToLower() + "'>" + Eval("ProjectSize") + "</span>" %>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                    <asp:BoundField DataField="ProjectManager"   HeaderText="Project Manager" />
-                    <asp:BoundField DataField="CreatedBy"        HeaderText="Requestor" />
-                    <asp:TemplateField HeaderText="Status">
-                        <ItemTemplate><%# Convert.ToBoolean(Eval("IsActive")) ? "<span class='badge-success'>Active</span>" : "<span class='badge-danger'>Inactive</span>" %></ItemTemplate>
-                    </asp:TemplateField>
-                    <asp:BoundField DataField="CreatedDate"      HeaderText="Created Date" DataFormatString="{0:dd-MMM-yyyy}" />
-                    <asp:TemplateField HeaderText="Action">
-                        <ItemTemplate>
-                            <a href='<%# ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=<%# Server.UrlEncode(Eval("ProjectID").ToString()) %>' class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                </Columns>
-            </asp:GridView>
-        </div>
-    </div>
-</div>
-
-<!-- ── PENDING ACTIONS ── -->
-<div class="dash-section" id="sec-pending">
-    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-pending')">
-        <span><i class="bi bi-clock-history"></i> Pending Approvals &amp; Requests
-            <span style="background:#fbbf24;color:#78350f;border-radius:10px;padding:1px 8px;font-size:.8em;margin-left:6px;">
-                <asp:Literal ID="litPendingCount" runat="server" Text="0" />
-            </span>
-        </span>
-        <i class="bi bi-chevron-down dash-sec-toggle"></i>
-    </div>
-    <div class="dash-sec-body">
-        <div class="card-panel" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
             <table class="dfm-table" style="width:100%;">
                 <thead>
                     <tr>
+                        <th style="width:210px;">Project / Request</th>
                         <th style="width:150px;">Code</th>
                         <th style="width:100px;">Status</th>
-                        <th>Project</th>
                         <th>Type</th>
                         <th>Budget Source</th>
                         <th class="text-right">Requested (AED)</th>
                         <th>Approver</th>
                         <th>Requestor</th>
                         <th>Submitted</th>
+                        <th>Size</th>
+                        <th>Lead</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <asp:Literal ID="litPendingTree" runat="server" />
+                    <asp:Literal ID="litRegisteredProjectTree" runat="server" />
                 </tbody>
             </table>
             <!-- Pagination -->
