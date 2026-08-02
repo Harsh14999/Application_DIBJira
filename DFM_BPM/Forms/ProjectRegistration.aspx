@@ -1,4 +1,4 @@
-<%@ Page Title="Project Portfolio" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true"
+<%@ Page Title="Project Registration" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true"
     CodeBehind="ProjectRegistration.aspx.cs" Inherits="DFM_BPM.Forms.ProjectRegistration" %>
 
 <asp:Content ID="HeadCt" ContentPlaceHolderID="HeadContent" runat="server">
@@ -20,42 +20,11 @@
 .dfm-table tr:nth-child(odd)  td { background:#fafbff; }
 .dfm-table tr:nth-child(even) td { background:#ffffff; }
 .dfm-table tr:hover td { background:#eff6ff; }
-.dash-section { margin-bottom:14px; border:1px solid #e2e8f0; border-radius:10px; overflow:hidden; background:#fff; }
-.dash-sec-hdr { padding:10px 16px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; font-weight:700; font-size:.9em; user-select:none; border-bottom:1px solid #e2e8f0; }
-.dash-sec-body { padding:0; }
-.dash-section.collapsed .dash-sec-body { display:none; }
-.dash-section.collapsed .dash-sec-toggle { transform:rotate(-90deg); }
-#sec-project-portfolio-filters .dash-sec-hdr { background:#f8fafc; color:#475569; }
-#sec-project-portfolio .dash-sec-hdr { background:#F3F9FD; color:#1F4E78; }
-.horizontal-filter-panel { padding:14px 16px; }
-.filter-grid { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
-.filter-grid .form-group { flex:1; min-width:140px; margin:0; }
-.filter-actions { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
-.tree-hidden { display:none !important; }
-.pet-status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.75em; font-weight:700; white-space:nowrap; }
-.st-draft { background:#f1f5f9; color:#475569; }
-.st-pending { background:#fef3c7; color:#92400e; }
-.st-review { background:#dbeafe; color:#1d4ed8; }
-.st-approved { background:#d1fae5; color:#065f46; }
-.st-rejected { background:#fee2e2; color:#991b1b; }
-.st-sent { background:#ede9fe; color:#5b21b6; }
-.page-nav { display:flex; justify-content:center; gap:4px; padding:10px; }
-.proj-action-btn { font-size:.75em; padding:2px 6px; margin-right:2px; border-radius:4px; font-weight:600; cursor:pointer; border:none; }
-.proj-action-btn.btn-sr { background:#E8F0FE; color:#2F5597; border:1px solid #B4C7E7; }
-.proj-action-btn.btn-bgt { background:#F0F9EC; color:#548235; border:1px solid #C6E0B4; }
-.proj-action-btn.btn-inv { background:#FFF3E8; color:#C55A11; border:1px solid #F4B183; }
-.card-panel.panel-budget-line-items { border-color:#C6E0B4; background:#fff; }
-.card-panel.panel-budget-line-items .card-panel-hdr { background:#F6FBF4; color:#548235; border-bottom:2px solid #C6E0B4; }
-.card-panel.panel-budget-invoice { border-color:#F4B183; background:#fff; }
-.card-panel.panel-budget-invoice .card-panel-hdr { background:#FFF8F2; color:#C55A11; border-bottom:2px solid #F4B183; }
-.action-modal-grid th { font-size:.8em; padding:6px 8px; white-space:nowrap; }
-.action-modal-grid td { font-size:.82em; padding:5px 8px; vertical-align:middle; color:#1e293b; }
-.del-pet-name { font-size:1em; font-weight:800; color:#dc2626; word-break:break-all; }
 </style>
 </asp:Content>
 
 <asp:Content ID="MainCt" ContentPlaceHolderID="MainContent" runat="server">
-<h1 class="page-title"><i class="bi bi-folder-plus"></i> Project Portfolio
+<h1 class="page-title"><i class="bi bi-folder-plus"></i> Project Registration
     <% if (IsExistingProject) { %>
         &nbsp;<span style="font-size:.6em;color:#2563eb;"><%= Server.HtmlEncode(CurrentProjectId) %></span>
     <% } %>
@@ -71,145 +40,8 @@
 <asp:Label ID="lblMsg" runat="server" CssClass="alert alert-info" Visible="false" />
 <asp:HiddenField ID="hfProjectId" runat="server" Value="" />
 
-<!-- ── PROJECT PORTFOLIO FILTERS ── -->
-<div class="dash-section" id="sec-project-portfolio-filters">
-    <div class="dash-sec-hdr" onclick="ppSecTog('sec-project-portfolio-filters')">
-        <span><i class="bi bi-funnel"></i> Portfolio Filters</span>
-        <i class="bi bi-chevron-down dash-sec-toggle"></i>
-    </div>
-    <div class="dash-sec-body">
-        <div class="horizontal-filter-panel">
-            <div class="filter-grid">
-                <div class="form-group">
-                    <label>Project</label>
-                    <asp:DropDownList ID="ddlPortfolioProjectFilter" runat="server" CssClass="form-control select2-enable"
-                        AutoPostBack="true" OnSelectedIndexChanged="PortfolioFilter_Changed">
-                        <asp:ListItem Text="All Projects" Value="ALL" />
-                    </asp:DropDownList>
-                </div>
-                <div class="form-group">
-                    <label>Type</label>
-                    <asp:DropDownList ID="ddlPortfolioTypeFilter" runat="server" CssClass="form-control select2-enable"
-                        AutoPostBack="true" OnSelectedIndexChanged="PortfolioFilter_Changed">
-                        <asp:ListItem Text="All" Value="ALL" />
-                        <asp:ListItem Text="CAPEX" Value="CAPEX" />
-                        <asp:ListItem Text="OPEX" Value="OPEX" />
-                    </asp:DropDownList>
-                </div>
-                <div class="form-group">
-                    <label>Accountable Exec Lead</label>
-                    <asp:DropDownList ID="ddlPortfolioAccountableExecLeadFilter" runat="server" CssClass="form-control select2-enable"
-                        AutoPostBack="true" OnSelectedIndexChanged="PortfolioFilter_Changed">
-                        <asp:ListItem Text="All Accountable Exec Leads" Value="ALL" />
-                    </asp:DropDownList>
-                </div>
-                <div class="form-group">
-                    <label>SME Lead</label>
-                    <asp:DropDownList ID="ddlPortfolioSmeLeadFilter" runat="server" CssClass="form-control select2-enable"
-                        AutoPostBack="true" OnSelectedIndexChanged="PortfolioFilter_Changed">
-                        <asp:ListItem Text="All SME Leads" Value="ALL" />
-                    </asp:DropDownList>
-                </div>
-                <div class="form-group">
-                    <label>View</label>
-                    <asp:DropDownList ID="ddlPortfolioViewFilter" runat="server" CssClass="form-control select2-enable"
-                        AutoPostBack="true" OnSelectedIndexChanged="PortfolioFilter_Changed">
-                        <asp:ListItem Text="Pending My Action" Value="MYAPPROVAL" />
-                        <asp:ListItem Text="My Requests" Value="MYREQUESTS" />
-                        <asp:ListItem Text="All Items" Value="ALL" />
-                    </asp:DropDownList>
-                </div>
-                <div class="form-group">
-                    <label>Status</label>
-                    <asp:DropDownList ID="ddlPortfolioStatusFilter" runat="server" CssClass="form-control select2-enable"
-                        AutoPostBack="true" OnSelectedIndexChanged="PortfolioFilter_Changed">
-                        <asp:ListItem Text="All" Value="ALL" />
-                        <asp:ListItem Text="Draft" Value="Draft" />
-                        <asp:ListItem Text="Pending Review" Value="PendingReview" />
-                        <asp:ListItem Text="Pending Approval" Value="PendingApproval" />
-                        <asp:ListItem Text="Approved" Value="Approved" />
-                        <asp:ListItem Text="Rejected" Value="Rejected" />
-                        <asp:ListItem Text="Sent Back" Value="SentBack" />
-                        <asp:ListItem Text="Deleted" Value="Deleted" />
-                    </asp:DropDownList>
-                </div>
-                <div class="form-group">
-                    <label>From Date</label>
-                    <asp:TextBox ID="txtPortfolioFromDate" runat="server" CssClass="form-control" TextMode="Date" />
-                </div>
-                <div class="form-group">
-                    <label>To Date</label>
-                    <asp:TextBox ID="txtPortfolioToDate" runat="server" CssClass="form-control" TextMode="Date" />
-                </div>
-            </div>
-            <div class="filter-actions">
-                <asp:Button ID="btnPortfolioApply" runat="server" Text="Apply Filters" CssClass="btn btn-primary"
-                    OnClick="PortfolioFilter_Changed" />
-                <asp:Button ID="btnPortfolioReset" runat="server" Text="Reset" CssClass="btn btn-default"
-                    OnClick="btnPortfolioReset_Click" CausesValidation="false" />
-                <asp:Button ID="btnPortfolioExport" runat="server" Text="Export Excel" CssClass="btn btn-success"
-                    OnClick="btnPortfolioExport_Click" />
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- ── PROJECT PORTFOLIO LIST ── -->
-<div class="dash-section" id="sec-project-portfolio">
-    <div class="dash-sec-hdr" onclick="ppSecTog('sec-project-portfolio')">
-        <span><i class="bi bi-folder2-open"></i> Registered Projects
-            <span style="background:#93c5fd;color:#1e3a5f;border-radius:10px;padding:1px 8px;font-size:.8em;margin-left:6px;">
-                <asp:Literal ID="litPortfolioProjectsCount" runat="server" Text="0" />
-            </span>
-        </span>
-        <i class="bi bi-chevron-down dash-sec-toggle"></i>
-    </div>
-    <div class="dash-sec-body">
-        <div style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-            <div class="form-group" style="flex:2;min-width:200px;margin:0;">
-                <label style="font-size:.78em;">Search (Name, ID, Lead, Manager, Requestor)</label>
-                <asp:TextBox ID="txtPortfolioProjectSearch" runat="server" CssClass="form-control" placeholder="Type to filter..." />
-            </div>
-            <asp:Button ID="btnPortfolioProjectSearch" runat="server" CssClass="btn btn-primary btn-sm" Text="Filter"
-                OnClick="btnPortfolioProjectSearch_Click" CausesValidation="false" />
-            <asp:Button ID="btnPortfolioProjectSearchReset" runat="server" CssClass="btn btn-default btn-sm" Text="Reset"
-                OnClick="btnPortfolioProjectSearchReset_Click" CausesValidation="false" />
-        </div>
-        <div class="card-panel" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
-            <table class="dfm-table" style="width:100%;">
-                <thead>
-                    <tr>
-                        <th style="width:210px;">Project / Request</th>
-                        <th style="width:150px;">Code</th>
-                        <th style="width:100px;">Status</th>
-                        <th>Type</th>
-                        <th>Budget Source</th>
-                        <th class="text-right">Requested (AED)</th>
-                        <th>Approver</th>
-                        <th>Requestor</th>
-                        <th>Submitted</th>
-                        <th>Size</th>
-                        <th>Lead</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <asp:Literal ID="litPortfolioProjectTree" runat="server" />
-                </tbody>
-            </table>
-            <div class="page-nav">
-                <asp:LinkButton ID="btnPortfolioPrevPage" runat="server" CssClass="btn btn-default btn-sm"
-                    Text="&#8249; Prev" OnClick="btnPortfolioPrevPage_Click" CausesValidation="false" />
-                <asp:Literal ID="litPortfolioPageInfo" runat="server" />
-                <asp:LinkButton ID="btnPortfolioNextPage" runat="server" CssClass="btn btn-default btn-sm"
-                    Text="Next &#8250;" OnClick="btnPortfolioNextPage_Click" CausesValidation="false" />
-            </div>
-        </div>
-    </div>
-</div>
-
 <div class="card-panel panel-spend-request">
-    <div class="card-panel-hdr"><i class="bi bi-pencil-square"></i> Register / Edit Project</div>
+    <div class="card-panel-hdr"><i class="bi bi-pencil-square"></i> Register a Project</div>
     <div class="card-panel-body">
         <asp:Panel ID="pnlCreatedInfo" runat="server" Visible="false" style="margin-bottom:10px;font-size:.85em;color:#64748b;">
             <asp:Literal ID="litCreatedInfo" runat="server" />
@@ -293,7 +125,7 @@
             </tbody>
         </table>
 
-        <asp:Button ID="btnSave" runat="server" CssClass="btn btn-primary" Text="Save Project Portfolio" OnClick="btnSave_Click" />
+        <asp:Button ID="btnSave" runat="server" CssClass="btn btn-primary" Text="Save Project Registration" OnClick="btnSave_Click" />
         <% if (IsExistingProject) { %>
         <a href='<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?project=<%= Server.UrlEncode(CurrentProjectId) %>' class="btn btn-success">
             <i class="bi bi-plus-circle"></i> Create Spend Request for this Project
@@ -530,221 +362,6 @@ function prSzPreSave() {
 }
 </script>
 
-<!-- Project Portfolio Action Hidden Fields + Buttons -->
-<asp:HiddenField ID="hfPortfolioActionProjectId" runat="server" Value="" />
-<asp:Button ID="btnPortfolioShowSpendRequests" runat="server" Text="_sr" style="display:none;"
-    OnClick="btnPortfolioShowSpendRequests_Click" CausesValidation="false" />
-<asp:Button ID="btnPortfolioShowBudget" runat="server" Text="_bgt" style="display:none;"
-    OnClick="btnPortfolioShowBudget_Click" CausesValidation="false" />
-<asp:Button ID="btnPortfolioShowInvoices" runat="server" Text="_inv" style="display:none;"
-    OnClick="btnPortfolioShowInvoices_Click" CausesValidation="false" />
-
-<div class="modal fade" id="portfolioSpendRequestModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document" style="max-width:95%;width:95%;">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#2F5597;color:#fff;">
-                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
-                <h4 class="modal-title"><i class="bi bi-file-earmark-text"></i> Spend Requests &mdash; <asp:Literal ID="litPortfolioSRModalProject" runat="server" /></h4>
-            </div>
-            <div class="modal-body" style="padding:16px;max-height:75vh;overflow-y:auto;">
-                <div class="card-panel panel-spend-request" style="margin-bottom:14px;">
-                    <div class="card-panel-hdr"><i class="bi bi-file-earmark-text"></i> Spend Requests (including Draft)</div>
-                    <div class="card-panel-body" style="padding:0;overflow-x:auto;">
-                        <asp:GridView ID="gvPortfolioModalSpendRequests" runat="server" AutoGenerateColumns="false"
-                            CssClass="dfm-table action-modal-grid" GridLines="None" EmptyDataText="No Spend Requests for this project.">
-                            <Columns>
-                                <asp:BoundField DataField="PetRefNo" HeaderText="Ref No" />
-                                <asp:BoundField DataField="CapexOpexType" HeaderText="Type" />
-                                <asp:BoundField DataField="Title" HeaderText="Title" />
-                                <asp:BoundField DataField="Status" HeaderText="Status" />
-                                <asp:BoundField DataField="CreatedBy" HeaderText="Requestor" />
-                                <asp:BoundField DataField="CreatedDate" HeaderText="Created" DataFormatString="{0:dd-MMM-yyyy}" />
-                                <asp:BoundField DataField="TotalRequestedAED" HeaderText="Requested (AED)" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                                <asp:TemplateField HeaderText="Action">
-                                    <ItemTemplate>
-                                        <a href='<%# ResolveUrl("~/Forms/PetWorkflow.aspx") + "?id=" + Eval("PetFormID") %>' class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                            </Columns>
-                        </asp:GridView>
-                    </div>
-                </div>
-                <div class="card-panel panel-spend-request">
-                    <div class="card-panel-hdr"><i class="bi bi-list-ul"></i> Spend Request Line Items (All)</div>
-                    <div class="card-panel-body" style="padding:0;overflow-x:auto;">
-                        <asp:GridView ID="gvPortfolioModalLineItems" runat="server" AutoGenerateColumns="false"
-                            CssClass="dfm-table action-modal-grid" GridLines="None" EmptyDataText="No line items.">
-                            <Columns>
-                                <asp:BoundField DataField="PetRefNo" HeaderText="Request" />
-                                <asp:BoundField DataField="SerialNo" HeaderText="#" ItemStyle-Width="30px" />
-                                <asp:BoundField DataField="ExpHead" HeaderText="Head" />
-                                <asp:BoundField DataField="Topic" HeaderText="Topic" />
-                                <asp:BoundField DataField="VendorName" HeaderText="Vendor" />
-                                <asp:BoundField DataField="CostType" HeaderText="Cost Type" />
-                                <asp:BoundField DataField="Units" HeaderText="Units" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                                <asp:BoundField DataField="UnitPrice" HeaderText="Unit Price" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                                <asp:BoundField DataField="BaseCurrency" HeaderText="CCY" />
-                                <asp:BoundField DataField="AmtFCY" HeaderText="FCY Amt" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                                <asp:BoundField DataField="FinalAmtLCY" HeaderText="Final AED" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                            </Columns>
-                        </asp:GridView>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Close</button></div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="portfolioBudgetActionModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document" style="max-width:95%;width:95%;">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#548235;color:#fff;">
-                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
-                <h4 class="modal-title"><i class="bi bi-cash-coin"></i> Budget &mdash; <asp:Literal ID="litPortfolioBgtModalProject" runat="server" /></h4>
-            </div>
-            <div class="modal-body" style="padding:16px;max-height:75vh;overflow-y:auto;">
-                <div class="card-panel panel-budget-line-items" style="margin-bottom:14px;">
-                    <div class="card-panel-hdr"><i class="bi bi-cash-coin"></i> Budget Line Items</div>
-                    <div class="card-panel-body" style="padding:0;overflow-x:auto;">
-                        <asp:GridView ID="gvPortfolioModalBudgetLines" runat="server" AutoGenerateColumns="false"
-                            CssClass="dfm-table action-modal-grid" GridLines="None" DataKeyNames="BudgetLineID"
-                            OnRowCommand="gvPortfolioModalBudgetLines_RowCommand"
-                            EmptyDataText="No budget lines for this project.">
-                            <Columns>
-                                <asp:BoundField DataField="PetRefNo" HeaderText="Request Ref" />
-                                <asp:BoundField DataField="VendorName" HeaderText="Vendor" />
-                                <asp:BoundField DataField="Justification" HeaderText="Justification" />
-                                <asp:BoundField DataField="Cost" HeaderText="Cost" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                                <asp:BoundField DataField="Currency" HeaderText="CCY" />
-                                <asp:BoundField DataField="CamStatus" HeaderText="CAM Status" />
-                                <asp:BoundField DataField="LpoStatus" HeaderText="LPO Status" />
-                                <asp:BoundField DataField="InvoiceTotal" HeaderText="Invoiced" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                                <asp:TemplateField HeaderText="Invoices">
-                                    <ItemTemplate>
-                                        <asp:LinkButton runat="server" CssClass="btn btn-xs btn-info" CommandName="ShowInvoice" CommandArgument='<%# Eval("BudgetLineID") %>'><i class="bi bi-receipt"></i> Invoice</asp:LinkButton>
-                                    </ItemTemplate>
-                                </asp:TemplateField>
-                            </Columns>
-                        </asp:GridView>
-                    </div>
-                </div>
-                <asp:Panel ID="pnlPortfolioBudgetInvoiceDetail" runat="server" Visible="false">
-                <div class="card-panel panel-budget-invoice">
-                    <div class="card-panel-hdr"><i class="bi bi-receipt"></i> Invoices for Budget Line #<asp:Literal ID="litPortfolioBgtInvLineId" runat="server" /></div>
-                    <div class="card-panel-body" style="padding:0;overflow-x:auto;">
-                        <asp:GridView ID="gvPortfolioModalBudgetInvoices" runat="server" AutoGenerateColumns="false"
-                            CssClass="dfm-table action-modal-grid" GridLines="None" EmptyDataText="No invoices for this budget line.">
-                            <Columns>
-                                <asp:BoundField DataField="InvoiceID" HeaderText="ID" />
-                                <asp:BoundField DataField="InvoiceNo" HeaderText="Invoice No" />
-                                <asp:BoundField DataField="InvoiceAmount" HeaderText="Amount" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                                <asp:BoundField DataField="InvoiceStatus" HeaderText="Status" />
-                                <asp:BoundField DataField="PaymentDate" HeaderText="Payment Date" DataFormatString="{0:dd-MMM-yyyy}" />
-                            </Columns>
-                        </asp:GridView>
-                    </div>
-                </div>
-                </asp:Panel>
-            </div>
-            <div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Close</button></div>
-        </div>
-    </div>
-</div>
-
-<div class="modal fade" id="portfolioInvoiceActionModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog modal-lg" role="document" style="max-width:90%;width:90%;">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#C55A11;color:#fff;">
-                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
-                <h4 class="modal-title"><i class="bi bi-receipt"></i> Invoices &mdash; <asp:Literal ID="litPortfolioInvModalProject" runat="server" /></h4>
-            </div>
-            <div class="modal-body" style="padding:16px;max-height:75vh;overflow-y:auto;">
-                <div class="card-panel panel-budget-invoice">
-                    <div class="card-panel-hdr"><i class="bi bi-receipt"></i> All Invoices for this Project</div>
-                    <div class="card-panel-body" style="padding:0;overflow-x:auto;">
-                        <asp:GridView ID="gvPortfolioModalInvoices" runat="server" AutoGenerateColumns="false"
-                            CssClass="dfm-table action-modal-grid" GridLines="None" EmptyDataText="No invoices for this project.">
-                            <Columns>
-                                <asp:BoundField DataField="PetRefNo" HeaderText="Request Ref" />
-                                <asp:BoundField DataField="VendorName" HeaderText="Vendor" />
-                                <asp:BoundField DataField="InvoiceNo" HeaderText="Invoice No" />
-                                <asp:BoundField DataField="InvoiceAmount" HeaderText="Amount" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                                <asp:BoundField DataField="InvoiceStatus" HeaderText="Status" />
-                                <asp:BoundField DataField="PaymentDate" HeaderText="Payment Date" DataFormatString="{0:dd-MMM-yyyy}" />
-                            </Columns>
-                        </asp:GridView>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer"><button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Close</button></div>
-        </div>
-    </div>
-</div>
-
-<asp:HiddenField ID="hfPortfolioDeletePetId" runat="server" Value="0" />
-<asp:Button ID="btnPortfolioConfirmDeletePet" runat="server" Text="_del" style="display:none;"
-    OnClick="btnPortfolioConfirmDeletePet_Click" CausesValidation="false" />
-
-<div class="modal fade" id="portfolioPetDelModal" tabindex="-1" role="dialog">
-    <div class="modal-dialog" role="document" style="max-width:460px;">
-        <div class="modal-content">
-            <div class="modal-header" style="background:#b91c1c;color:#fff;">
-                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
-                <h4 class="modal-title"><i class="bi bi-exclamation-triangle-fill"></i> Confirm Delete Spend Request</h4>
-            </div>
-            <div class="modal-body" style="padding:24px;text-align:center;">
-                <div style="font-size:2.8em;color:#dc2626;margin-bottom:10px;"><i class="bi bi-trash3-fill"></i></div>
-                <p style="font-size:.94em;font-weight:600;color:#1e293b;margin-bottom:4px;">Are you sure you want to delete Spend Request</p>
-                <p id="portfolioPetDelRefNo" class="del-pet-name"></p>
-                <p style="font-size:.82em;color:#64748b;margin-top:8px;">The Spend Request will be marked as <strong>Deleted</strong> and removed from all views. Workflow history is retained.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Cancel</button>
-                <button type="button" class="btn btn-danger" onclick="ppPetDelConfirm();"><i class="bi bi-trash"></i> Yes, Delete</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-function ppSecTog(id) {
-    var el = document.getElementById(id);
-    if (el) el.classList.toggle('collapsed');
-}
-function ppTog(cls) {
-    var rows = document.querySelectorAll('.tree-row.' + cls);
-    var hidden = rows.length > 0 && rows[0].classList.contains('tree-hidden');
-    for (var i = 0; i < rows.length; i++) {
-        if (hidden) rows[i].classList.remove('tree-hidden');
-        else rows[i].classList.add('tree-hidden');
-    }
-    var btns = document.querySelectorAll('[data-tog="' + cls + '"]');
-    for (var j = 0; j < btns.length; j++) btns[j].innerHTML = hidden ? '&#9660;' : '&#9658;';
-}
-function ppPetDel(id, refNo) {
-    document.getElementById('<%= hfPortfolioDeletePetId.ClientID %>').value = id;
-    document.getElementById('portfolioPetDelRefNo').textContent = refNo;
-    jQuery('#portfolioPetDelModal').modal('show');
-}
-function ppPetDelConfirm() {
-    jQuery('#portfolioPetDelModal').modal('hide');
-    document.getElementById('<%= btnPortfolioConfirmDeletePet.ClientID %>').click();
-}
-function ppShowSR(projId) {
-    document.getElementById('<%= hfPortfolioActionProjectId.ClientID %>').value = projId;
-    document.getElementById('<%= btnPortfolioShowSpendRequests.ClientID %>').click();
-}
-function ppShowBgt(projId) {
-    document.getElementById('<%= hfPortfolioActionProjectId.ClientID %>').value = projId;
-    document.getElementById('<%= btnPortfolioShowBudget.ClientID %>').click();
-}
-function ppShowInv(projId) {
-    document.getElementById('<%= hfPortfolioActionProjectId.ClientID %>').value = projId;
-    document.getElementById('<%= btnPortfolioShowInvoices.ClientID %>').click();
-}
-</script>
-
 <!-- Project Delete Confirmation Modal -->
 <div class="modal fade" id="projectDelModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document" style="max-width:460px;">
@@ -757,7 +374,7 @@ function ppShowInv(projId) {
                 <div style="font-size:2.8em;color:#dc2626;margin-bottom:10px;"><i class="bi bi-trash3-fill"></i></div>
                 <p style="font-size:.94em;font-weight:600;color:#1e293b;margin-bottom:4px;">Are you sure you want to delete</p>
                 <p style="font-size:1.1em;font-weight:800;color:#dc2626;"><%= Server.HtmlEncode(CurrentProjectId) %></p>
-                <p style="font-size:.82em;color:#64748b;margin-top:8px;">This permanently removes the project portfolio record, its Sizing record and Engineer assignments. This cannot be undone.</p>
+                <p style="font-size:.82em;color:#64748b;margin-top:8px;">This permanently removes the project registration, its Sizing record and Engineer assignments. This cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Cancel</button>
