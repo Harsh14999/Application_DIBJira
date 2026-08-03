@@ -13,6 +13,15 @@ namespace DFM_BPM {
     public partial class DefaultPage {
         
         /// <summary>
+        /// smDashboard control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.ScriptManager smDashboard;
+        
+        /// <summary>
         /// litLastSync control.
         /// </summary>
         /// <remarks>
@@ -103,15 +112,6 @@ namespace DFM_BPM {
         protected global::System.Web.UI.WebControls.Button btnReset;
         
         /// <summary>
-        /// btnExport control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Button btnExport;
-        
-        /// <summary>
         /// litProjects control.
         /// </summary>
         /// <remarks>
@@ -175,6 +175,15 @@ namespace DFM_BPM {
         protected global::System.Web.UI.WebControls.Literal litOpexBudget;
         
         /// <summary>
+        /// litCapexOpexSummary control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Literal litCapexOpexSummary;
+        
+        /// <summary>
         /// litRegisteredProjectsCount control.
         /// </summary>
         /// <remarks>
@@ -184,31 +193,13 @@ namespace DFM_BPM {
         protected global::System.Web.UI.WebControls.Literal litRegisteredProjectsCount;
         
         /// <summary>
-        /// gvRegisteredProjects control.
+        /// litRegisteredProjectRows control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvRegisteredProjects;
-        
-        /// <summary>
-        /// litPendingCount control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litPendingCount;
-        
-        /// <summary>
-        /// litPendingTree control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litPendingTree;
+        protected global::System.Web.UI.WebControls.Literal litRegisteredProjectRows;
         
         /// <summary>
         /// btnPrevPage control.
@@ -238,33 +229,6 @@ namespace DFM_BPM {
         protected global::System.Web.UI.WebControls.LinkButton btnNextPage;
         
         /// <summary>
-        /// gvMyPet control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvMyPet;
-        
-        /// <summary>
-        /// btnExportMyBudgetLines control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnExportMyBudgetLines;
-        
-        /// <summary>
-        /// gvMyBudgetLines control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.GridView gvMyBudgetLines;
-        
-        /// <summary>
         /// hfDeletePetId control.
         /// </summary>
         /// <remarks>
@@ -282,9 +246,14 @@ namespace DFM_BPM {
         /// </remarks>
         protected global::System.Web.UI.WebControls.Button btnConfirmDeletePet;
 
-        protected global::System.Web.UI.WebControls.TextBox txtProjectSearch;
-        protected global::System.Web.UI.WebControls.Button btnProjectSearch;
-        protected global::System.Web.UI.WebControls.Button btnProjectSearchReset;
+        /// <summary>
+        /// updDashboardActions control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.UpdatePanel updDashboardActions;
 
         protected global::System.Web.UI.WebControls.HiddenField hfActionProjectId;
         protected global::System.Web.UI.WebControls.Button btnShowSpendRequests;

@@ -70,16 +70,10 @@ namespace DFM_BPM
         {
             LoadKPIs();
             LoadRegisteredProjects();
-            LoadPendingTree();
-            LoadMyPet();
-            LoadMyBudgetLines();
             LoadLastSync();
         }
 
-        /// <summary>Simple "one row per registered Project" grid shown before Pending Approvals & Requests —
-        /// shows every JIRA or Non-JIRA project registered via the Project Registration module, regardless of
-        /// whether a Spend Request has ever been submitted/approved for it. Respects the Portfolio filter so
-        /// dashboard/reporting can slice by Portfolio Hierarchy ownership.</summary>
+        /// <summary>One row per registered Project, with matching Spend Requests expanded client-side below it.</summary>
         private void LoadRegisteredProjects()
         {
             try
@@ -88,26 +82,112 @@ namespace DFM_BPM
                 int rid;
                 if (int.TryParse(ddlPortfolioFilter.SelectedValue, out rid) && rid > 0) resourceId = rid;
 
-                string search = txtProjectSearch.Text.Trim();
-                DataTable dt = ProjectDAL.GetProjects(string.IsNullOrEmpty(search) ? null : search, resourceId);
-                gvRegisteredProjects.DataSource = dt;
-                gvRegisteredProjects.DataBind();
-                litRegisteredProjectsCount.Text = dt.Rows.Count.ToString();
+                string jiraFilter = ddlProject.SelectedValue == "ALL" ? null : ddlProject.SelectedValue;
+                string typeFilter = ddlType.SelectedValue == "ALL" ? null : ddlType.SelectedValue;
+                string statFilter = ddlStatus.SelectedValue == "ALL" ? null : ddlStatus.SelectedValue;
+                string viewFilter = ddlView.SelectedValue;
+                string viewUser = AuthHelper.CurrentUserShort;
+                DateTime? fromDate = null, toDate = null;
+                DateTime dt;
+                if (DateTime.TryParse(txtFromDate.Text, out dt)) fromDate = dt;
+                if (DateTime.TryParse(txtToDate.Text, out dt)) toDate = dt;
+
+                DataTable projects = ProjectDAL.GetProjects(null, resourceId);
+                DataTable allForms = WorkflowDAL.GetPetFormsDashboard(
+                    jiraFilter, typeFilter, statFilter, fromDate, toDate, viewFilter, viewUser);
+
+                var projectRows = new System.Collections.Generic.List<DataRow>();
+                foreach (DataRow project in projects.Rows)
+                {
+                    string projectId = Val(project, "ProjectID");
+                    if (!string.IsNullOrEmpty(jiraFilter) && !string.Equals(projectId, jiraFilter, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    projectRows.Add(project);
+                }
+
+                var requestsByProject = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<DataRow>>(StringComparer.OrdinalIgnoreCase);
+                foreach (DataRow request in allForms.Rows)
+                {
+                    string projectId = Val(request, "ProjectID");
+                    if (string.IsNullOrEmpty(projectId)) projectId = "(No Project)";
+                    if (!requestsByProject.ContainsKey(projectId))
+                        requestsByProject[projectId] = new System.Collections.Generic.List<DataRow>();
+                    requestsByProject[projectId].Add(request);
+                }
+
+                int totalProjects = projectRows.Count;
+                int totalRequests = allForms.Rows.Count;
+                int pages = Math.Max(1, (int)Math.Ceiling(totalProjects / (double)PageSize));
+                if (CurrentPage > pages) CurrentPage = pages;
+                if (CurrentPage < 1) CurrentPage = 1;
+
+                litRegisteredProjectsCount.Text = totalProjects.ToString();
+                litPageInfo.Text = string.Format(
+                    "<span style='font-size:.85em;color:#64748b;padding:0 8px;'>Page {0} of {1} ({2} project(s), {3} request(s))</span>",
+                    CurrentPage, pages, totalProjects, totalRequests);
+                btnPrevPage.Enabled = CurrentPage > 1;
+                btnNextPage.Enabled = CurrentPage < pages;
+
+                int skip = (CurrentPage - 1) * PageSize;
+                var sb = new StringBuilder();
+                for (int i = skip; i < Math.Min(skip + PageSize, projectRows.Count); i++)
+                {
+                    DataRow project = projectRows[i];
+                    string projectId = Val(project, "ProjectID");
+                    string safeId = "pr" + Math.Abs(projectId.GetHashCode() & 0x7FFFFFFF).ToString();
+                    System.Collections.Generic.List<DataRow> requests;
+                    if (!requestsByProject.TryGetValue(projectId, out requests))
+                        requests = new System.Collections.Generic.List<DataRow>();
+
+                    string toggle = requests.Count > 0
+                        ? "<span class='project-toggle' data-project-tog='" + safeId + "' onclick=\"return dfmProjectTog('" + safeId + "');\">&#9658;</span>"
+                        : "<span style='display:inline-block;width:18px;'></span>";
+                    string size = Val(project, "ProjectSize");
+                    string sizeHtml = string.IsNullOrEmpty(size)
+                        ? "<span style='color:#94a3b8;'>--</span>"
+                        : "<span class='ps-size-badge size-" + Html(size).ToLowerInvariant() + "'>" + Html(size) + "</span>";
+                    string statusHtml = GetBool(project, "IsActive")
+                        ? "<span class='badge-success'>Active</span>"
+                        : "<span class='badge-danger'>Inactive</span>";
+
+                    sb.AppendFormat(
+                        "<tr class='project-parent-row'>" +
+                        "<td>{0}<strong>{1}</strong><br /><small style='color:#64748b;'>{2}</small></td>" +
+                        "<td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td><td>{8}</td><td>{9}</td><td>{10}</td>" +
+                        "<td><div class='gv-acts'>" +
+                        "<a href='Forms/ProjectRegistration.aspx?pid={11}' class='btn btn-xs btn-primary'><i class='bi bi-arrow-right-circle'></i> Open</a>" +
+                        "<button type='button' class='proj-action-btn btn-sr' onclick=\"dfmShowSR('{12}');\"><i class='bi bi-file-earmark-text'></i></button>" +
+                        "<button type='button' class='proj-action-btn btn-bgt' onclick=\"dfmShowBgt('{12}');\"><i class='bi bi-cash-coin'></i></button>" +
+                        "<button type='button' class='proj-action-btn btn-inv' onclick=\"dfmShowInv('{12}');\"><i class='bi bi-receipt'></i></button>" +
+                        "</div></td></tr>",
+                        toggle,
+                        Html(Val(project, "ProjectName")),
+                        Html(projectId),
+                        GetBool(project, "IsNonJiraProject") ? "Non-JIRA" : "JIRA",
+                        Html(Val(project, "AccountableExecLead")),
+                        Html(Val(project, "SmeLead")),
+                        sizeHtml,
+                        Html(Val(project, "ProjectManager")),
+                        Html(Val(project, "CreatedBy")),
+                        statusHtml,
+                        FormatDate(project, "CreatedDate"),
+                        Server.UrlEncode(projectId),
+                        System.Web.HttpUtility.JavaScriptStringEncode(projectId));
+
+                    if (requests.Count > 0)
+                        AppendRequestChildRows(sb, safeId, requests);
+                }
+
+                if (sb.Length == 0)
+                    sb.Append("<tr><td colspan='10' style='text-align:center;padding:18px;color:#94a3b8;'>No registered projects found for the selected filters.</td></tr>");
+
+                litRegisteredProjectRows.Text = sb.ToString();
             }
-            catch { }
-        }
-
-        protected void btnProjectSearch_Click(object sender, EventArgs e)
-        {
-            gvRegisteredProjects.PageIndex = 0;
-            LoadRegisteredProjects();
-        }
-
-        protected void btnProjectSearchReset_Click(object sender, EventArgs e)
-        {
-            txtProjectSearch.Text = "";
-            gvRegisteredProjects.PageIndex = 0;
-            LoadRegisteredProjects();
+            catch (Exception ex)
+            {
+                litRegisteredProjectRows.Text = "<tr><td colspan='10' style='padding:14px;color:#dc2626;'>Error loading projects: " +
+                    System.Web.HttpUtility.HtmlEncode(ex.Message) + "</td></tr>";
+            }
         }
 
         private void LoadLastSync()
@@ -135,180 +215,14 @@ namespace DFM_BPM
                     litRejected.Text    = Fmt(kpi, "TotalRejected");
                     litCapexBudget.Text = FmtAmt(kpi, "TotalCapexBudget");
                     litOpexBudget.Text  = FmtAmt(kpi, "TotalOpexBudget");
+                    litCapexOpexSummary.Text = RenderCapexOpexSummary(
+                        GetDecimal(kpi, "TotalCapexBudget"), GetDecimal(kpi, "TotalOpexBudget"));
                 }
             }
-            catch { /* data not yet available */ }
+            catch { litCapexOpexSummary.Text = "<div class='project-child-empty'>CAPEX/OPEX data is not available.</div>"; }
         }
 
-        private void LoadPendingTree()
-        {
-            try
-            {
-                string jiraFilter = ddlProject.SelectedValue == "ALL" ? null : ddlProject.SelectedValue;
-                string typeFilter = ddlType.SelectedValue == "ALL" ? null : ddlType.SelectedValue;
-                string statFilter = ddlStatus.SelectedValue == "ALL" ? null : ddlStatus.SelectedValue;
-                string viewFilter = ddlView.SelectedValue;
-                string viewUser = AuthHelper.CurrentUserShort;
-                DateTime? fromDate = null, toDate = null;
-                DateTime dt;
-                if (DateTime.TryParse(txtFromDate.Text, out dt)) fromDate = dt;
-                if (DateTime.TryParse(txtToDate.Text, out dt)) toDate = dt;
-
-                DataTable allForms = WorkflowDAL.GetPetFormsDashboard(
-                    jiraFilter, typeFilter, statFilter, fromDate, toDate, viewFilter, viewUser);
-
-                // ── Group by ProjectID ──────────────────────────────────────────
-                var groupOrder = new System.Collections.Generic.List<string>();
-                var groups = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<DataRow>>();
-                foreach (DataRow r in allForms.Rows)
-                {
-                    string proj = r["ProjectID"] == DBNull.Value ? "(No Project)" : r["ProjectID"].ToString();
-                    if (!groups.ContainsKey(proj)) { groups[proj] = new System.Collections.Generic.List<DataRow>(); groupOrder.Add(proj); }
-                    groups[proj].Add(r);
-                }
-
-                int totalGroups = groupOrder.Count;
-                int pages = Math.Max(1, (int)Math.Ceiling(totalGroups / (double)PageSize));
-                if (CurrentPage > pages) CurrentPage = pages;
-                litPendingCount.Text = allForms.Rows.Count.ToString();
-                litPageInfo.Text = string.Format(
-                    "<span style='font-size:.85em;color:#64748b;padding:0 8px;'>Page {0} of {1} ({2} project(s), {3} PET(s))</span>",
-                    CurrentPage, pages, totalGroups, allForms.Rows.Count);
-                btnPrevPage.Enabled = CurrentPage > 1;
-                btnNextPage.Enabled = CurrentPage < pages;
-
-                int skip = (CurrentPage - 1) * PageSize;
-                var sb = new StringBuilder();
-
-                for (int gi = skip; gi < Math.Min(skip + PageSize, groupOrder.Count); gi++)
-                {
-                    string proj = groupOrder[gi];
-                    var petRows = groups[proj];
-                    // Safe CSS class (digits only to avoid selector issues)
-                    string safeId = "pg" + Math.Abs(proj.GetHashCode() & 0x7FFFFFFF).ToString();
-                    // Project display name (use ProjectName from first row if available)
-                    string projName = "";
-                    decimal projTotal = 0m;
-                    if (petRows.Count > 0 && petRows[0].Table.Columns.Contains("ProjectName"))
-                        projName = petRows[0]["ProjectName"] == DBNull.Value ? "" : petRows[0]["ProjectName"].ToString();
-
-                    foreach (DataRow pr in petRows)
-                        if (pr.Table.Columns.Contains("TotalRequestedAED") && pr["TotalRequestedAED"] != DBNull.Value)
-                            projTotal += Convert.ToDecimal(pr["TotalRequestedAED"]);
-
-                    string projDisplay = System.Web.HttpUtility.HtmlEncode(proj);
-                    if (!string.IsNullOrEmpty(projName)) projDisplay += " &mdash; " + System.Web.HttpUtility.HtmlEncode(projName);
-
-                    string projEsc = System.Web.HttpUtility.JavaScriptStringEncode(proj);
-
-                    // Parent row
-                    sb.AppendFormat(
-                        "<tr style='background:#e8f0fe;'>" +
-                        "<td colspan='10' style='border-bottom:1px solid #c7d2fe;'>" +
-                        "<span class='tree-toggle' onclick='dfmTog(\"{0}\")' data-tog='{0}' style='cursor:pointer;color:#2563eb;font-size:1.1em;margin-right:6px;'>&#9658;</span>" +
-                        "<i class='bi bi-folder2-open' style='color:#2563eb;margin-right:5px;'></i>{1}" +
-                        "<span style='color:#64748b;font-weight:400;font-size:.82em;margin-left:10px;'>{2} PET(s) &mdash; Total AED: <strong style=\"color:#1a3c5e;\">{3}</strong></span>" +
-                        "<span style='margin-left:14px;'>" +
-                        "<button type='button' class='proj-action-btn btn-sr' onclick=\"dfmShowSR('{4}');\"><i class='bi bi-file-earmark-text'></i> Spend Request</button>" +
-                        "<button type='button' class='proj-action-btn btn-bgt' onclick=\"dfmShowBgt('{4}');\"><i class='bi bi-cash-coin'></i> Budget</button>" +
-                        "<button type='button' class='proj-action-btn btn-inv' onclick=\"dfmShowInv('{4}');\"><i class='bi bi-receipt'></i> Invoice</button>" +
-                        "</span>" +
-                        "</td></tr>",
-                        safeId, projDisplay, petRows.Count, projTotal.ToString("N0"), projEsc);
-
-                    // Child rows for each PET (ordered by PetFormID ASC = V1, V2, ...)
-                    petRows.Sort(delegate (DataRow a, DataRow b) {
-                        int ia = Convert.ToInt32(a["PetFormID"]);
-                        int ib = Convert.ToInt32(b["PetFormID"]);
-                        return ia.CompareTo(ib);
-                    });
-
-                    for (int vi = 0; vi < petRows.Count; vi++)
-                    {
-                        DataRow r = petRows[vi];
-                        string status = r["Status"].ToString();
-                        string badgeCss = status == "Draft" ? "st-draft"
-                                        : status == "PendingReview" ? "st-review"
-                                        : status == "PendingApproval" ? "st-pending"
-                                        : status == "Approved" ? "st-approved"
-                                        : status == "Rejected" ? "st-rejected"
-                                        : "st-sent";
-                        string petId = r["PetFormID"].ToString();
-                        string refNo = r["PetRefNo"] == DBNull.Value ? "#" + petId : r["PetRefNo"].ToString();
-                        string type = r["CapexOpexType"] == DBNull.Value ? "" : r["CapexOpexType"].ToString();
-                        string src = r["BudgetSourceID"] == DBNull.Value ? "" : r["BudgetSourceID"].ToString();
-                        string approver = r["ApproverUsername"] == DBNull.Value ? "" : r["ApproverUsername"].ToString();
-                        string by = r["CreatedBy"] == DBNull.Value ? "" : r["CreatedBy"].ToString();
-                        decimal reqAmt = r.Table.Columns.Contains("TotalRequestedAED") && r["TotalRequestedAED"] != DBNull.Value
-                                          ? Convert.ToDecimal(r["TotalRequestedAED"]) : 0m;
-                        string submitted = r["SubmittedDate"] == DBNull.Value ? ""
-                                         : Convert.ToDateTime(r["SubmittedDate"]).ToString("dd-MMM-yy");
-                        string typeColor = type == "CAPEX" ? "#2563eb" : (type == "OPEX" ? "#059669" : "#64748b");
-                        // Delete is only offered for Draft / Pending Review / Pending Approval — never once Approved (or Rejected/SentBack).
-                        string delBtn = WorkflowDAL.IsPetDeletable(status)
-                            ? "<button type='button' class='btn btn-xs btn-danger' onclick=\"dfmPetDel('" + petId + "','" + System.Web.HttpUtility.JavaScriptStringEncode(refNo) + "');\"><i class='bi bi-trash'></i></button>"
-                            : "";
-
-                        sb.AppendFormat(
-                            "<tr class='tree-row tree-hidden {0}'>" +
-                            "<td style='padding-left:5px;'>" +
-                            "<a href='Forms/PetWorkflow.aspx?id={1}' style='font-weight:700;color:#1a3c5e;'>v{2} &ndash; {3}</a></td><td>" +
-                            "<span class='pet-status {4}' style='display:block;margin-top:2px;text-align:center;'>{5}</td></span>" +
-                            "<td style='color:#374151;'>{6}</td>" +
-                            "<td><span style='font-weight:700;color:{7};'>{8}</td></span>" +
-                            "<td style='color:#475569;'>{9}</td>" +
-                            "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{10}</td>" +
-                            "<td>{11}</td>" +
-                            "<td>{12}</td>" +
-                            "<td style='color:#64748b;'>{13}</td>" +
-                            "<td><div class='gv-acts'>" +
-                            "<a href='Forms/PetWorkflow.aspx?id={1}' class='btn btn-xs btn-primary'><i class='bi bi-arrow-right-circle'></i></a>" +
-                            "{14}</div></td>" +
-                            "</tr>",
-                            safeId,
-                            petId,
-                            vi + 1,
-                            System.Web.HttpUtility.HtmlEncode(refNo),
-                            badgeCss,
-                            System.Web.HttpUtility.HtmlEncode(status),
-                            System.Web.HttpUtility.HtmlEncode(proj),
-                            typeColor,
-                            System.Web.HttpUtility.HtmlEncode(type),
-                            System.Web.HttpUtility.HtmlEncode(src),
-                            reqAmt > 0 ? reqAmt.ToString("N0") : "",
-                            System.Web.HttpUtility.HtmlEncode(approver),
-                            System.Web.HttpUtility.HtmlEncode(by),
-                            submitted,
-                            delBtn);
-                    }
-                }
-
-                if (sb.Length == 0)
-                    sb.Append("<tr><td colspan='9' style='text-align:center;padding:18px;color:#94a3b8;'>No records found for the selected view/filters.</td></tr>");
-
-                litPendingTree.Text = sb.ToString();
-            }
-            catch (Exception ex)
-            {
-                litPendingTree.Text = "<tr><td colspan='9' style='padding:14px;color:#dc2626;'>Error loading data: " +
-                    System.Web.HttpUtility.HtmlEncode(ex.Message) + "</td></tr>";
-            }
-        }
-
-        private void LoadMyPet()
-        {
-            try
-            {
-                DataTable dt = WorkflowDAL.GetPetForms(AuthHelper.CurrentUserShort);
-                gvMyPet.DataSource = dt;
-                gvMyPet.DataBind();
-            }
-            catch { }
-        }
-
-        /// <summary>Renders the gvMyPet row's Delete button, but only for Draft / Pending Review / Pending
-        /// Approval requests — hidden entirely once Approved (or Rejected/SentBack/Deleted), per the Delete
-        /// Button Visibility business rule. Shared status rule lives in WorkflowDAL.IsPetDeletable.</summary>
+        /// <summary>Renders the Delete button only for Draft / Pending Review / Pending Approval requests.</summary>
         protected string DeleteButtonHtml(object petFormId, object petRefNo, object status)
         {
             string statusStr = status == null || status == DBNull.Value ? "" : status.ToString();
@@ -319,23 +233,91 @@ namespace DFM_BPM
                    System.Web.HttpUtility.JavaScriptStringEncode(refNo) + "');\"><i class='bi bi-trash'></i> Delete</button>";
         }
 
-        /// <summary>Budget Line Items the current user has added across all of their (Approved) PET forms.</summary>
-        private void LoadMyBudgetLines()
+        private void AppendRequestChildRows(StringBuilder sb, string safeId, System.Collections.Generic.List<DataRow> requests)
         {
-            try
+            requests.Sort(delegate (DataRow a, DataRow b) {
+                int ia = Convert.ToInt32(a["PetFormID"]);
+                int ib = Convert.ToInt32(b["PetFormID"]);
+                return ia.CompareTo(ib);
+            });
+
+            sb.Append("<tr class='project-child-row tree-hidden " + safeId + "'><td colspan='10'>");
+            sb.Append("<div class='project-child-box'><div class='project-child-title'>Spend Requests under this Project</div>");
+            sb.Append("<table class='dfm-table' style='width:100%;font-size:.86em;'><thead><tr>");
+            sb.Append("<th>Request</th><th>Status</th><th>Type</th><th>Budget Source</th><th class='text-right'>Requested (AED)</th><th>Approver</th><th>Requestor</th><th>Submitted</th><th>Action</th>");
+            sb.Append("</tr></thead><tbody>");
+
+            for (int i = 0; i < requests.Count; i++)
             {
-                DataTable dt = WorkflowDAL.GetBudgetLinesByUser(AuthHelper.CurrentUserShort);
-                gvMyBudgetLines.DataSource = dt;
-                gvMyBudgetLines.DataBind();
+                DataRow r = requests[i];
+                string status = Val(r, "Status");
+                string badgeCss = status == "Draft" ? "st-draft"
+                                : status == "PendingReview" ? "st-review"
+                                : status == "PendingApproval" ? "st-pending"
+                                : status == "Approved" ? "st-approved"
+                                : status == "Rejected" ? "st-rejected"
+                                : "st-sent";
+                string petId = Val(r, "PetFormID");
+                string refNo = string.IsNullOrEmpty(Val(r, "PetRefNo")) ? "#" + petId : Val(r, "PetRefNo");
+                string type = Val(r, "CapexOpexType");
+                string typeColor = type == "CAPEX" ? "#2563eb" : (type == "OPEX" ? "#059669" : "#64748b");
+                decimal requested = GetDecimal(r, "TotalRequestedAED");
+
+                sb.AppendFormat(
+                    "<tr>" +
+                    "<td><a href='Forms/PetWorkflow.aspx?id={0}' style='font-weight:700;color:#1a3c5e;'>v{1} &ndash; {2}</a></td>" +
+                    "<td><span class='pet-status {3}'>{4}</span></td>" +
+                    "<td><span style='font-weight:700;color:{5};'>{6}</span></td>" +
+                    "<td>{7}</td>" +
+                    "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{8}</td>" +
+                    "<td>{9}</td><td>{10}</td><td>{11}</td>" +
+                    "<td><div class='gv-acts'><a href='Forms/PetWorkflow.aspx?id={0}' class='btn btn-xs btn-primary'><i class='bi bi-arrow-right-circle'></i> Open</a>{12}</div></td>" +
+                    "</tr>",
+                    petId,
+                    i + 1,
+                    Html(refNo),
+                    badgeCss,
+                    Html(status),
+                    typeColor,
+                    Html(type),
+                    Html(Val(r, "BudgetSourceID")),
+                    requested > 0 ? requested.ToString("N0") : "",
+                    Html(Val(r, "ApproverUsername")),
+                    Html(Val(r, "CreatedBy")),
+                    FormatDate(r, "SubmittedDate"),
+                    DeleteButtonHtml(petId, refNo, status));
             }
-            catch { }
+
+            sb.Append("</tbody></table></div></td></tr>");
+        }
+
+        private static string RenderCapexOpexSummary(decimal capex, decimal opex)
+        {
+            decimal total = capex + opex;
+            decimal capexPct = total > 0 ? Math.Round((capex / total) * 100m, 1) : 0m;
+            decimal opexPct = total > 0 ? Math.Round((opex / total) * 100m, 1) : 0m;
+            return "<div class='budget-summary'>" +
+                   RenderBudgetSummaryCard("CAPEX", capex, capexPct, "budget-capex") +
+                   RenderBudgetSummaryCard("OPEX", opex, opexPct, "budget-opex") +
+                   "<div class='budget-summary-card'><div class='budget-summary-title'>Total Budget</div><div class='budget-summary-value'>" +
+                   FormatCurrency(total) + "</div><div style='color:#64748b;font-size:.86em;'>CAPEX " + capexPct.ToString("N1") +
+                   "% / OPEX " + opexPct.ToString("N1") + "%</div></div></div>";
+        }
+
+        private static string RenderBudgetSummaryCard(string label, decimal value, decimal pct, string barCss)
+        {
+            return "<div class='budget-summary-card'><div class='budget-summary-title'>" + label +
+                   "</div><div class='budget-summary-value'>" + FormatCurrency(value) +
+                   "</div><div class='budget-bar'><span class='" + barCss + "' style='width:" + pct.ToString("0.##") +
+                   "%;'></span></div><div style='margin-top:6px;color:#64748b;font-size:.84em;'>" + pct.ToString("N1") +
+                   "% of total</div></div>";
         }
 
         // ===== Events =====
         protected void Filter_Changed(object sender, EventArgs e)
         {
             CurrentPage = 1;
-            LoadPendingTree();
+            LoadRegisteredProjects();
             LoadKPIs();
         }
 
@@ -349,23 +331,6 @@ namespace DFM_BPM
             txtFromDate.Text = txtToDate.Text = "";
             CurrentPage = 1;
             LoadAll();
-        }
-
-        protected void btnExport_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                string jiraFilter = ddlProject.SelectedValue == "ALL" ? null : ddlProject.SelectedValue;
-                string typeFilter = ddlType.SelectedValue  == "ALL" ? null : ddlType.SelectedValue;
-                string statFilter = ddlStatus.SelectedValue == "ALL" ? null : ddlStatus.SelectedValue;
-                DateTime? fromDate = null, toDate = null;
-                DateTime dt;
-                if (DateTime.TryParse(txtFromDate.Text, out dt)) fromDate = dt;
-                if (DateTime.TryParse(txtToDate.Text, out dt))   toDate   = dt;
-                DataTable data = WorkflowDAL.GetPetFormsDashboard(jiraFilter, typeFilter, statFilter, fromDate, toDate);
-                ExcelHelper.ExportDataTable(data, "PET_Dashboard", Response);
-            }
-            catch { }
         }
 
         protected void btnConfirmDeletePet_Click(object sender, EventArgs e)
@@ -385,25 +350,14 @@ namespace DFM_BPM
             LoadAll();
         }
 
-        protected void btnExportMyBudgetLines_Click(object sender, EventArgs e)
-        {
-            ExcelHelper.ExportCsv(WorkflowDAL.GetBudgetLinesByUser(AuthHelper.CurrentUserShort), "My_Budget_Lines", Response);
-        }
-
         protected void btnPrevPage_Click(object sender, EventArgs e)
         {
-            if (CurrentPage > 1) { CurrentPage--; LoadPendingTree(); }
+            if (CurrentPage > 1) { CurrentPage--; LoadRegisteredProjects(); }
         }
 
         protected void btnNextPage_Click(object sender, EventArgs e)
         {
             CurrentPage++;
-            LoadPendingTree();
-        }
-
-        protected void gvRegisteredProjects_PageIndexChanging(object sender, System.Web.UI.WebControls.GridViewPageEventArgs e)
-        {
-            gvRegisteredProjects.PageIndex = e.NewPageIndex;
             LoadRegisteredProjects();
         }
 
@@ -501,6 +455,42 @@ namespace DFM_BPM
             if (v >= 1000000m) return "AED " + (v / 1000000m).ToString("N2") + "M";
             if (v >= 1000m)    return "AED " + (v / 1000m).ToString("N1") + "K";
             return "AED " + v.ToString("N0");
+        }
+
+        private static string FormatCurrency(decimal value)
+        {
+            if (value >= 1000000m) return "AED " + (value / 1000000m).ToString("N2") + "M";
+            if (value >= 1000m) return "AED " + (value / 1000m).ToString("N1") + "K";
+            return "AED " + value.ToString("N0");
+        }
+
+        private static string Val(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return "";
+            return row[col].ToString();
+        }
+
+        private static string Html(string value)
+        {
+            return System.Web.HttpUtility.HtmlEncode(value ?? "");
+        }
+
+        private static bool GetBool(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return false;
+            return Convert.ToBoolean(row[col]);
+        }
+
+        private static decimal GetDecimal(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return 0m;
+            return Convert.ToDecimal(row[col]);
+        }
+
+        private static string FormatDate(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return "";
+            return Convert.ToDateTime(row[col]).ToString("dd-MMM-yyyy");
         }
     }
 }

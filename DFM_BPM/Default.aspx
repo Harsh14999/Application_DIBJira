@@ -37,6 +37,13 @@
 .tree-item { padding:7px 12px; border-bottom:1px solid #f1f5f9; display:flex; gap:8px; align-items:center; font-size:.86em; }
 .tree-item:last-child { border-bottom:none; }
 .tree-item:hover { background:#f8fafc; }
+.project-parent-row { background:#fff; }
+.project-parent-row:hover { background:#f8fafc; }
+.project-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:6px; }
+.project-child-row td { background:#f8fafc; border-top:0; }
+.project-child-box { margin:4px 0 8px 24px; border:1px solid #dbeafe; border-radius:8px; overflow:hidden; background:#fff; }
+.project-child-title { padding:8px 10px; background:#eff6ff; color:#1d4ed8; font-weight:700; font-size:.84em; }
+.project-child-empty { padding:10px 12px; color:#94a3b8; font-size:.86em; }
 .pet-status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.75em; font-weight:700; white-space:nowrap; }
 .st-draft    { background:#f1f5f9; color:#475569; }
 .st-pending  { background:#fef3c7; color:#92400e; }
@@ -65,6 +72,15 @@
 .card-panel.panel-budget-invoice { border-color:#F4B183; background:#fff; }
 .card-panel.panel-budget-invoice .card-panel-hdr { background:#FFF8F2; color:#C55A11; border-bottom:2px solid #F4B183; }
 .card-panel.panel-budget-invoice .dfm-table th { background:#FFF0E5 !important; color:#7c3006; border-bottom:1px solid #F4B183; }
+/* ── CAPEX/OPEX summary ── */
+.budget-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; padding:12px 14px; }
+.budget-summary-card { border:1px solid #e2e8f0; border-radius:8px; padding:12px; background:#fff; }
+.budget-summary-title { font-weight:800; color:#1e293b; margin-bottom:6px; }
+.budget-summary-value { font-size:1.25em; font-weight:900; color:#1a3c5e; margin-bottom:8px; }
+.budget-bar { height:10px; border-radius:999px; background:#e2e8f0; overflow:hidden; }
+.budget-bar span { display:block; height:100%; border-radius:999px; }
+.budget-capex { background:#2563eb; }
+.budget-opex { background:#059669; }
 /* ── action buttons ── */
 .proj-action-btn { font-size:.75em; padding:2px 6px; margin-right:2px; border-radius:4px; font-weight:600; cursor:pointer; border:none; }
 .proj-action-btn.btn-sr { background:#E8F0FE; color:#2F5597; border:1px solid #B4C7E7; }
@@ -83,6 +99,7 @@
 </asp:Content>
 
 <asp:Content ID="MainCt" ContentPlaceHolderID="MainContent" runat="server">
+<asp:ScriptManager ID="smDashboard" runat="server" />
 <h1 class="page-title">
     <i class="bi bi-house"></i> Dashboard
     <span style="font-size:.55em;color:#94a3b8;font-weight:400;margin-left:12px;">
@@ -159,8 +176,6 @@
                     OnClick="Filter_Changed" />
                 <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn btn-default"
                     OnClick="btnResetFilters_Click" CausesValidation="false" />
-                <asp:Button ID="btnExport" runat="server" Text="Export Excel" CssClass="btn btn-success"
-                    OnClick="btnExport_Click" />
             </div>
         </div>
     </div>
@@ -198,6 +213,17 @@
     </div>
 </div>
 
+<!-- ── CAPEX/OPEX DATA SUMMARY ── -->
+<div class="dash-section" id="sec-capex-opex">
+    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-capex-opex')">
+        <span><i class="bi bi-pie-chart"></i> CAPEX vs OPEX Summary</span>
+        <i class="bi bi-chevron-down dash-sec-toggle"></i>
+    </div>
+    <div class="dash-sec-body">
+        <asp:Literal ID="litCapexOpexSummary" runat="server" />
+    </div>
+</div>
+
 <!-- ── REGISTERED PROJECTS ── -->
 <div class="dash-section" id="sec-projects">
     <div class="dash-sec-hdr" onclick="dfmSecTog('sec-projects')">
@@ -209,88 +235,26 @@
         <i class="bi bi-chevron-down dash-sec-toggle"></i>
     </div>
     <div class="dash-sec-body">
-        <div style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
-            <div class="form-group" style="flex:2;min-width:200px;margin:0;">
-                <label style="font-size:.78em;">Search (Name, ID, Lead, Manager, Requestor)</label>
-                <asp:TextBox ID="txtProjectSearch" runat="server" CssClass="form-control" placeholder="Type to filter..." />
-            </div>
-            <asp:Button ID="btnProjectSearch" runat="server" CssClass="btn btn-primary btn-sm" Text="Filter"
-                OnClick="btnProjectSearch_Click" CausesValidation="false" />
-            <asp:Button ID="btnProjectSearchReset" runat="server" CssClass="btn btn-default btn-sm" Text="Reset"
-                OnClick="btnProjectSearchReset_Click" CausesValidation="false" />
-        </div>
-        <div class="card-panel" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
-            <asp:GridView ID="gvRegisteredProjects" runat="server" AutoGenerateColumns="false"
-                CssClass="dfm-table" GridLines="None" EmptyDataText="No projects registered yet."
-                AllowPaging="true" PageSize="5" OnPageIndexChanging="gvRegisteredProjects_PageIndexChanging">
-                <PagerStyle CssClass="dfm-pager" HorizontalAlign="Center" />
-                <PagerSettings Mode="NumericFirstLast" PageButtonCount="5" FirstPageText="&amp;laquo;" LastPageText="&amp;raquo;" />
-                <Columns>
-                    <asp:TemplateField HeaderText="Project Name">
-                        <ItemTemplate>
-                            <strong><%# Eval("ProjectName") %></strong>
-                            <br /><small style="color:#64748b;"><%# Eval("ProjectID") %></small>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                    <asp:TemplateField HeaderText="Project Type">
-                        <ItemTemplate><%# Convert.ToBoolean(Eval("IsNonJiraProject")) ? "Non-JIRA" : "JIRA" %></ItemTemplate>
-                    </asp:TemplateField>
-                    <asp:BoundField DataField="AccountableExecLead" HeaderText="Accountable Exec Lead" />
-                    <asp:BoundField DataField="SmeLead"             HeaderText="SME Lead" />
-                    <asp:TemplateField HeaderText="Project Size">
-                        <ItemTemplate>
-                            <%# string.IsNullOrEmpty(Convert.ToString(Eval("ProjectSize"))) ? "<span style='color:#94a3b8;'>--</span>" : "<span class='ps-size-badge size-" + Eval("ProjectSize").ToString().ToLower() + "'>" + Eval("ProjectSize") + "</span>" %>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                    <asp:BoundField DataField="ProjectManager"   HeaderText="Project Manager" />
-                    <asp:BoundField DataField="CreatedBy"        HeaderText="Requestor" />
-                    <asp:TemplateField HeaderText="Status">
-                        <ItemTemplate><%# Convert.ToBoolean(Eval("IsActive")) ? "<span class='badge-success'>Active</span>" : "<span class='badge-danger'>Inactive</span>" %></ItemTemplate>
-                    </asp:TemplateField>
-                    <asp:BoundField DataField="CreatedDate"      HeaderText="Created Date" DataFormatString="{0:dd-MMM-yyyy}" />
-                    <asp:TemplateField HeaderText="Action">
-                        <ItemTemplate>
-                            <a href='<%# ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=<%# Server.UrlEncode(Eval("ProjectID").ToString()) %>' class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                </Columns>
-            </asp:GridView>
-        </div>
-    </div>
-</div>
-
-<!-- ── PENDING ACTIONS ── -->
-<div class="dash-section" id="sec-pending">
-    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-pending')">
-        <span><i class="bi bi-clock-history"></i> Pending Approvals &amp; Requests
-            <span style="background:#fbbf24;color:#78350f;border-radius:10px;padding:1px 8px;font-size:.8em;margin-left:6px;">
-                <asp:Literal ID="litPendingCount" runat="server" Text="0" />
-            </span>
-        </span>
-        <i class="bi bi-chevron-down dash-sec-toggle"></i>
-    </div>
-    <div class="dash-sec-body">
         <div class="card-panel" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
             <table class="dfm-table" style="width:100%;">
                 <thead>
                     <tr>
-                        <th style="width:150px;">Code</th>
-                        <th style="width:100px;">Status</th>
-                        <th>Project</th>
-                        <th>Type</th>
-                        <th>Budget Source</th>
-                        <th class="text-right">Requested (AED)</th>
-                        <th>Approver</th>
+                        <th>Project Name</th>
+                        <th>Project Type</th>
+                        <th>Accountable Exec Lead</th>
+                        <th>SME Lead</th>
+                        <th>Project Size</th>
+                        <th>Project Manager</th>
                         <th>Requestor</th>
-                        <th>Submitted</th>
+                        <th>Status</th>
+                        <th>Created Date</th>
                         <th>Action</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <asp:Literal ID="litPendingTree" runat="server" />
+                    <asp:Literal ID="litRegisteredProjectRows" runat="server" />
                 </tbody>
             </table>
-            <!-- Pagination -->
             <div class="page-nav">
                 <asp:LinkButton ID="btnPrevPage" runat="server" CssClass="btn btn-default btn-sm"
                     Text="&#8249; Prev" OnClick="btnPrevPage_Click" CausesValidation="false" />
@@ -298,74 +262,6 @@
                 <asp:LinkButton ID="btnNextPage" runat="server" CssClass="btn btn-default btn-sm"
                     Text="Next &#8250;" OnClick="btnNextPage_Click" CausesValidation="false" />
             </div>
-        </div>
-    </div>
-</div>
-
-<!-- ── MY REQUEST(S) ── -->
-<div class="dash-section" id="sec-myforms">
-    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-myforms')">
-        <span><i class="bi bi-person-lines-fill"></i> My Request(s)</span>
-        <i class="bi bi-chevron-down dash-sec-toggle"></i>
-    </div>
-    <div class="dash-sec-body">
-        <div class="card-panel" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;">
-            <asp:GridView ID="gvMyPet" runat="server" AutoGenerateColumns="false"
-                CssClass="dfm-table" GridLines="None" EmptyDataText="No requests found.">
-                <Columns>
-                    <asp:BoundField DataField="PetRefNo"      HeaderText="Ref No" />
-                    <asp:BoundField DataField="ProjectID"     HeaderText="Project" />
-                    <asp:BoundField DataField="Title"         HeaderText="Title" />
-                    <asp:BoundField DataField="CapexOpexType" HeaderText="Type" />
-                    <asp:BoundField DataField="Status"        HeaderText="Status" />
-                    <asp:BoundField DataField="CreatedDate"   HeaderText="Created" DataFormatString="{0:dd-MMM-yyyy}" />
-                    <asp:TemplateField HeaderText="Action">
-                        <ItemTemplate>
-                            <div class="gv-acts">
-                                <a href='<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?id=<%# Eval("PetFormID") %>'
-                                   class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
-                                <%# DeleteButtonHtml(Eval("PetFormID"), Eval("PetRefNo"), Eval("Status")) %>
-                            </div>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                </Columns>
-            </asp:GridView>
-        </div>
-    </div>
-</div>
-
-<!-- ── MY BUDGET LINE ITEMS ── -->
-<div class="dash-section" id="sec-budget">
-    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-budget')">
-        <span><i class="bi bi-cash-coin"></i> My Budget Line Items</span>
-        <i class="bi bi-chevron-down dash-sec-toggle"></i>
-    </div>
-    <div class="dash-sec-body">
-        <div class="card-panel" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;">
-            <div style="padding:10px 14px;display:flex;justify-content:flex-end;">
-                <asp:LinkButton ID="btnExportMyBudgetLines" runat="server" CssClass="btn btn-xs btn-default"
-                    OnClick="btnExportMyBudgetLines_Click" CausesValidation="false"><i class="bi bi-download"></i> Export CSV</asp:LinkButton>
-            </div>
-            <asp:GridView ID="gvMyBudgetLines" runat="server" AutoGenerateColumns="false"
-                CssClass="dfm-table" GridLines="None" EmptyDataText="No budget line items added yet.">
-                <Columns>
-                    <asp:BoundField DataField="PetRefNo"       HeaderText="Request Ref" />
-                    <asp:BoundField DataField="VendorName"     HeaderText="Vendor" />
-                    <asp:BoundField DataField="Justification"  HeaderText="Justification" />
-                    <asp:BoundField DataField="Cost"            HeaderText="Cost" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                    <asp:BoundField DataField="Currency"        HeaderText="CCY" />
-                    <asp:BoundField DataField="GLNumber"        HeaderText="GL" />
-                    <asp:BoundField DataField="CamStatus"       HeaderText="CAM Status" />
-                    <asp:BoundField DataField="LpoStatus"       HeaderText="LPO Status" />
-                    <asp:BoundField DataField="InvoiceTotal"    HeaderText="Invoiced" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
-                    <asp:TemplateField HeaderText="Action">
-                        <ItemTemplate>
-                            <a href='<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?id=<%# Eval("PetFormID") %>&tab=budget'
-                               class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
-                        </ItemTemplate>
-                    </asp:TemplateField>
-                </Columns>
-            </asp:GridView>
         </div>
     </div>
 </div>
@@ -380,6 +276,8 @@
 </div>
 
 <!-- ── Project Action Hidden Fields + Buttons ── -->
+<asp:UpdatePanel ID="updDashboardActions" runat="server" UpdateMode="Conditional">
+<ContentTemplate>
 <asp:HiddenField ID="hfActionProjectId" runat="server" Value="" />
 <asp:Button ID="btnShowSpendRequests" runat="server" Text="_sr" style="display:none;"
     OnClick="btnShowSpendRequests_Click" CausesValidation="false" />
@@ -585,6 +483,19 @@ function dfmTog(cls) {
     for (var j = 0; j < btns.length; j++)
         btns[j].innerHTML = hidden ? '&#9660;' : '&#9658;';
 }
+function dfmProjectTog(cls) {
+    var rows = document.querySelectorAll('.project-child-row.' + cls);
+    if (!rows.length) return false;
+    var hidden = rows[0].classList.contains('tree-hidden');
+    for (var i = 0; i < rows.length; i++) {
+        if (hidden) rows[i].classList.remove('tree-hidden');
+        else rows[i].classList.add('tree-hidden');
+    }
+    var btns = document.querySelectorAll('[data-project-tog="' + cls + '"]');
+    for (var j = 0; j < btns.length; j++)
+        btns[j].innerHTML = hidden ? '&#9660;' : '&#9658;';
+    return false;
+}
 function dfmPetDel(id, refNo) {
     document.getElementById('<%= hfDeletePetId.ClientID %>').value = id;
     document.getElementById('petDelRefNo').textContent = refNo;
@@ -607,4 +518,6 @@ function dfmShowInv(projId) {
     document.getElementById('<%= btnShowInvoices.ClientID %>').click();
 }
 </script>
+</ContentTemplate>
+</asp:UpdatePanel>
 </asp:Content>
