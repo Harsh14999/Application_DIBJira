@@ -57,7 +57,7 @@
             <a href="<%= ResolveUrl("~/Default.aspx") %>" class="nav-item <%= IsActive("Default") %>">
                 <i class="bi bi-house"></i><span>Home</span></a>
             <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>" class="nav-item <%= IsActive("ProjectRegistration") %>">
-                <i class="bi bi-folder-plus"></i><span>Project Registration</span></a>
+                <i class="bi bi-folder-plus"></i><span>Project Portfolio</span></a>
             <a href="<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>" class="nav-item <%= IsActive("PetWorkflow") %>">
                 <i class="bi bi-file-earmark-text"></i><span>Spend Request</span></a>
             <a href="<%= ResolveUrl("~/Forms/MyApprovals.aspx") %>" class="nav-item <%= IsActive("MyApprovals") %>">

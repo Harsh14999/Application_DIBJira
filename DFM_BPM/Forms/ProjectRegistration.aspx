@@ -1,4 +1,4 @@
-<%@ Page Title="Project Registration" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true"
+<%@ Page Title="Project Portfolio" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true"
     CodeBehind="ProjectRegistration.aspx.cs" Inherits="DFM_BPM.Forms.ProjectRegistration" %>
 
 <asp:Content ID="HeadCt" ContentPlaceHolderID="HeadContent" runat="server">
@@ -20,11 +20,14 @@
 .dfm-table tr:nth-child(odd)  td { background:#fafbff; }
 .dfm-table tr:nth-child(even) td { background:#ffffff; }
 .dfm-table tr:hover td { background:#eff6ff; }
+.project-modal .modal-dialog { width:95%; max-width:1100px; }
+.project-modal .modal-body { max-height:76vh; overflow-y:auto; padding:16px; }
+.portfolio-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
 </style>
 </asp:Content>
 
 <asp:Content ID="MainCt" ContentPlaceHolderID="MainContent" runat="server">
-<h1 class="page-title"><i class="bi bi-folder-plus"></i> Project Registration
+<h1 class="page-title"><i class="bi bi-folder-plus"></i> Project Portfolio
     <% if (IsExistingProject) { %>
         &nbsp;<span style="font-size:.6em;color:#2563eb;"><%= Server.HtmlEncode(CurrentProjectId) %></span>
     <% } %>
@@ -40,9 +43,56 @@
 <asp:Label ID="lblMsg" runat="server" CssClass="alert alert-info" Visible="false" />
 <asp:HiddenField ID="hfProjectId" runat="server" Value="" />
 
+<div class="portfolio-toolbar">
+    <div style="font-size:.9em;color:#64748b;">Registered Projects (<asp:Literal ID="litProjectPortfolioCount" runat="server" Text="0" />)</div>
+    <asp:Button ID="btnNewProject" runat="server" CssClass="btn btn-primary" Text="New Project" OnClick="btnNewProject_Click" CausesValidation="false" />
+</div>
+
 <div class="card-panel panel-spend-request">
-    <div class="card-panel-hdr"><i class="bi bi-pencil-square"></i> Register a Project</div>
-    <div class="card-panel-body">
+    <div class="card-panel-hdr"><i class="bi bi-table"></i> Project Portfolio</div>
+    <div class="card-panel-body" style="padding:0;overflow-x:auto;">
+        <asp:GridView ID="gvProjectPortfolio" runat="server" AutoGenerateColumns="false"
+            CssClass="dfm-table" GridLines="None" DataKeyNames="ProjectID" OnRowCommand="gvProjectPortfolio_RowCommand"
+            EmptyDataText="No projects registered yet.">
+            <Columns>
+                <asp:TemplateField HeaderText="Project Name">
+                    <ItemTemplate>
+                        <strong><%# Eval("ProjectName") %></strong><br />
+                        <small style="color:#64748b;"><%# Eval("ProjectID") %></small>
+                    </ItemTemplate>
+                </asp:TemplateField>
+                <asp:TemplateField HeaderText="Project Type">
+                    <ItemTemplate><%# Convert.ToBoolean(Eval("IsNonJiraProject")) ? "Non-JIRA" : "JIRA" %></ItemTemplate>
+                </asp:TemplateField>
+                <asp:BoundField DataField="AccountableExecLead" HeaderText="Accountable Exec Lead" />
+                <asp:BoundField DataField="SmeLead" HeaderText="SME Lead" />
+                <asp:BoundField DataField="ProjectManager" HeaderText="Project Manager" />
+                <asp:BoundField DataField="CreatedBy" HeaderText="Requestor" />
+                <asp:TemplateField HeaderText="Status">
+                    <ItemTemplate><%# Convert.ToBoolean(Eval("IsActive")) ? "<span class='badge-success'>Active</span>" : "<span class='badge-danger'>Inactive</span>" %></ItemTemplate>
+                </asp:TemplateField>
+                <asp:BoundField DataField="CreatedDate" HeaderText="Created Date" DataFormatString="{0:dd-MMM-yyyy}" />
+                <asp:TemplateField HeaderText="Action">
+                    <ItemTemplate>
+                        <asp:LinkButton runat="server" CssClass="btn btn-xs btn-primary" CommandName="EditProject"
+                            CommandArgument='<%# Eval("ProjectID") %>' CausesValidation="false">
+                            <i class="bi bi-pencil"></i> Edit
+                        </asp:LinkButton>
+                    </ItemTemplate>
+                </asp:TemplateField>
+            </Columns>
+        </asp:GridView>
+    </div>
+</div>
+
+<div class="modal fade project-modal" id="projectRegistrationModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a3c5e;color:#fff;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
+                <h4 class="modal-title"><i class="bi bi-pencil-square"></i> <%= IsExistingProject ? "Edit Project" : "New Project" %></h4>
+            </div>
+            <div class="modal-body">
         <asp:Panel ID="pnlCreatedInfo" runat="server" Visible="false" style="margin-bottom:10px;font-size:.85em;color:#64748b;">
             <asp:Literal ID="litCreatedInfo" runat="server" />
         </asp:Panel>
@@ -57,7 +107,7 @@
                             <asp:ListItem Text="JIRA Project" Value="JIRA" Selected="True" />
                             <asp:ListItem Text="Non-JIRA Project" Value="NONJIRA" />
                         </asp:RadioButtonList>
-                        <small style="color:#64748b;display:block;">For Non-JIRA projects, Project Name/ID and the Portfolio assignment are entered manually.</small>
+                        <small style="color:#64748b;display:block;">For Non-JIRA projects, Project Name/ID are entered manually.</small>
                     </td>
                 </tr>
                 <tr>
@@ -84,35 +134,6 @@
                     </td>
                 </tr>
                 <tr>
-                    <td class="lbl"><i class="bi bi-diagram-3"></i>Assigned To (Hierarchy)</td>
-                    <td class="val" colspan="3">
-                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
-                            <div>
-                                <label style="font-size:.72em;color:#64748b;display:block;margin-bottom:2px;">Accountable Exec</label>
-                                <asp:DropDownList ID="ddlHierExec" runat="server" CssClass="form-control select2-enable"
-                                    AutoPostBack="true" OnSelectedIndexChanged="ddlHierExec_Changed" />
-                            </div>
-                            <div>
-                                <label style="font-size:.72em;color:#64748b;display:block;margin-bottom:2px;">Accountable Exec Lead</label>
-                                <asp:DropDownList ID="ddlHierExecLead" runat="server" CssClass="form-control select2-enable"
-                                    AutoPostBack="true" OnSelectedIndexChanged="ddlHierExecLead_Changed" />
-                            </div>
-                            <div>
-                                <label style="font-size:.72em;color:#64748b;display:block;margin-bottom:2px;">SME Lead</label>
-                                <asp:DropDownList ID="ddlHierSmeLead" runat="server" CssClass="form-control select2-enable"
-                                    AutoPostBack="true" OnSelectedIndexChanged="ddlHierSmeLead_Changed" />
-                            </div>
-                            <div>
-                                <label style="font-size:.72em;color:#64748b;display:block;margin-bottom:2px;">Engineer <small>(optional, multiple allowed)</small></label>
-                                <asp:ListBox ID="ddlHierEngineer" runat="server" CssClass="form-control select2-enable" SelectionMode="Multiple" />
-                            </div>
-                        </div>
-                        <small style="color:#64748b;">Auto-filled from JIRA when available (still overridable). Manage entries via
-                            <a href="<%= ResolveUrl("~/Admin/PortfolioHierarchy.aspx") %>" target="_blank">Portfolio Hierarchy</a> or
-                            <a href="<%= ResolveUrl("~/Admin/EngineerMaster.aspx") %>" target="_blank">Engineer Master</a>.</small>
-                    </td>
-                </tr>
-                <tr>
                     <td class="lbl"><i class="bi bi-toggle-on"></i>Status</td>
                     <td class="val">
                         <asp:DropDownList ID="ddlActive" runat="server" CssClass="form-control">
@@ -124,13 +145,17 @@
                 </tr>
             </tbody>
         </table>
-
-        <asp:Button ID="btnSave" runat="server" CssClass="btn btn-primary" Text="Save Project Registration" OnClick="btnSave_Click" />
+            </div>
+            <div class="modal-footer">
+        <asp:Button ID="btnSave" runat="server" CssClass="btn btn-primary" Text="Save Project" OnClick="btnSave_Click" />
         <% if (IsExistingProject) { %>
         <a href='<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?project=<%= Server.UrlEncode(CurrentProjectId) %>' class="btn btn-success">
             <i class="bi bi-plus-circle"></i> Create Spend Request for this Project
         </a>
         <% } %>
+                <button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Close</button>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -374,7 +399,7 @@ function prSzPreSave() {
                 <div style="font-size:2.8em;color:#dc2626;margin-bottom:10px;"><i class="bi bi-trash3-fill"></i></div>
                 <p style="font-size:.94em;font-weight:600;color:#1e293b;margin-bottom:4px;">Are you sure you want to delete</p>
                 <p style="font-size:1.1em;font-weight:800;color:#dc2626;"><%= Server.HtmlEncode(CurrentProjectId) %></p>
-                <p style="font-size:.82em;color:#64748b;margin-top:8px;">This permanently removes the project registration, its Sizing record and Engineer assignments. This cannot be undone.</p>
+                <p style="font-size:.82em;color:#64748b;margin-top:8px;">This permanently removes the project record and its Sizing record. This cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Cancel</button>

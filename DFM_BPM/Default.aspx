@@ -267,8 +267,8 @@
 </div>
 
 <div style="margin-top:10px;">
-    <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>" class="btn btn-default">
-        <i class="bi bi-folder-plus"></i> Register New Project
+    <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx?new=1") %>" class="btn btn-default">
+        <i class="bi bi-folder-plus"></i> New Project
     </a>
     <a href="<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>" class="btn btn-primary">
         <i class="bi bi-plus-circle"></i> New Spend Request

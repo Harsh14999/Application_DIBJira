@@ -16,6 +16,9 @@ namespace DFM_BPM.Forms {
         protected global::System.Web.UI.WebControls.HiddenField hfProjectId;
         protected global::System.Web.UI.WebControls.Button btnDeleteProject;
         protected global::System.Web.UI.WebControls.Button btnConfirmDeleteProject;
+        protected global::System.Web.UI.WebControls.Literal litProjectPortfolioCount;
+        protected global::System.Web.UI.WebControls.Button btnNewProject;
+        protected global::System.Web.UI.WebControls.GridView gvProjectPortfolio;
         protected global::System.Web.UI.WebControls.Panel pnlCreatedInfo;
         protected global::System.Web.UI.WebControls.Literal litCreatedInfo;
         protected global::System.Web.UI.WebControls.RadioButtonList rblProjectMode;
@@ -25,10 +28,6 @@ namespace DFM_BPM.Forms {
         protected global::System.Web.UI.WebControls.TextBox txtNonJiraProjectId;
         protected global::System.Web.UI.WebControls.TextBox txtProjectName;
         protected global::System.Web.UI.WebControls.TextBox txtProjectManager;
-        protected global::System.Web.UI.WebControls.DropDownList ddlHierExec;
-        protected global::System.Web.UI.WebControls.DropDownList ddlHierExecLead;
-        protected global::System.Web.UI.WebControls.DropDownList ddlHierSmeLead;
-        protected global::System.Web.UI.WebControls.ListBox ddlHierEngineer;
         protected global::System.Web.UI.WebControls.DropDownList ddlActive;
         protected global::System.Web.UI.WebControls.Button btnSave;
         protected global::System.Web.UI.WebControls.Panel pnlProjectDetails;

@@ -37,12 +37,22 @@ namespace DFM_BPM.Forms
             if (!IsPostBack)
             {
                 LoadDropdowns();
+                BindProjectPortfolio();
 
                 string pid = Request.QueryString["pid"];
                 if (!string.IsNullOrEmpty(pid))
                 {
                     CurrentProjectId = pid;
                     LoadProject(pid);
+                    ShowProjectModal();
+                }
+                else if (Request.QueryString["new"] == "1")
+                {
+                    ClearProjectForm();
+                    ApplyProjectModePanels();
+                    pnlProjectDetails.Visible = false;
+                    pnlNoProject.Visible = true;
+                    ShowProjectModal();
                 }
                 else
                 {
@@ -61,7 +71,14 @@ namespace DFM_BPM.Forms
         private void LoadDropdowns()
         {
             BindJiraDropdown();
-            BindHierarchyDropdowns();
+        }
+
+        private void BindProjectPortfolio()
+        {
+            DataTable dt = ProjectDAL.GetProjects();
+            gvProjectPortfolio.DataSource = dt;
+            gvProjectPortfolio.DataBind();
+            litProjectPortfolioCount.Text = dt.Rows.Count.ToString();
         }
 
         private void BindJiraDropdown()
@@ -87,154 +104,6 @@ namespace DFM_BPM.Forms
                 ddlProject.Items.Add(new ListItem(jiraId + " - " + Convert.ToString(j["Summary"]), jiraId));
         }
 
-        // ===================================================================
-        // Cascading hierarchy picker: Accountable Exec -> Accountable Exec Lead -> SME Lead -> Engineer.
-        // Auto-bound from JIRA when available (see LoadFromJira); always manually overridable/editable.
-        // ===================================================================
-        private void BindHierarchyDropdowns()
-        {
-            DataTable dt = PortfolioDAL.GetRootResources();
-            ddlHierExec.Items.Clear();
-            ddlHierExec.DataSource     = dt;
-            ddlHierExec.DataTextField  = "ResourceName";
-            ddlHierExec.DataValueField = "ResourceID";
-            ddlHierExec.DataBind();
-            ddlHierExec.Items.Insert(0, new ListItem("-- Select --", ""));
-
-            ClearChildDropdown(ddlHierExecLead);
-            ClearChildDropdown(ddlHierSmeLead);
-            ClearChildDropdown(ddlHierEngineer);
-        }
-
-        /// <summary>Works for both single-select DropDownLists (Exec/ExecLead/SmeLead) and the multi-select
-        /// Engineer ListBox -- both derive from ListControl.</summary>
-        private static void ClearChildDropdown(ListControl ddl)
-        {
-            ddl.Items.Clear();
-            ddl.Items.Add(new ListItem("-- None --", ""));
-        }
-
-        private static void BindChildDropdown(ListControl ddl, int parentId)
-        {
-            DataTable dt = PortfolioDAL.GetChildResources(parentId);
-            ddl.Items.Clear();
-            ddl.DataSource     = dt;
-            ddl.DataTextField  = "ResourceName";
-            ddl.DataValueField = "ResourceID";
-            ddl.DataBind();
-            ddl.Items.Insert(0, new ListItem("-- None --", ""));
-        }
-
-        protected void ddlHierExec_Changed(object sender, EventArgs e)
-        {
-            int execId;
-            if (int.TryParse(ddlHierExec.SelectedValue, out execId) && execId > 0)
-                BindChildDropdown(ddlHierExecLead, execId);
-            else
-                ClearChildDropdown(ddlHierExecLead);
-            ClearChildDropdown(ddlHierSmeLead);
-            ClearChildDropdown(ddlHierEngineer);
-        }
-
-        protected void ddlHierExecLead_Changed(object sender, EventArgs e)
-        {
-            int leadId;
-            if (int.TryParse(ddlHierExecLead.SelectedValue, out leadId) && leadId > 0)
-                BindChildDropdown(ddlHierSmeLead, leadId);
-            else
-                ClearChildDropdown(ddlHierSmeLead);
-            ClearChildDropdown(ddlHierEngineer);
-        }
-
-        protected void ddlHierSmeLead_Changed(object sender, EventArgs e)
-        {
-            int smeId;
-            if (int.TryParse(ddlHierSmeLead.SelectedValue, out smeId) && smeId > 0)
-                BindChildDropdown(ddlHierEngineer, smeId);
-            else
-                ClearChildDropdown(ddlHierEngineer);
-        }
-
-        /// <summary>Resolves the Project's single hierarchy placement (Project.ResourceID) as the DEEPEST
-        /// non-empty selection across the 3 single-select cascading dropdowns (SME Lead &gt; Exec Lead &gt;
-        /// Exec). Engineer is deliberately EXCLUDED here -- it's a multi-select "who's staffed on this
-        /// project" list saved separately via ProjectDAL.SaveProjectEngineers, not a single ResourceID.</summary>
-        private int? ResolveSelectedResourceId()
-        {
-            int rid;
-            if (int.TryParse(ddlHierSmeLead.SelectedValue, out rid) && rid > 0) return rid;
-            if (int.TryParse(ddlHierExecLead.SelectedValue, out rid) && rid > 0) return rid;
-            if (int.TryParse(ddlHierExec.SelectedValue, out rid) && rid > 0) return rid;
-            return null;
-        }
-
-        /// <summary>Selected ResourceIDs from the multi-select Engineer ListBox, to be persisted via
-        /// ProjectDAL.SaveProjectEngineers.</summary>
-        private System.Collections.Generic.List<int> GetSelectedEngineerIds()
-        {
-            var ids = new System.Collections.Generic.List<int>();
-            foreach (ListItem li in ddlHierEngineer.Items)
-            {
-                int v;
-                if (li.Selected && int.TryParse(li.Value, out v) && v > 0) ids.Add(v);
-            }
-            return ids;
-        }
-
-        /// <summary>Re-checks the Engineer ListBox items that are currently saved against this project
-        /// (dbo.ProjectEngineer), so re-opening a registered project shows exactly who was previously picked.</summary>
-        private void SelectEngineers(string projectId)
-        {
-            var ids = ProjectDAL.GetProjectEngineerIds(projectId);
-            foreach (ListItem li in ddlHierEngineer.Items)
-            {
-                int v;
-                li.Selected = int.TryParse(li.Value, out v) && ids.Contains(v);
-            }
-        }
-
-        /// <summary>Reverse-maps an already-assigned ResourceID onto the 4 cascading dropdowns by walking up
-        /// its parent chain, so re-opening a registered project shows exactly what was previously selected.</summary>
-        private void SelectHierarchyDropdowns(int resourceId)
-        {
-            var chain = new System.Collections.Generic.List<DataRow>();
-            DataRow cur = PortfolioDAL.GetResourceById(resourceId);
-            int guard = 0;
-            while (cur != null && guard++ < 10)
-            {
-                chain.Insert(0, cur);
-                if (cur["ParentResourceID"] == DBNull.Value) break;
-                cur = PortfolioDAL.GetResourceById(Convert.ToInt32(cur["ParentResourceID"]));
-            }
-
-            if (chain.Count > 0)
-            {
-                int execId = Convert.ToInt32(chain[0]["ResourceID"]);
-                SetDdl(ddlHierExec, execId.ToString());
-                BindChildDropdown(ddlHierExecLead, execId);
-            }
-            if (chain.Count > 1)
-            {
-                int leadId = Convert.ToInt32(chain[1]["ResourceID"]);
-                SetDdl(ddlHierExecLead, leadId.ToString());
-                BindChildDropdown(ddlHierSmeLead, leadId);
-            }
-            if (chain.Count > 2)
-            {
-                int smeId = Convert.ToInt32(chain[2]["ResourceID"]);
-                SetDdl(ddlHierSmeLead, smeId.ToString());
-                BindChildDropdown(ddlHierEngineer, smeId);
-            }
-            // Engineer is a separate multi-select (dbo.ProjectEngineer) -- see SelectEngineers, called
-            // from LoadProject once this hierarchy chain (and hence the Engineer option list) is bound.
-        }
-
-        private static void SetDdl(DropDownList ddl, string value)
-        {
-            var item = ddl.Items.FindByValue(value ?? "");
-            if (item != null) ddl.SelectedValue = value;
-        }
-
         private void ApplyProjectModePanels()
         {
             bool nonJira = rblProjectMode.SelectedValue == "NONJIRA";
@@ -258,15 +127,16 @@ namespace DFM_BPM.Forms
                 txtNonJiraProjectId.Text = "";
                 LoadFromJira(ddlProject.SelectedValue);
             }
+            ShowProjectModal();
         }
 
         protected void ddlProject_Changed(object sender, EventArgs e)
         {
             LoadFromJira(ddlProject.SelectedValue);
+            ShowProjectModal();
         }
 
-        /// <summary>Populates Project Name / Project Manager / suggested Portfolio assignment from the
-        /// selected JIRA row's AccountableExec / AccountableExecLead / SmeLead chain.</summary>
+        /// <summary>Populates Project Name / Project Manager from the selected JIRA row.</summary>
         private void LoadFromJira(string jiraId)
         {
             if (string.IsNullOrEmpty(jiraId))
@@ -282,43 +152,6 @@ namespace DFM_BPM.Forms
 
             txtProjectName.Text    = Convert.ToString(j["Summary"]);
             txtProjectManager.Text = Convert.ToString(j["AssignedProjectManager"]);
-
-            // Auto-map the JIRA AccountableExec / AccountableExecLead / SmeLead chain onto the 3 cascading
-            // hierarchy dropdowns as the DEFAULT assignment — still manually overridable. Only auto-fills
-            // when nothing has been picked yet, so it never clobbers a manual choice.
-            if (string.IsNullOrEmpty(ddlHierExec.SelectedValue))
-            {
-                string execName = Convert.ToString(j["AccountableExec"]);
-                string leadName = Convert.ToString(j["AccountableExecLead"]);
-                string smeName  = Convert.ToString(j["SmeLead"]);
-
-                PortfolioDAL.EnsureHierarchyPath(execName, leadName, smeName, AuthHelper.CurrentUserShort);
-                BindHierarchyDropdowns(); // refresh root list in case a new Exec node was just created
-
-                DataRow execRow = !string.IsNullOrWhiteSpace(execName) ? PortfolioDAL.GetResourceByName(execName.Trim()) : null;
-                if (execRow != null)
-                {
-                    int execId = Convert.ToInt32(execRow["ResourceID"]);
-                    SetDdl(ddlHierExec, execId.ToString());
-                    BindChildDropdown(ddlHierExecLead, execId);
-
-                    DataRow leadRow = !string.IsNullOrWhiteSpace(leadName) ? PortfolioDAL.GetResourceByName(leadName.Trim()) : null;
-                    if (leadRow != null)
-                    {
-                        int leadId = Convert.ToInt32(leadRow["ResourceID"]);
-                        SetDdl(ddlHierExecLead, leadId.ToString());
-                        BindChildDropdown(ddlHierSmeLead, leadId);
-
-                        DataRow smeRow = !string.IsNullOrWhiteSpace(smeName) ? PortfolioDAL.GetResourceByName(smeName.Trim()) : null;
-                        if (smeRow != null)
-                        {
-                            int smeId = Convert.ToInt32(smeRow["ResourceID"]);
-                            SetDdl(ddlHierSmeLead, smeId.ToString());
-                            BindChildDropdown(ddlHierEngineer, smeId);
-                        }
-                    }
-                }
-            }
 
             LoadProjectDetails(jiraId);
         }
@@ -366,22 +199,20 @@ namespace DFM_BPM.Forms
             {
                 projectId   = txtNonJiraProjectId.Text.Trim();
                 projectName = txtProjectName.Text.Trim();
-                if (string.IsNullOrEmpty(projectId))   { ShowMsg("Project ID is required."); return; }
-                if (string.IsNullOrEmpty(projectName)) { ShowMsg("Project Name is required."); return; }
+                if (string.IsNullOrEmpty(projectId))   { ShowMsg("Project ID is required."); ShowProjectModal(); return; }
+                if (string.IsNullOrEmpty(projectName)) { ShowMsg("Project Name is required."); ShowProjectModal(); return; }
             }
             else
             {
                 projectId = ddlProject.SelectedValue;
-                if (string.IsNullOrEmpty(projectId)) { ShowMsg("Select a JIRA project."); return; }
+                if (string.IsNullOrEmpty(projectId)) { ShowMsg("Select a JIRA project."); ShowProjectModal(); return; }
                 projectName = txtProjectName.Text.Trim();
             }
 
             if (!IsExistingProject && ProjectDAL.ProjectExists(projectId))
             {
-                ShowMsg("A project with this ID is already registered."); return;
+                ShowMsg("A project with this ID is already registered."); ShowProjectModal(); return;
             }
-
-            int? resourceId = ResolveSelectedResourceId();
 
             // Resolve JIRA hierarchy fields to store denormalized for grid display
             string accExecLead = null, smeLead = null;
@@ -396,12 +227,26 @@ namespace DFM_BPM.Forms
             }
 
             ProjectDAL.SaveProject(projectId, projectName, isNonJira,
-                txtProjectManager.Text.Trim(), resourceId, ddlActive.SelectedValue == "Yes", AuthHelper.CurrentUserShort,
+                txtProjectManager.Text.Trim(), null, ddlActive.SelectedValue == "Yes", AuthHelper.CurrentUserShort,
                 accExecLead, smeLead);
 
-            ProjectDAL.SaveProjectEngineers(projectId, GetSelectedEngineerIds(), AuthHelper.CurrentUserShort);
-
             Response.Redirect("~/Forms/ProjectRegistration.aspx?pid=" + Server.UrlEncode(projectId));
+        }
+
+        protected void btnNewProject_Click(object sender, EventArgs e)
+        {
+            ClearProjectForm();
+            BindProjectPortfolio();
+            ShowProjectModal();
+        }
+
+        protected void gvProjectPortfolio_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName != "EditProject") return;
+            string projectId = Convert.ToString(e.CommandArgument);
+            CurrentProjectId = projectId;
+            LoadProject(projectId);
+            ShowProjectModal();
         }
 
         protected void btnDeleteProject_Click(object sender, EventArgs e)
@@ -445,12 +290,6 @@ namespace DFM_BPM.Forms
             txtProjectManager.Text = p["ProjectManager"] == DBNull.Value ? "" : p["ProjectManager"].ToString();
             ddlActive.SelectedValue = (p["IsActive"] != DBNull.Value && Convert.ToBoolean(p["IsActive"])) ? "Yes" : "No";
 
-            if (p["ResourceID"] != DBNull.Value)
-            {
-                SelectHierarchyDropdowns(Convert.ToInt32(p["ResourceID"]));
-            }
-            SelectEngineers(projectId);
-
             litCreatedInfo.Text = string.Format("Registered by {0} on {1}",
                 Server.HtmlEncode(Convert.ToString(p["CreatedBy"])),
                 p["CreatedDate"] == DBNull.Value ? "" : Convert.ToDateTime(p["CreatedDate"]).ToString("dd-MMM-yyyy HH:mm"));
@@ -492,7 +331,7 @@ namespace DFM_BPM.Forms
 
         protected void btnSizingSave_Click(object sender, EventArgs e)
         {
-            if (!IsExistingProject) { ShowMsg("Save the project registration first."); return; }
+            if (!IsExistingProject) { ShowMsg("Save the project first."); return; }
 
             decimal q1, q2, q3, q4, q5, q6, q7;
             if (!decimal.TryParse(hfSzQ1.Value, out q1) || !decimal.TryParse(hfSzQ2.Value, out q2) ||
@@ -527,6 +366,33 @@ namespace DFM_BPM.Forms
 
             ShowMsg("Sizing saved. Size: " + sizeResult + " (Score: " + weighted.ToString("F4") + ")");
             LoadProjectSizing(CurrentProjectId);
+        }
+
+        private void ClearProjectForm()
+        {
+            CurrentProjectId = "";
+            rblProjectMode.Enabled = true;
+            rblProjectMode.SelectedValue = "JIRA";
+            ddlProject.Enabled = true;
+            if (ddlProject.Items.Count > 0) ddlProject.SelectedIndex = 0;
+            txtNonJiraProjectId.Text = "";
+            txtNonJiraProjectId.ReadOnly = false;
+            txtProjectName.Text = "";
+            txtProjectManager.Text = "";
+            ddlActive.SelectedValue = "Yes";
+            pnlCreatedInfo.Visible = false;
+            pnlProjectDetails.Visible = false;
+            pnlProjectPets.Visible = false;
+            pnlSizing.Visible = false;
+            pnlNoProject.Visible = true;
+            litNoProjectMsg.Text = "Select a JIRA project (or enter a Non-JIRA Project ID) above to see its details here.";
+            ApplyProjectModePanels();
+        }
+
+        private void ShowProjectModal()
+        {
+            ScriptManager.RegisterStartupScript(this, GetType(), "showProjectRegistrationModal",
+                "$(function(){ $('#projectRegistrationModal').modal('show'); });", true);
         }
 
         private void ShowMsg(string msg) { lblMsg.Text = msg; lblMsg.Visible = true; }
