@@ -34,10 +34,10 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
             text-decoration: none; gap: 10px; font-size: .88em; white-space: nowrap; overflow: hidden;
             transition: background .15s; border-left: 3px solid transparent; }
 .nav-item:hover { background: #f1f5f9; color: #1e293b; text-decoration: none; }
-.nav-item.active { background: #1e293b; color: #fff; border-left-color: #1e293b; }
+.nav-item.active { background: #eff6ff; color: #1d4ed8; border-left-color: #2563eb; }
 .nav-item i { font-size: 16px; flex-shrink: 0; color: #64748b; }
 .nav-item:hover i { color: #1e293b; }
-.nav-item.active i { color: #fff; }
+.nav-item.active i { color: #2563eb; }
 .nav-item span { overflow: hidden; }
 .sidebar.collapsed .nav-item span { display: none; }
 
