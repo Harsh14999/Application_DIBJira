@@ -65,8 +65,9 @@
     <Reference Include="System.Web.Http">
       <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.7\lib\net45\System.Web.Http.dll</HintPath>
     </Reference>
+    <!-- Microsoft.AspNet.WebApi.Client 5.2.7 -->
     <Reference Include="System.Net.Http.Formatting">
-      <HintPath>..\packages\Microsoft.AspNet.WebApi.Core.5.2.7\lib\net45\System.Net.Http.Formatting.dll</HintPath>
+      <HintPath>..\packages\Microsoft.AspNet.WebApi.Client.5.2.7\lib\net45\System.Net.Http.Formatting.dll</HintPath>
     </Reference>
     <!-- Microsoft.AspNet.WebApi.WebHost 5.2.7 -->
     <Reference Include="System.Web.Http.WebHost">
@@ -89,9 +90,11 @@
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
-  <!-- Guarded so command-line MSBuild (outside VS) doesn't fail when VSToolsPath is unset.
-       This targets file only adds web-publish tasks; the project compiles fine without it. -->
-  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="'$(VSToolsPath)' != '' and Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')" />
+  <PropertyGroup>
+    <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">15.0</VisualStudioVersion>
+    <VSToolsPath Condition="'$(VSToolsPath)' == ''">$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)</VSToolsPath>
+  </PropertyGroup>
+  <Import Project="$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets" Condition="Exists('$(VSToolsPath)\WebApplications\Microsoft.WebApplication.targets')" />
   <!-- NuGet package restore target -->
   <Import Project="..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.7\build\net45\Microsoft.AspNet.WebApi.WebHost.targets" Condition="Exists('..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.7\build\net45\Microsoft.AspNet.WebApi.WebHost.targets')" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
@@ -100,6 +103,7 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\Microsoft.AspNet.WebApi.Core.5.2.7\lib\net45\System.Web.Http.dll')" Text="$(ErrorText)" />
     <Error Condition="!Exists('..\packages\Microsoft.AspNet.WebApi.WebHost.5.2.7\lib\net45\System.Web.Http.WebHost.dll')" Text="$(ErrorText)" />
+    <Error Condition="!Exists('..\packages\Microsoft.AspNet.WebApi.Client.5.2.7\lib\net45\System.Net.Http.Formatting.dll')" Text="$(ErrorText)" />
     <Error Condition="!Exists('..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll')" Text="$(ErrorText)" />
   </Target>
   <ProjectExtensions>
