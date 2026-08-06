@@ -11,6 +11,8 @@
 # Build output directories
 **/bin/
 **/obj/
+!packages/Oracle.ManagedDataAccess.19.10.0/bin/
+!packages/Oracle.ManagedDataAccess.19.10.0/bin/**
 
 # NuGet temporary files
 *.nupkg
