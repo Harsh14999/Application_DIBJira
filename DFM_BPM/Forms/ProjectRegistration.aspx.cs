@@ -24,11 +24,18 @@ namespace DFM_BPM.Forms
         {
             get
             {
-                if (!IsExistingProject) return false;
-                if (ProjectDAL.HasPetForms(CurrentProjectId)) return false;
-                if (AuthHelper.IsAdmin) return true;
-                DataRow p = ProjectDAL.GetProjectById(CurrentProjectId);
-                return p != null && string.Equals(Convert.ToString(p["CreatedBy"]), AuthHelper.CurrentUserShort, StringComparison.OrdinalIgnoreCase);
+                try
+                {
+                    if (!IsExistingProject) return false;
+                    if (ProjectDAL.HasPetForms(CurrentProjectId)) return false;
+                    if (AuthHelper.IsAdmin) return true;
+                    DataRow p = ProjectDAL.GetProjectById(CurrentProjectId);
+                    return p != null && string.Equals(Convert.ToString(p["CreatedBy"]), AuthHelper.CurrentUserShort, StringComparison.OrdinalIgnoreCase);
+                }
+                catch
+                {
+                    return false;
+                }
             }
         }
 
@@ -75,33 +82,56 @@ namespace DFM_BPM.Forms
 
         private void BindProjectPortfolio()
         {
-            DataTable dt = ProjectDAL.GetProjects();
-            gvProjectPortfolio.DataSource = dt;
-            gvProjectPortfolio.DataBind();
-            litProjectPortfolioCount.Text = dt.Rows.Count.ToString();
+            try
+            {
+                DataTable dt = ProjectDAL.GetProjects();
+                gvProjectPortfolio.DataSource = dt;
+                gvProjectPortfolio.DataBind();
+                litProjectPortfolioCount.Text = dt.Rows.Count.ToString();
+            }
+            catch (Exception ex)
+            {
+                gvProjectPortfolio.DataSource = null;
+                gvProjectPortfolio.DataBind();
+                litProjectPortfolioCount.Text = "0";
+                ShowMsg("Project portfolio is unavailable because the SQL Server connection failed. " + ex.Message);
+            }
         }
 
         private void BindJiraDropdown()
         {
-            string currentSelection = ddlProject.SelectedValue;
-            DataTable dtP = MastersDAL.GetJiraDropdown();
-            ddlProject.DataSource     = dtP;
-            ddlProject.DataTextField  = "DisplayName";
-            ddlProject.DataValueField = "JiraID";
-            ddlProject.DataBind();
-            ddlProject.Items.Insert(0, new ListItem("-- Select JIRA Project --", ""));
-            if (!string.IsNullOrEmpty(currentSelection) && ddlProject.Items.FindByValue(currentSelection) != null)
-                ddlProject.SelectedValue = currentSelection;
+            try
+            {
+                string currentSelection = ddlProject.SelectedValue;
+                DataTable dtP = MastersDAL.GetJiraDropdown();
+                ddlProject.DataSource     = dtP;
+                ddlProject.DataTextField  = "DisplayName";
+                ddlProject.DataValueField = "JiraID";
+                ddlProject.DataBind();
+                ddlProject.Items.Insert(0, new ListItem("-- Select JIRA Project --", ""));
+                if (!string.IsNullOrEmpty(currentSelection) && ddlProject.Items.FindByValue(currentSelection) != null)
+                    ddlProject.SelectedValue = currentSelection;
+            }
+            catch (Exception ex)
+            {
+                ddlProject.Items.Clear();
+                ddlProject.Items.Insert(0, new ListItem("JIRA projects unavailable", ""));
+                ShowMsg("JIRA project list is unavailable because the SQL Server connection failed. " + ex.Message);
+            }
         }
 
         /// <summary>Ensures an already-registered JIRA project still appears as a dropdown option even if it no
         /// longer satisfies the current Platform-filter selection.</summary>
         private void EnsureJiraOptionPresent(string jiraId)
         {
-            if (string.IsNullOrEmpty(jiraId) || ddlProject.Items.FindByValue(jiraId) != null) return;
-            DataRow j = MastersDAL.GetJiraById(jiraId);
-            if (j != null)
-                ddlProject.Items.Add(new ListItem(jiraId + " - " + Convert.ToString(j["Summary"]), jiraId));
+            try
+            {
+                if (string.IsNullOrEmpty(jiraId) || ddlProject.Items.FindByValue(jiraId) != null) return;
+                DataRow j = MastersDAL.GetJiraById(jiraId);
+                if (j != null)
+                    ddlProject.Items.Add(new ListItem(jiraId + " - " + Convert.ToString(j["Summary"]), jiraId));
+            }
+            catch { }
         }
 
         private void ApplyProjectModePanels()
@@ -115,24 +145,38 @@ namespace DFM_BPM.Forms
 
         protected void rblProjectMode_Changed(object sender, EventArgs e)
         {
-            ApplyProjectModePanels();
-            if (rblProjectMode.SelectedValue == "NONJIRA")
+            try
             {
-                txtProjectName.Text = "";
-                txtProjectManager.Text = "";
-                LoadProjectDetails(null);
+                ApplyProjectModePanels();
+                if (rblProjectMode.SelectedValue == "NONJIRA")
+                {
+                    txtProjectName.Text = "";
+                    txtProjectManager.Text = "";
+                    LoadProjectDetails(null);
+                }
+                else
+                {
+                    txtNonJiraProjectId.Text = "";
+                    LoadFromJira(ddlProject.SelectedValue);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                txtNonJiraProjectId.Text = "";
-                LoadFromJira(ddlProject.SelectedValue);
+                ShowMsg("Project details are unavailable because the SQL Server connection failed. " + ex.Message);
             }
             ShowProjectModal();
         }
 
         protected void ddlProject_Changed(object sender, EventArgs e)
         {
-            LoadFromJira(ddlProject.SelectedValue);
+            try
+            {
+                LoadFromJira(ddlProject.SelectedValue);
+            }
+            catch (Exception ex)
+            {
+                ShowMsg("Project details are unavailable because the SQL Server connection failed. " + ex.Message);
+            }
             ShowProjectModal();
         }
 
@@ -166,7 +210,18 @@ namespace DFM_BPM.Forms
                 return;
             }
 
-            DataRow j = MastersDAL.GetJiraById(jiraId);
+            DataRow j;
+            try
+            {
+                j = MastersDAL.GetJiraById(jiraId);
+            }
+            catch (Exception ex)
+            {
+                pnlProjectDetails.Visible = false;
+                pnlNoProject.Visible = true;
+                litNoProjectMsg.Text = "Project metadata is unavailable because the SQL Server connection failed. " + Server.HtmlEncode(ex.Message);
+                return;
+            }
             if (j == null)
             {
                 pnlProjectDetails.Visible = false;
@@ -192,45 +247,53 @@ namespace DFM_BPM.Forms
 
         protected void btnSave_Click(object sender, EventArgs e)
         {
-            bool isNonJira = rblProjectMode.SelectedValue == "NONJIRA";
-            string projectId, projectName;
+            try
+            {
+                bool isNonJira = rblProjectMode.SelectedValue == "NONJIRA";
+                string projectId, projectName;
 
-            if (isNonJira)
-            {
-                projectId   = txtNonJiraProjectId.Text.Trim();
-                projectName = txtProjectName.Text.Trim();
-                if (string.IsNullOrEmpty(projectId))   { ShowMsg("Project ID is required."); ShowProjectModal(); return; }
-                if (string.IsNullOrEmpty(projectName)) { ShowMsg("Project Name is required."); ShowProjectModal(); return; }
-            }
-            else
-            {
-                projectId = ddlProject.SelectedValue;
-                if (string.IsNullOrEmpty(projectId)) { ShowMsg("Select a JIRA project."); ShowProjectModal(); return; }
-                projectName = txtProjectName.Text.Trim();
-            }
-
-            if (!IsExistingProject && ProjectDAL.ProjectExists(projectId))
-            {
-                ShowMsg("A project with this ID is already registered."); ShowProjectModal(); return;
-            }
-
-            // Resolve JIRA hierarchy fields to store denormalized for grid display
-            string accExecLead = null, smeLead = null;
-            if (!isNonJira)
-            {
-                DataRow jRow = MastersDAL.GetJiraById(projectId);
-                if (jRow != null)
+                if (isNonJira)
                 {
-                    accExecLead = Convert.ToString(jRow["AccountableExecLead"]);
-                    smeLead     = Convert.ToString(jRow["SmeLead"]);
+                    projectId   = txtNonJiraProjectId.Text.Trim();
+                    projectName = txtProjectName.Text.Trim();
+                    if (string.IsNullOrEmpty(projectId))   { ShowMsg("Project ID is required."); ShowProjectModal(); return; }
+                    if (string.IsNullOrEmpty(projectName)) { ShowMsg("Project Name is required."); ShowProjectModal(); return; }
                 }
+                else
+                {
+                    projectId = ddlProject.SelectedValue;
+                    if (string.IsNullOrEmpty(projectId)) { ShowMsg("Select a JIRA project."); ShowProjectModal(); return; }
+                    projectName = txtProjectName.Text.Trim();
+                }
+
+                if (!IsExistingProject && ProjectDAL.ProjectExists(projectId))
+                {
+                    ShowMsg("A project with this ID is already registered."); ShowProjectModal(); return;
+                }
+
+                // Resolve JIRA hierarchy fields to store denormalized for grid display
+                string accExecLead = null, smeLead = null;
+                if (!isNonJira)
+                {
+                    DataRow jRow = MastersDAL.GetJiraById(projectId);
+                    if (jRow != null)
+                    {
+                        accExecLead = Convert.ToString(jRow["AccountableExecLead"]);
+                        smeLead     = Convert.ToString(jRow["SmeLead"]);
+                    }
+                }
+
+                ProjectDAL.SaveProject(projectId, projectName, isNonJira,
+                    txtProjectManager.Text.Trim(), null, ddlActive.SelectedValue == "Yes", AuthHelper.CurrentUserShort,
+                    accExecLead, smeLead);
+
+                Response.Redirect("~/Forms/ProjectRegistration.aspx?pid=" + Server.UrlEncode(projectId));
             }
-
-            ProjectDAL.SaveProject(projectId, projectName, isNonJira,
-                txtProjectManager.Text.Trim(), null, ddlActive.SelectedValue == "Yes", AuthHelper.CurrentUserShort,
-                accExecLead, smeLead);
-
-            Response.Redirect("~/Forms/ProjectRegistration.aspx?pid=" + Server.UrlEncode(projectId));
+            catch (Exception ex)
+            {
+                ShowMsg("Project could not be saved because the SQL Server connection failed. " + ex.Message);
+                ShowProjectModal();
+            }
         }
 
         protected void btnNewProject_Click(object sender, EventArgs e)
@@ -243,72 +306,112 @@ namespace DFM_BPM.Forms
         protected void gvProjectPortfolio_RowCommand(object sender, GridViewCommandEventArgs e)
         {
             if (e.CommandName != "EditProject") return;
-            string projectId = Convert.ToString(e.CommandArgument);
-            CurrentProjectId = projectId;
-            LoadProject(projectId);
+            try
+            {
+                string projectId = Convert.ToString(e.CommandArgument);
+                CurrentProjectId = projectId;
+                LoadProject(projectId);
+            }
+            catch (Exception ex)
+            {
+                CurrentProjectId = "";
+                ClearProjectForm();
+                ShowMsg("Project could not be opened because the SQL Server connection failed. " + ex.Message);
+            }
             ShowProjectModal();
         }
 
         protected void btnDeleteProject_Click(object sender, EventArgs e)
         {
-            if (!CanDeleteProject)
+            try
             {
-                ShowMsg("This project cannot be deleted (an active Spend Request already references it, or you don't have permission).");
-                return;
+                if (!CanDeleteProject)
+                {
+                    ShowMsg("This project cannot be deleted (an active Spend Request already references it, or you don't have permission).");
+                    return;
+                }
+                ProjectDAL.DeleteProject(CurrentProjectId);
+                Response.Redirect("~/Default.aspx");
             }
-            ProjectDAL.DeleteProject(CurrentProjectId);
-            Response.Redirect("~/Default.aspx");
+            catch (Exception ex)
+            {
+                ShowMsg("Project could not be deleted because the SQL Server connection failed. " + ex.Message);
+            }
         }
 
         private void LoadProject(string projectId)
         {
-            DataRow p = ProjectDAL.GetProjectById(projectId);
-            if (p == null) { Response.Redirect("~/Forms/ProjectRegistration.aspx"); return; }
-
-            bool isNonJira = p["IsNonJiraProject"] != DBNull.Value && Convert.ToBoolean(p["IsNonJiraProject"]);
-            rblProjectMode.SelectedValue = isNonJira ? "NONJIRA" : "JIRA";
-            ApplyProjectModePanels();
-
-            // Project identity (Type + JIRA ID / Project ID) is the primary key — lock it once registered.
-            // Only the descriptive fields below (Name refresh, Manager, Portfolio, Active) may be edited.
-            rblProjectMode.Enabled = false;
-
-            if (isNonJira)
+            try
             {
-                txtNonJiraProjectId.Text = projectId;
-                txtNonJiraProjectId.ReadOnly = true; // Project ID is the primary key — not editable after creation
+                DataRow p = ProjectDAL.GetProjectById(projectId);
+                if (p == null)
+                {
+                    CurrentProjectId = "";
+                    ClearProjectForm();
+                    ShowMsg("Project was not found or is no longer registered.");
+                    return;
+                }
+
+                bool isNonJira = p["IsNonJiraProject"] != DBNull.Value && Convert.ToBoolean(p["IsNonJiraProject"]);
+                rblProjectMode.SelectedValue = isNonJira ? "NONJIRA" : "JIRA";
+                ApplyProjectModePanels();
+
+                // Project identity (Type + JIRA ID / Project ID) is the primary key — lock it once registered.
+                // Only the descriptive fields below (Name refresh, Manager, Portfolio, Active) may be edited.
+                rblProjectMode.Enabled = false;
+
+                if (isNonJira)
+                {
+                    txtNonJiraProjectId.Text = projectId;
+                    txtNonJiraProjectId.ReadOnly = true; // Project ID is the primary key — not editable after creation
+                }
+                else
+                {
+                    EnsureJiraOptionPresent(projectId);
+                    var item = ddlProject.Items.FindByValue(projectId);
+                    if (item != null) ddlProject.SelectedValue = projectId;
+                    ddlProject.Enabled = false;
+                }
+
+                txtProjectName.Text    = p["ProjectName"]    == DBNull.Value ? "" : p["ProjectName"].ToString();
+                txtProjectManager.Text = p["ProjectManager"] == DBNull.Value ? "" : p["ProjectManager"].ToString();
+                ddlActive.SelectedValue = (p["IsActive"] != DBNull.Value && Convert.ToBoolean(p["IsActive"])) ? "Yes" : "No";
+
+                litCreatedInfo.Text = string.Format("Registered by {0} on {1}",
+                    Server.HtmlEncode(Convert.ToString(p["CreatedBy"])),
+                    p["CreatedDate"] == DBNull.Value ? "" : Convert.ToDateTime(p["CreatedDate"]).ToString("dd-MMM-yyyy HH:mm"));
+                pnlCreatedInfo.Visible = true;
+
+                LoadProjectDetails(isNonJira ? null : projectId);
+
+                gvProjectPets.DataSource = WorkflowDAL.GetPetFormsDashboard(projectId, null, null, null, null);
+                gvProjectPets.DataBind();
+                pnlProjectPets.Visible = true;
+
+                // Project Sizing (1 per project, editable)
+                LoadProjectSizing(projectId);
             }
-            else
+            catch (Exception ex)
             {
-                EnsureJiraOptionPresent(projectId);
-                var item = ddlProject.Items.FindByValue(projectId);
-                if (item != null) ddlProject.SelectedValue = projectId;
-                ddlProject.Enabled = false;
+                CurrentProjectId = "";
+                ClearProjectForm();
+                ShowMsg("Project could not be loaded because the SQL Server connection failed. " + ex.Message);
             }
-
-            txtProjectName.Text    = p["ProjectName"]    == DBNull.Value ? "" : p["ProjectName"].ToString();
-            txtProjectManager.Text = p["ProjectManager"] == DBNull.Value ? "" : p["ProjectManager"].ToString();
-            ddlActive.SelectedValue = (p["IsActive"] != DBNull.Value && Convert.ToBoolean(p["IsActive"])) ? "Yes" : "No";
-
-            litCreatedInfo.Text = string.Format("Registered by {0} on {1}",
-                Server.HtmlEncode(Convert.ToString(p["CreatedBy"])),
-                p["CreatedDate"] == DBNull.Value ? "" : Convert.ToDateTime(p["CreatedDate"]).ToString("dd-MMM-yyyy HH:mm"));
-            pnlCreatedInfo.Visible = true;
-
-            LoadProjectDetails(isNonJira ? null : projectId);
-
-            gvProjectPets.DataSource = WorkflowDAL.GetPetFormsDashboard(projectId, null, null, null, null);
-            gvProjectPets.DataBind();
-            pnlProjectPets.Visible = true;
-
-            // Project Sizing (1 per project, editable)
-            LoadProjectSizing(projectId);
         }
 
         private void LoadProjectSizing(string projectId)
         {
             pnlSizing.Visible = true;
-            DataRow sz = ProjectDAL.GetProjectSizing(projectId);
+            DataRow sz;
+            try
+            {
+                sz = ProjectDAL.GetProjectSizing(projectId);
+            }
+            catch (Exception ex)
+            {
+                ShowMsg("Project sizing is unavailable because the SQL Server connection failed. " + ex.Message);
+                return;
+            }
             if (sz != null)
             {
                 hfSzQ1.Value = sz["Q1Score"] == DBNull.Value ? "" : Convert.ToDecimal(sz["Q1Score"]).ToString("0");
@@ -331,41 +434,48 @@ namespace DFM_BPM.Forms
 
         protected void btnSizingSave_Click(object sender, EventArgs e)
         {
-            if (!IsExistingProject) { ShowMsg("Save the project first."); return; }
-
-            decimal q1, q2, q3, q4, q5, q6, q7;
-            if (!decimal.TryParse(hfSzQ1.Value, out q1) || !decimal.TryParse(hfSzQ2.Value, out q2) ||
-                !decimal.TryParse(hfSzQ3.Value, out q3) || !decimal.TryParse(hfSzQ4.Value, out q4) ||
-                !decimal.TryParse(hfSzQ5.Value, out q5) || !decimal.TryParse(hfSzQ6.Value, out q6) ||
-                !decimal.TryParse(hfSzQ7.Value, out q7))
+            try
             {
-                ShowMsg("Please complete all 7 criteria."); return;
+                if (!IsExistingProject) { ShowMsg("Save the project first."); return; }
+
+                decimal q1, q2, q3, q4, q5, q6, q7;
+                if (!decimal.TryParse(hfSzQ1.Value, out q1) || !decimal.TryParse(hfSzQ2.Value, out q2) ||
+                    !decimal.TryParse(hfSzQ3.Value, out q3) || !decimal.TryParse(hfSzQ4.Value, out q4) ||
+                    !decimal.TryParse(hfSzQ5.Value, out q5) || !decimal.TryParse(hfSzQ6.Value, out q6) ||
+                    !decimal.TryParse(hfSzQ7.Value, out q7))
+                {
+                    ShowMsg("Please complete all 7 criteria."); return;
+                }
+
+                decimal weighted = q1 * 0.20m + q2 * 0.20m + q3 * 0.15m + q4 * 0.15m
+                                 + q5 * 0.15m + q6 * 0.10m + q7 * 0.05m;
+                string sizeResult;
+                if      (weighted <= 1.5m) sizeResult = "XS";
+                else if (weighted <= 2.3m) sizeResult = "S";
+                else if (weighted <= 3.2m) sizeResult = "M";
+                else if (weighted <= 4.1m) sizeResult = "L";
+                else                       sizeResult = "XL";
+
+                string capacityMap;
+                switch (sizeResult)
+                {
+                    case "XS": capacityMap = "< 100 hrs";        break;
+                    case "S":  capacityMap = "100 - 500 hrs";    break;
+                    case "M":  capacityMap = "500 - 2,000 hrs";  break;
+                    case "L":  capacityMap = "2,000 - 5,000 hrs"; break;
+                    default:   capacityMap = "> 5,000 hrs";       break;
+                }
+
+                ProjectDAL.SaveProjectSizing(CurrentProjectId, q1, q2, q3, q4, q5, q6, q7,
+                    weighted, sizeResult, capacityMap, AuthHelper.CurrentUserShort);
+
+                ShowMsg("Sizing saved. Size: " + sizeResult + " (Score: " + weighted.ToString("F4") + ")");
+                LoadProjectSizing(CurrentProjectId);
             }
-
-            decimal weighted = q1 * 0.20m + q2 * 0.20m + q3 * 0.15m + q4 * 0.15m
-                             + q5 * 0.15m + q6 * 0.10m + q7 * 0.05m;
-            string sizeResult;
-            if      (weighted <= 1.5m) sizeResult = "XS";
-            else if (weighted <= 2.3m) sizeResult = "S";
-            else if (weighted <= 3.2m) sizeResult = "M";
-            else if (weighted <= 4.1m) sizeResult = "L";
-            else                       sizeResult = "XL";
-
-            string capacityMap;
-            switch (sizeResult)
+            catch (Exception ex)
             {
-                case "XS": capacityMap = "< 100 hrs";        break;
-                case "S":  capacityMap = "100 - 500 hrs";    break;
-                case "M":  capacityMap = "500 - 2,000 hrs";  break;
-                case "L":  capacityMap = "2,000 - 5,000 hrs"; break;
-                default:   capacityMap = "> 5,000 hrs";       break;
+                ShowMsg("Project sizing could not be saved because the SQL Server connection failed. " + ex.Message);
             }
-
-            ProjectDAL.SaveProjectSizing(CurrentProjectId, q1, q2, q3, q4, q5, q6, q7,
-                weighted, sizeResult, capacityMap, AuthHelper.CurrentUserShort);
-
-            ShowMsg("Sizing saved. Size: " + sizeResult + " (Score: " + weighted.ToString("F4") + ")");
-            LoadProjectSizing(CurrentProjectId);
         }
 
         private void ClearProjectForm()
