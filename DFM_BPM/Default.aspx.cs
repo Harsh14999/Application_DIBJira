@@ -185,8 +185,7 @@ namespace DFM_BPM
             }
             catch (Exception ex)
             {
-                litRegisteredProjectRows.Text = "<tr><td colspan='10' style='padding:14px;color:#dc2626;'>" +
-                    "Database connection failed. Check the DFM_BPMConnection value in Web.config and confirm the SQL Server database is reachable. Details: " +
+                litRegisteredProjectRows.Text = "<tr><td colspan='10' style='padding:14px;color:#dc2626;'>Error loading projects: " +
                     System.Web.HttpUtility.HtmlEncode(ex.Message) + "</td></tr>";
             }
         }
