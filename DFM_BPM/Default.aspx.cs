@@ -121,20 +121,27 @@ namespace DFM_BPM
                     string statusHtml = GetBool(project, "IsActive")
                         ? "<span class='badge-success'>Active</span>"
                         : "<span class='badge-danger'>Inactive</span>";
+                    DataRow financial = WorkflowDAL.GetProjectFinancialSummary(projectId);
+                    decimal approvedSpend = GetDecimal(financial, "ApprovedSpendRequestTotal");
+                    decimal budgetTotal = GetDecimal(financial, "BudgetTotal");
+                    decimal invoiceTotal = GetDecimal(financial, "InvoiceTotal");
+                    decimal invoiceSettled = GetDecimal(financial, "InvoiceSettledTotal");
+                    decimal outstanding = invoiceTotal - invoiceSettled;
 
                     sb.AppendFormat(
                         "<tr class='project-parent-row'>" +
-                        "<td>{0}<strong>{1}</strong><br /><small style='color:#64748b;'>{2}</small></td>" +
-                        "<td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td><td>{8}</td><td>{9}</td><td>{10}</td>" +
+                        "<td>{0}<strong>{1}</strong></td>" +
+                        "<td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td><td>{8}</td><td>{9}</td><td>{10}</td>" +
+                        "<td class='text-right'>{11}</td><td class='text-right'>{12}</td><td class='text-right'>{13}</td><td class='text-right'>{14}</td><td class='text-right'>{15}</td>" +
                         "<td><div class='gv-acts'>" +
-                        "<button type='button' class='btn btn-xs btn-primary' onclick=\"return dfmOpenProject('{11}');\"><i class='bi bi-arrow-right-circle'></i> Open</button>" +
-                        "<button type='button' class='proj-action-btn btn-sr' onclick=\"dfmShowSR('{12}');\"><i class='bi bi-file-earmark-text'></i></button>" +
-                        "<button type='button' class='proj-action-btn btn-bgt' onclick=\"dfmShowBgt('{12}');\"><i class='bi bi-cash-coin'></i></button>" +
-                        "<button type='button' class='proj-action-btn btn-inv' onclick=\"dfmShowInv('{12}');\"><i class='bi bi-receipt'></i></button>" +
+                        "<button type='button' class='btn btn-xs btn-primary' onclick=\"return dfmOpenProject('{16}');\"><i class='bi bi-arrow-right-circle'></i> Open</button>" +
+                        "<button type='button' class='proj-action-btn btn-sr' onclick=\"dfmShowSR('{16}');\"><i class='bi bi-file-earmark-text'></i></button>" +
+                        "<button type='button' class='proj-action-btn btn-bgt' onclick=\"dfmShowBgt('{16}');\"><i class='bi bi-cash-coin'></i></button>" +
+                        "<button type='button' class='proj-action-btn btn-inv' onclick=\"dfmShowInv('{16}');\"><i class='bi bi-receipt'></i></button>" +
                         "</div></td></tr>",
                         toggle,
-                        Html(Val(project, "ProjectName")),
                         Html(projectId),
+                        Html(Val(project, "ProjectName")),
                         GetBool(project, "IsNonJiraProject") ? "Non-JIRA" : "JIRA",
                         Html(Val(project, "AccountableExecLead")),
                         Html(Val(project, "SmeLead")),
@@ -143,6 +150,11 @@ namespace DFM_BPM
                         Html(Val(project, "CreatedBy")),
                         statusHtml,
                         FormatDate(project, "CreatedDate"),
+                        FormatCurrency(approvedSpend),
+                        FormatCurrency(budgetTotal),
+                        FormatCurrency(invoiceTotal),
+                        FormatCurrency(invoiceSettled),
+                        FormatCurrency(outstanding),
                         System.Web.HttpUtility.JavaScriptStringEncode(projectId),
                         System.Web.HttpUtility.JavaScriptStringEncode(projectId));
 
@@ -151,13 +163,13 @@ namespace DFM_BPM
                 }
 
                 if (sb.Length == 0)
-                    sb.Append("<tr><td colspan='10' style='text-align:center;padding:18px;color:#94a3b8;'>No registered projects found for the selected filters.</td></tr>");
+                    sb.Append("<tr><td colspan='16' style='text-align:center;padding:18px;color:#94a3b8;'>No registered projects found for the selected filters.</td></tr>");
 
                 litRegisteredProjectRows.Text = sb.ToString();
             }
             catch (Exception ex)
             {
-                litRegisteredProjectRows.Text = "<tr><td colspan='10' style='padding:14px;color:#dc2626;'>Error loading projects: " +
+                litRegisteredProjectRows.Text = "<tr><td colspan='16' style='padding:14px;color:#dc2626;'>Error loading projects: " +
                     System.Web.HttpUtility.HtmlEncode(ex.Message) + "</td></tr>";
             }
         }
@@ -213,7 +225,7 @@ namespace DFM_BPM
                 return ia.CompareTo(ib);
             });
 
-            sb.Append("<tr class='project-child-row tree-hidden " + safeId + "'><td colspan='10'>");
+            sb.Append("<tr class='project-child-row tree-hidden " + safeId + "'><td colspan='16'>");
             sb.Append("<div class='project-child-box'><div class='project-child-title'>Spend Requests under this Project</div>");
             sb.Append("<table class='dfm-table' style='width:100%;font-size:.86em;'><thead><tr>");
             sb.Append("<th>Request</th><th>Status</th><th>Type</th><th>Budget Source</th><th class='text-right'>Requested (AED)</th><th>Approver</th><th>Requestor</th><th>Submitted</th><th>Action</th>");
@@ -243,7 +255,7 @@ namespace DFM_BPM
                     "<td>{7}</td>" +
                     "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{8}</td>" +
                     "<td>{9}</td><td>{10}</td><td>{11}</td>" +
-                    "<td><div class='gv-acts'><a href='Forms/PetWorkflow.aspx?id={0}' class='btn btn-xs btn-primary'><i class='bi bi-arrow-right-circle'></i> Open</a>{12}</div></td>" +
+                    "<td><div class='gv-acts'><a href='Forms/PetWorkflow.aspx?id={0}' class='btn btn-xs btn-primary'><i class='bi bi-arrow-right-circle'></i> Open Request</a>{12}</div></td>" +
                     "</tr>",
                     petId,
                     i + 1,

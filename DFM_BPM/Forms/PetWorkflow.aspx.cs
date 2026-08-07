@@ -90,12 +90,12 @@ namespace DFM_BPM.Forms
             switch (CurrentStatus)
             {
                 case "Draft":           return 1;
-                case "PendingReview":   return 3;
                 case "SentBack":        return 1;
+                case "PendingReview":   return 2;
                 case "PendingApproval": return 3;
-                case "Approved":        return 4;
+                case "Approved":        return ShowBudgetTab ? 5 : 4;
                 case "Rejected":        return 3;
-                default:                return 2;
+                default:                return 1;
             }
         }
 

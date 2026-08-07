@@ -55,12 +55,8 @@
             CssClass="dfm-table" GridLines="None" DataKeyNames="ProjectID" OnRowCommand="gvProjectPortfolio_RowCommand"
             EmptyDataText="No projects registered yet.">
             <Columns>
-                <asp:TemplateField HeaderText="Project Name">
-                    <ItemTemplate>
-                        <strong><%# Eval("ProjectName") %></strong><br />
-                        <small style="color:#64748b;"><%# Eval("ProjectID") %></small>
-                    </ItemTemplate>
-                </asp:TemplateField>
+                <asp:BoundField DataField="ProjectID" HeaderText="Project ID" />
+                <asp:BoundField DataField="ProjectName" HeaderText="Project Name" />
                 <asp:TemplateField HeaderText="Project Type">
                     <ItemTemplate><%# Convert.ToBoolean(Eval("IsNonJiraProject")) ? "Non-JIRA" : "JIRA" %></ItemTemplate>
                 </asp:TemplateField>

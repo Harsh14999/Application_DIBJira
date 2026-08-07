@@ -650,6 +650,31 @@ namespace DFM_BPM.App_Code.DAL
                 Db.P("@pid", projectId));
         }
 
+        public static DataRow GetProjectFinancialSummary(string projectId)
+        {
+            return Db.QueryRow(@"SELECT
+                    ISNULL((SELECT SUM(li.FinalAmtLCY)
+                        FROM dbo.PetLineItem li
+                        INNER JOIN dbo.PetForm p ON p.PetFormID = li.PetFormID
+                        WHERE p.ProjectID=@pid AND p.Status='Approved'),0) AS ApprovedSpendRequestTotal,
+                    ISNULL((SELECT SUM(bl.Cost)
+                        FROM dbo.PetBudgetLine bl
+                        INNER JOIN dbo.PetForm p ON p.PetFormID = bl.PetFormID
+                        WHERE p.ProjectID=@pid AND p.Status<>'Deleted'),0) AS BudgetTotal,
+                    ISNULL((SELECT SUM(i.InvoiceAmount)
+                        FROM dbo.PetBudgetInvoice i
+                        INNER JOIN dbo.PetBudgetLine bl ON bl.BudgetLineID = i.BudgetLineID
+                        INNER JOIN dbo.PetForm p ON p.PetFormID = bl.PetFormID
+                        WHERE p.ProjectID=@pid AND p.Status<>'Deleted'),0) AS InvoiceTotal,
+                    ISNULL((SELECT SUM(i.InvoiceAmount)
+                        FROM dbo.PetBudgetInvoice i
+                        INNER JOIN dbo.PetBudgetLine bl ON bl.BudgetLineID = i.BudgetLineID
+                        INNER JOIN dbo.PetForm p ON p.PetFormID = bl.PetFormID
+                        WHERE p.ProjectID=@pid AND p.Status<>'Deleted'
+                          AND i.InvoiceStatus IN ('Paid','Processed / Archived')),0) AS InvoiceSettledTotal",
+                Db.P("@pid", projectId));
+                }
+
         // ===================================================================
         // BUDGET INVOICES  (multiple invoices per Budget Line)
         // ===================================================================

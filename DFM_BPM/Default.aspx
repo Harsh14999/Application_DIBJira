@@ -111,7 +111,7 @@
 </h1>
 
 <!-- ── FILTER SECTION ── -->
-<div class="dash-section" id="sec-filters">
+<div class="dash-section collapsed" id="sec-filters" data-dash-persist="1" data-default-collapsed="1">
     <div class="dash-sec-hdr" onclick="dfmSecTog('sec-filters')">
         <span><i class="bi bi-funnel"></i> Filters</span>
         <i class="bi bi-chevron-down dash-sec-toggle"></i>
@@ -178,34 +178,42 @@
 </div>
 
 <!-- ── KPI CARDS ── -->
-<div class="kpi-row">
-    <div class="kpi-card kpi-blue">
-        <i class="bi bi-folder2-open kpi-icon"></i>
-        <div><div class="kpi-label">Total Projects</div><div class="kpi-val"><asp:Literal ID="litProjects" runat="server" Text="0" /></div></div>
+<div class="dash-section collapsed" id="sec-kpi" data-dash-persist="1" data-default-collapsed="1">
+    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-kpi')">
+        <span><i class="bi bi-speedometer2"></i> KPI Summary</span>
+        <i class="bi bi-chevron-down dash-sec-toggle"></i>
     </div>
-    <div class="kpi-card kpi-green">
-        <i class="bi bi-file-earmark-text kpi-icon"></i>
-        <div><div class="kpi-label">Total Requests</div><div class="kpi-val"><asp:Literal ID="litPET" runat="server" Text="0" /></div></div>
-    </div>
-    <div class="kpi-card kpi-orange">
-        <i class="bi bi-hourglass-split kpi-icon"></i>
-        <div><div class="kpi-label">Pending</div><div class="kpi-val"><asp:Literal ID="litPending" runat="server" Text="0" /></div></div>
-    </div>
-    <div class="kpi-card kpi-teal">
-        <i class="bi bi-check2-circle kpi-icon"></i>
-        <div><div class="kpi-label">Approved</div><div class="kpi-val"><asp:Literal ID="litApproved" runat="server" Text="0" /></div></div>
-    </div>
-    <div class="kpi-card kpi-red">
-        <i class="bi bi-x-circle kpi-icon"></i>
-        <div><div class="kpi-label">Rejected</div><div class="kpi-val"><asp:Literal ID="litRejected" runat="server" Text="0" /></div></div>
-    </div>
-    <div class="kpi-card kpi-green">
-        <i class="bi bi-currency-dollar kpi-icon"></i>
-        <div><div class="kpi-label">CAPEX Budget</div><div class="kpi-val"><asp:Literal ID="litCapexBudget" runat="server" Text="0" /></div></div>
-    </div>
-    <div class="kpi-card kpi-blue">
-        <i class="bi bi-receipt kpi-icon"></i>
-        <div><div class="kpi-label">OPEX Budget</div><div class="kpi-val"><asp:Literal ID="litOpexBudget" runat="server" Text="0" /></div></div>
+    <div class="dash-sec-body">
+        <div class="kpi-row">
+            <div class="kpi-card kpi-blue">
+                <i class="bi bi-folder2-open kpi-icon"></i>
+                <div><div class="kpi-label">Total Projects</div><div class="kpi-val"><asp:Literal ID="litProjects" runat="server" Text="0" /></div></div>
+            </div>
+            <div class="kpi-card kpi-green">
+                <i class="bi bi-file-earmark-text kpi-icon"></i>
+                <div><div class="kpi-label">Total Requests</div><div class="kpi-val"><asp:Literal ID="litPET" runat="server" Text="0" /></div></div>
+            </div>
+            <div class="kpi-card kpi-orange">
+                <i class="bi bi-hourglass-split kpi-icon"></i>
+                <div><div class="kpi-label">Pending</div><div class="kpi-val"><asp:Literal ID="litPending" runat="server" Text="0" /></div></div>
+            </div>
+            <div class="kpi-card kpi-teal">
+                <i class="bi bi-check2-circle kpi-icon"></i>
+                <div><div class="kpi-label">Approved</div><div class="kpi-val"><asp:Literal ID="litApproved" runat="server" Text="0" /></div></div>
+            </div>
+            <div class="kpi-card kpi-red">
+                <i class="bi bi-x-circle kpi-icon"></i>
+                <div><div class="kpi-label">Rejected</div><div class="kpi-val"><asp:Literal ID="litRejected" runat="server" Text="0" /></div></div>
+            </div>
+            <div class="kpi-card kpi-green">
+                <i class="bi bi-currency-dollar kpi-icon"></i>
+                <div><div class="kpi-label">CAPEX Budget</div><div class="kpi-val"><asp:Literal ID="litCapexBudget" runat="server" Text="0" /></div></div>
+            </div>
+            <div class="kpi-card kpi-blue">
+                <i class="bi bi-receipt kpi-icon"></i>
+                <div><div class="kpi-label">OPEX Budget</div><div class="kpi-val"><asp:Literal ID="litOpexBudget" runat="server" Text="0" /></div></div>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -235,6 +243,7 @@
             <table class="dfm-table" style="width:100%;">
                 <thead>
                     <tr>
+                        <th>Project ID</th>
                         <th>Project Name</th>
                         <th>Project Type</th>
                         <th>Accountable Exec Lead</th>
@@ -244,6 +253,11 @@
                         <th>Requestor</th>
                         <th>Status</th>
                         <th>Created Date</th>
+                        <th>Approved Spend Request</th>
+                        <th>Budget</th>
+                        <th>Invoice</th>
+                        <th>Invoice Settled</th>
+                        <th>Outstanding</th>
                         <th>Action</th>
                     </tr>
                 </thead>
@@ -481,8 +495,25 @@
 <script>
 function dfmSecTog(id) {
     var el = document.getElementById(id);
-    if (el) el.classList.toggle('collapsed');
+    if (!el) return;
+    el.classList.toggle('collapsed');
+    if (el.getAttribute('data-dash-persist') === '1') {
+        try { sessionStorage.setItem('DFM.DashSection.' + id, el.classList.contains('collapsed') ? '1' : '0'); } catch (e) { }
+    }
 }
+function dfmApplyDashSectionState() {
+    var sections = document.querySelectorAll('.dash-section[data-dash-persist="1"]');
+    for (var i = 0; i < sections.length; i++) {
+        var el = sections[i];
+        var key = 'DFM.DashSection.' + el.id;
+        var stored = null;
+        try { stored = sessionStorage.getItem(key); } catch (e) { }
+        var collapsed = stored === null ? el.getAttribute('data-default-collapsed') === '1' : stored === '1';
+        if (collapsed) el.classList.add('collapsed');
+        else el.classList.remove('collapsed');
+    }
+}
+dfmApplyDashSectionState();
 function dfmTog(cls) {
     var rows = document.querySelectorAll('.tree-row.' + cls);
     var hidden = rows.length > 0 && rows[0].classList.contains('tree-hidden');

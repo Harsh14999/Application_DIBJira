@@ -17,6 +17,9 @@
 .step::after { content:'>'; position:absolute; right:-12px; top:50%; transform:translateY(-50%);
                font-size:1.4em; z-index:2; color:#94a3b8; }
 .step:last-child::after { display:none; }
+.workflow-breadcrumb { margin-bottom:12px; }
+.workflow-breadcrumb .step { min-height:38px; display:flex; align-items:center; justify-content:center; }
+.workflow-breadcrumb .step.rejected { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
 .pet-line-tbl th { background:#1a3c5e; color:#fff; padding:6px 8px; font-size:.78em; white-space:nowrap; }
 .pet-line-tbl td { padding:4px 6px; border:1px solid #e2e8f0; vertical-align:middle; font-size:.82em; }
 .total-bar { background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px 14px;
@@ -170,6 +173,14 @@
 <asp:Label ID="lblMsg" runat="server" CssClass="alert alert-info" Visible="false" />
 <asp:HiddenField ID="hfPetFormId" runat="server" Value="0" />
 <asp:HiddenField ID="hfActiveTab" runat="server" Value="pet" />
+
+<div class="stepper workflow-breadcrumb">
+    <div class="step <%= StepClass(1) %>">Draft</div>
+    <div class="step <%= StepClass(2) %>">Pending Review</div>
+    <div class="step <%= StepClass(3) %>">Pending Approval</div>
+    <div class="step <%= StepClass(4) %>">Approved</div>
+    <div class="step <%= StepClass(5) %>">Budget/Invoice</div>
+</div>
 
 <ul class="nav nav-tabs pet-nav-tabs" role="tablist">
     <li class="<%= TabActive("pet") %>">      <a href="#tabPet"      data-toggle="tab"><i class="bi bi-file-earmark-text"></i> Request</a></li>
