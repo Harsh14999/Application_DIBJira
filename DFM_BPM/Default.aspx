@@ -95,6 +95,9 @@
 .action-modal-grid tr:nth-child(odd) td { background:#fafbff; }
 .action-modal-grid tr:nth-child(even) td { background:#fff; }
 .action-modal-grid tr:hover td { background:#eff6ff; }
+.project-frame-modal .modal-dialog { width:95%; max-width:1180px; }
+.project-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
+.project-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
 </style>
 </asp:Content>
 
@@ -130,13 +133,6 @@
                         <asp:ListItem Text="All" Value="ALL" />
                         <asp:ListItem Text="CAPEX" Value="CAPEX" />
                         <asp:ListItem Text="OPEX" Value="OPEX" />
-                    </asp:DropDownList>
-                </div>
-                <div class="form-group">
-                    <label>Portfolio</label>
-                    <asp:DropDownList ID="ddlPortfolioFilter" runat="server" CssClass="form-control"
-                        AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed">
-                        <asp:ListItem Text="All Portfolios" Value="ALL" />
                     </asp:DropDownList>
                 </div>
                 <div class="form-group">
@@ -440,6 +436,21 @@
     </div>
 </div>
 
+<!-- ── DASHBOARD PROJECT MODAL ── -->
+<div class="modal fade project-frame-modal" id="dashboardProjectModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#1a3c5e;color:#fff;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
+                <h4 class="modal-title"><i class="bi bi-folder-plus"></i> Project Portfolio</h4>
+            </div>
+            <div class="modal-body">
+                <iframe id="dashboardProjectFrame" title="Project Portfolio"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ── PET Delete Hidden Fields + Modal ── -->
 <asp:HiddenField ID="hfDeletePetId" runat="server" Value="0" />
 <asp:Button ID="btnConfirmDeletePet" runat="server" Text="_del" style="display:none;"
@@ -517,6 +528,15 @@ function dfmShowInv(projId) {
     document.getElementById('<%= hfActionProjectId.ClientID %>').value = projId;
     document.getElementById('<%= btnShowInvoices.ClientID %>').click();
 }
+function dfmOpenProject(projId) {
+    var frame = document.getElementById('dashboardProjectFrame');
+    frame.src = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projId) + '&embed=1';
+    jQuery('#dashboardProjectModal').modal('show');
+    return false;
+}
+jQuery('#dashboardProjectModal').on('hidden.bs.modal', function () {
+    document.getElementById('dashboardProjectFrame').src = 'about:blank';
+});
 </script>
 </ContentTemplate>
 </asp:UpdatePanel>

@@ -25,6 +25,13 @@
         /* ---- Notification dropdown ---- */
         #notifDropdown { display:none; position:absolute; top:50px; right:70px; z-index:9999; background:#fff;
             border:1px solid #e2e8f0; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.12); width:340px; max-height:420px; overflow-y:auto; }
+        <% if (Request.QueryString["embed"] == "1") { %>
+        body { background:#fff; }
+        .sidebar, .topbar, #devBar { display:none !important; }
+        .wrapper { display:block; min-height:0; }
+        .main-wrap { display:block; overflow:visible; }
+        .main-content { padding:12px; overflow:visible; }
+        <% } %>
         .notif-hdr { display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border-bottom:1px solid #e2e8f0; }
         .notif-hdr strong { font-size:.88em; color:#1e293b; }
         .notif-hdr a { font-size:.78em; color:#2563eb; text-decoration:none; }
@@ -62,8 +69,6 @@
                 <i class="bi bi-file-earmark-text"></i><span>Spend Request</span></a>
             <a href="<%= ResolveUrl("~/Forms/MyApprovals.aspx") %>" class="nav-item <%= IsActive("MyApprovals") %>">
                 <i class="bi bi-check2-all"></i><span>My Approvals</span></a>
-            <a href="<%= ResolveUrl("~/Admin/PortfolioHierarchy.aspx") %>" class="nav-item <%= IsActive("PortfolioHierarchy") %>">
-                <i class="bi bi-diagram-3"></i><span>Portfolio Hierarchy</span></a>
         </div>
 
         <div class="nav-section">
@@ -194,9 +199,27 @@
 </form>
 <script>
 var DFM = window.DFM || {};
-DFM.toggleSidebar = function() {
-    document.getElementById('sidebar').classList.toggle('collapsed');
+DFM.sidebarStateKey = 'DFM.SidebarCollapsed';
+DFM.applySidebarState = function() {
+    var sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    try {
+        if (window.sessionStorage && sessionStorage.getItem(DFM.sidebarStateKey) === '1') {
+            sidebar.classList.add('collapsed');
+        }
+    } catch (e) { }
 };
+DFM.toggleSidebar = function() {
+    var sidebar = document.getElementById('sidebar');
+    if (!sidebar) return;
+    sidebar.classList.toggle('collapsed');
+    try {
+        if (window.sessionStorage) {
+            sessionStorage.setItem(DFM.sidebarStateKey, sidebar.classList.contains('collapsed') ? '1' : '0');
+        }
+    } catch (e) { }
+};
+DFM.applySidebarState();
 DFM.toggleNotif = function() {
     var m = document.getElementById('userMenu');
     if (m) m.style.display = 'none';

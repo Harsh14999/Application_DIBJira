@@ -23,33 +23,9 @@ namespace DFM_BPM
             if (!IsPostBack)
             {
                 LoadJiraProjects();
-                LoadPortfolioFilter();
-
-                // Support redirect from Portfolio Hierarchy: ?resource=<id> pre-selects that Portfolio filter
-                string qsResource = Request.QueryString["resource"];
-                int qsRid;
-                if (!string.IsNullOrEmpty(qsResource) && int.TryParse(qsResource, out qsRid) && qsRid > 0)
-                {
-                    if (ddlPortfolioFilter.Items.FindByValue(qsRid.ToString()) != null)
-                        ddlPortfolioFilter.SelectedValue = qsRid.ToString();
-                }
 
                 LoadAll();
             }
-        }
-
-        private void LoadPortfolioFilter()
-        {
-            try
-            {
-                DataTable dt = PortfolioDAL.GetResourceDropdown();
-                ddlPortfolioFilter.Items.Clear();
-                ddlPortfolioFilter.Items.Add(new System.Web.UI.WebControls.ListItem("All Portfolios", "ALL"));
-                foreach (DataRow r in dt.Rows)
-                    ddlPortfolioFilter.Items.Add(new System.Web.UI.WebControls.ListItem(
-                        r["DisplayName"].ToString(), r["ResourceID"].ToString()));
-            }
-            catch { /* no Portfolio data yet */ }
         }
 
         private void LoadJiraProjects()
@@ -78,10 +54,6 @@ namespace DFM_BPM
         {
             try
             {
-                int? resourceId = null;
-                int rid;
-                if (int.TryParse(ddlPortfolioFilter.SelectedValue, out rid) && rid > 0) resourceId = rid;
-
                 string jiraFilter = ddlProject.SelectedValue == "ALL" ? null : ddlProject.SelectedValue;
                 string typeFilter = ddlType.SelectedValue == "ALL" ? null : ddlType.SelectedValue;
                 string statFilter = ddlStatus.SelectedValue == "ALL" ? null : ddlStatus.SelectedValue;
@@ -92,7 +64,7 @@ namespace DFM_BPM
                 if (DateTime.TryParse(txtFromDate.Text, out dt)) fromDate = dt;
                 if (DateTime.TryParse(txtToDate.Text, out dt)) toDate = dt;
 
-                DataTable projects = ProjectDAL.GetProjects(null, resourceId);
+                DataTable projects = ProjectDAL.GetProjects();
                 DataTable allForms = WorkflowDAL.GetPetFormsDashboard(
                     jiraFilter, typeFilter, statFilter, fromDate, toDate, viewFilter, viewUser);
 
@@ -155,7 +127,7 @@ namespace DFM_BPM
                         "<td>{0}<strong>{1}</strong><br /><small style='color:#64748b;'>{2}</small></td>" +
                         "<td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td><td>{8}</td><td>{9}</td><td>{10}</td>" +
                         "<td><div class='gv-acts'>" +
-                        "<a href='Forms/ProjectRegistration.aspx?pid={11}' class='btn btn-xs btn-primary'><i class='bi bi-arrow-right-circle'></i> Open</a>" +
+                        "<button type='button' class='btn btn-xs btn-primary' onclick=\"return dfmOpenProject('{11}');\"><i class='bi bi-arrow-right-circle'></i> Open</button>" +
                         "<button type='button' class='proj-action-btn btn-sr' onclick=\"dfmShowSR('{12}');\"><i class='bi bi-file-earmark-text'></i></button>" +
                         "<button type='button' class='proj-action-btn btn-bgt' onclick=\"dfmShowBgt('{12}');\"><i class='bi bi-cash-coin'></i></button>" +
                         "<button type='button' class='proj-action-btn btn-inv' onclick=\"dfmShowInv('{12}');\"><i class='bi bi-receipt'></i></button>" +
@@ -171,7 +143,7 @@ namespace DFM_BPM
                         Html(Val(project, "CreatedBy")),
                         statusHtml,
                         FormatDate(project, "CreatedDate"),
-                        Server.UrlEncode(projectId),
+                        System.Web.HttpUtility.JavaScriptStringEncode(projectId),
                         System.Web.HttpUtility.JavaScriptStringEncode(projectId));
 
                     if (requests.Count > 0)
@@ -325,7 +297,6 @@ namespace DFM_BPM
         {
             ddlProject.SelectedValue = "ALL";
             ddlType.SelectedValue    = "ALL";
-            ddlPortfolioFilter.SelectedValue = "ALL";
             ddlStatus.SelectedValue  = "ALL";
             ddlView.SelectedValue    = "MYAPPROVAL";
             txtFromDate.Text = txtToDate.Text = "";

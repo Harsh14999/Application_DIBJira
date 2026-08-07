@@ -49,15 +49,6 @@ namespace DFM_BPM {
         protected global::System.Web.UI.WebControls.DropDownList ddlType;
         
         /// <summary>
-        /// ddlPortfolioFilter control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.DropDownList ddlPortfolioFilter;
-        
-        /// <summary>
         /// ddlView control.
         /// </summary>
         /// <remarks>
