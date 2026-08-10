@@ -294,23 +294,9 @@ namespace DFM_BPM.Forms
             ddlLineGL.Items.Insert(0, new ListItem("-- None --", ""));
         }
 
-        /// <summary>Populate Vendor / Currency / GL dropdowns used by the Budget Line popup modal.</summary>
+        /// <summary>Populate Currency dropdown used by the Budget Line popup modal.</summary>
         private void LoadBudgetDropdowns()
         {
-            DataTable vd = MastersDAL.GetVendorDropdown();
-            ddlBgtVendor.DataSource     = vd;
-            ddlBgtVendor.DataTextField  = "Name";
-            ddlBgtVendor.DataValueField = "Name";
-            ddlBgtVendor.DataBind();
-            ddlBgtVendor.Items.Insert(0, new ListItem("-- Select --", ""));
-
-            DataTable gl = MastersDAL.GetGLDropdown();
-            ddlBgtGL.DataSource     = gl;
-            ddlBgtGL.DataTextField  = "Name";
-            ddlBgtGL.DataValueField = "ID";
-            ddlBgtGL.DataBind();
-            ddlBgtGL.Items.Insert(0, new ListItem("-- None --", ""));
-
             DataTable ccy = MastersDAL.GetCurrencies();
             ddlBgtCcy.DataSource     = ccy;
             ddlBgtCcy.DataTextField  = "Code";
@@ -1253,8 +1239,8 @@ namespace DFM_BPM.Forms
             txtBgtPetRef.Text = PetRefNo;
             txtBgtCamId.Text = txtBgtCamStatus.Text = txtBgtCamComments.Text = "";
             txtBgtLpoRequest.Text = txtBgtLpoStatus.Text = txtBgtLpoComments.Text = "";
-            if (ddlBgtVendor.Items.Count > 0) ddlBgtVendor.SelectedIndex = 0;
-            if (ddlBgtGL.Items.Count > 0)     ddlBgtGL.SelectedIndex = 0;
+            txtBgtVendor.Text = "";
+            txtBgtGL.Text = "";
             if (ddlBgtCcy.Items.FindByValue("AED") != null) ddlBgtCcy.SelectedValue = "AED";
             ActiveTab = "budget"; hfActiveTab.Value = "budget";
             ScriptManager.RegisterStartupScript(this, GetType(), "showBudgetModal",
@@ -1266,12 +1252,14 @@ namespace DFM_BPM.Forms
             if (!CanManageBudget) return;
             if (CurrentPetFormId == 0) { ShowMsg("Save the PET header first."); return; }
             decimal cost = Dec(txtBgtCost.Text);
-            string gl = ddlBgtGL.SelectedValue == "" ? null : ddlBgtGL.SelectedValue;
+            string vendor = txtBgtVendor.Text.Trim();
+            string gl = txtBgtGL.Text.Trim();
+            if (gl == "") gl = null;
 
             int editId;
             if (int.TryParse(hfEditBudgetLineId.Value, out editId) && editId > 0)
             {
-                WorkflowDAL.UpdateBudgetLine(editId, ddlBgtVendor.SelectedValue, txtBgtJustification.Text.Trim(),
+                WorkflowDAL.UpdateBudgetLine(editId, vendor, txtBgtJustification.Text.Trim(),
                     cost, ddlBgtCcy.SelectedValue, gl, txtBgtPetRef.Text.Trim(),
                     txtBgtCamId.Text.Trim(), txtBgtCamStatus.Text.Trim(), txtBgtCamComments.Text.Trim(),
                     txtBgtLpoRequest.Text.Trim(), txtBgtLpoStatus.Text.Trim(), txtBgtLpoComments.Text.Trim(),
@@ -1281,7 +1269,7 @@ namespace DFM_BPM.Forms
             {
                 int nextSerial = Convert.ToInt32(Db.Scalar(
                     "SELECT ISNULL(MAX(SerialNo),0)+1 FROM dbo.PetBudgetLine WHERE PetFormID=@f", Db.P("@f", CurrentPetFormId)));
-                WorkflowDAL.SaveBudgetLine(CurrentPetFormId, nextSerial, ddlBgtVendor.SelectedValue, txtBgtJustification.Text.Trim(),
+                WorkflowDAL.SaveBudgetLine(CurrentPetFormId, nextSerial, vendor, txtBgtJustification.Text.Trim(),
                     cost, ddlBgtCcy.SelectedValue, gl, txtBgtPetRef.Text.Trim(),
                     txtBgtCamId.Text.Trim(), txtBgtCamStatus.Text.Trim(), txtBgtCamComments.Text.Trim(),
                     txtBgtLpoRequest.Text.Trim(), txtBgtLpoStatus.Text.Trim(), txtBgtLpoComments.Text.Trim(),
@@ -1318,11 +1306,11 @@ namespace DFM_BPM.Forms
 
                 hfEditBudgetLineId.Value = id.ToString();
                 litBudgetModalTitle.Text = "Edit Budget Row #" + (r["SerialNo"] == DBNull.Value ? id.ToString() : r["SerialNo"].ToString());
-                SetDdl(ddlBgtVendor, r["VendorName"] == DBNull.Value ? "" : r["VendorName"].ToString());
+                txtBgtVendor.Text = r["VendorName"] == DBNull.Value ? "" : r["VendorName"].ToString();
                 txtBgtJustification.Text = r["Justification"] == DBNull.Value ? "" : r["Justification"].ToString();
                 txtBgtCost.Text = Dec(r, "Cost").ToString("N2");
                 SetDdl(ddlBgtCcy, r["Currency"] == DBNull.Value ? "AED" : r["Currency"].ToString());
-                SetDdl(ddlBgtGL, r["GLNumber"] == DBNull.Value ? "" : r["GLNumber"].ToString());
+                txtBgtGL.Text = r["GLNumber"] == DBNull.Value ? "" : r["GLNumber"].ToString();
                 txtBgtPetRef.Text       = r["PetRef"]      == DBNull.Value ? "" : r["PetRef"].ToString();
                 txtBgtCamId.Text        = r["CamId"]       == DBNull.Value ? "" : r["CamId"].ToString();
                 txtBgtCamStatus.Text    = r["CamStatus"]   == DBNull.Value ? "" : r["CamStatus"].ToString();

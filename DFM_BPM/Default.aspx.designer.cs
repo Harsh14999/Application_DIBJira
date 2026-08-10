@@ -218,6 +218,20 @@ namespace DFM_BPM {
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.LinkButton btnNextPage;
+
+        protected global::System.Web.UI.WebControls.Literal litBulkApprovalCount;
+
+        protected global::System.Web.UI.WebControls.GridView gvBulkApproval;
+
+        protected global::System.Web.UI.WebControls.TextBox txtBulkApprovalComments;
+
+        protected global::System.Web.UI.WebControls.Button btnBulkApproveSelected;
+
+        protected global::System.Web.UI.WebControls.Button btnBulkSendBackSelected;
+
+        protected global::System.Web.UI.WebControls.Label lblBulkApprovalMsg;
+
+        protected global::System.Web.UI.WebControls.GridView gvProjectWiseKpi;
         
         /// <summary>
         /// hfDeletePetId control.

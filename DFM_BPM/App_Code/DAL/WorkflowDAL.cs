@@ -78,8 +78,8 @@ namespace DFM_BPM.App_Code.DAL
                                      p.IsNonJiraProject, ISNULL(j.Summary, p.ProjectName) AS ProjectName
                               FROM dbo.PetForm p
                               LEFT JOIN dbo.JiraIssues j ON j.JiraID = p.ProjectID
-                              WHERE (p.ReviewerUsername=@u OR p.ApproverUsername=@u)
-                                AND p.Status IN ('PendingReview','PendingApproval')
+                                                            WHERE ((p.ReviewerUsername=@u AND p.Status='PendingReview')
+                                                                    OR (p.ApproverUsername=@u AND p.Status='PendingApproval'))
                               ORDER BY p.PetFormID DESC",
                 Db.P("@u", username));
         }
@@ -674,6 +674,43 @@ namespace DFM_BPM.App_Code.DAL
                           AND i.InvoiceStatus IN ('Paid','Processed / Archived')),0) AS InvoiceSettledTotal",
                 Db.P("@pid", projectId));
                 }
+
+            public static DataTable GetProjectWiseKpiSummary(string projectId = null)
+            {
+                string sql = @"SELECT p.ProjectID, p.ProjectName,
+                    ISNULL((SELECT COUNT(*) FROM dbo.PetForm pf
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status<>'Deleted'),0) AS SpendRequestCount,
+                    ISNULL((SELECT COUNT(*) FROM dbo.PetForm pf
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status='PendingReview'),0) AS PendingReviewerCount,
+                    ISNULL((SELECT COUNT(*) FROM dbo.PetForm pf
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status='PendingApproval'),0) AS PendingApproverCount,
+                    ISNULL((SELECT COUNT(*) FROM dbo.PetForm pf
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status='Approved'),0) AS ApprovedCount,
+                    ISNULL((SELECT COUNT(*) FROM dbo.PetBudgetLine bl
+                        INNER JOIN dbo.PetForm pf ON pf.PetFormID = bl.PetFormID
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status<>'Deleted'),0) AS BudgetingCount,
+                    ISNULL((SELECT SUM(bl.Cost) FROM dbo.PetBudgetLine bl
+                        INNER JOIN dbo.PetForm pf ON pf.PetFormID = bl.PetFormID
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status<>'Deleted'),0) AS BudgetTotal,
+                    ISNULL((SELECT COUNT(*) FROM dbo.PetBudgetInvoice i
+                        INNER JOIN dbo.PetBudgetLine bl ON bl.BudgetLineID = i.BudgetLineID
+                        INNER JOIN dbo.PetForm pf ON pf.PetFormID = bl.PetFormID
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status<>'Deleted'),0) AS InvoiceCount,
+                    ISNULL((SELECT COUNT(*) FROM dbo.PetBudgetInvoice i
+                        INNER JOIN dbo.PetBudgetLine bl ON bl.BudgetLineID = i.BudgetLineID
+                        INNER JOIN dbo.PetForm pf ON pf.PetFormID = bl.PetFormID
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status<>'Deleted'
+                          AND i.InvoiceStatus IN ('Paid','Processed / Archived')),0) AS InvoiceSettledCount,
+                    ISNULL((SELECT COUNT(*) FROM dbo.PetBudgetInvoice i
+                        INNER JOIN dbo.PetBudgetLine bl ON bl.BudgetLineID = i.BudgetLineID
+                        INNER JOIN dbo.PetForm pf ON pf.PetFormID = bl.PetFormID
+                        WHERE pf.ProjectID=p.ProjectID AND pf.Status<>'Deleted'
+                          AND (i.InvoiceStatus IS NULL OR i.InvoiceStatus NOT IN ('Paid','Processed / Archived'))),0) AS InvoicePendingCount
+                FROM dbo.Project p
+                WHERE (@pid IS NULL OR p.ProjectID=@pid)
+                ORDER BY p.ProjectName";
+                return Db.Query(sql, Db.P("@pid", string.IsNullOrEmpty(projectId) ? (object)DBNull.Value : projectId));
+            }
 
         // ===================================================================
         // BUDGET INVOICES  (multiple invoices per Budget Line)

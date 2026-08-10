@@ -2,6 +2,7 @@
 using System.Data;
 using System.Text;
 using System.Web.UI;
+using System.Web.UI.WebControls;
 using DFM_BPM.App_Code.DAL;
 using DFM_BPM.App_Code.Helpers;
 
@@ -45,6 +46,8 @@ namespace DFM_BPM
         private void LoadAll()
         {
             LoadKPIs();
+            LoadBulkApproval();
+            LoadProjectWiseKpi();
             LoadRegisteredProjects();
             LoadLastSync();
         }
@@ -206,6 +209,38 @@ namespace DFM_BPM
             catch { litCapexOpexSummary.Text = "<div class='project-child-empty'>CAPEX/OPEX data is not available.</div>"; }
         }
 
+        private void LoadBulkApproval()
+        {
+            try
+            {
+                DataTable dt = WorkflowDAL.GetPetFormsForApprover(AuthHelper.CurrentUserShort);
+                gvBulkApproval.DataSource = dt;
+                gvBulkApproval.DataBind();
+                litBulkApprovalCount.Text = dt.Rows.Count.ToString();
+            }
+            catch
+            {
+                gvBulkApproval.DataSource = null;
+                gvBulkApproval.DataBind();
+                litBulkApprovalCount.Text = "0";
+            }
+        }
+
+        private void LoadProjectWiseKpi()
+        {
+            try
+            {
+                string projectId = ddlProject.SelectedValue == "ALL" ? null : ddlProject.SelectedValue;
+                gvProjectWiseKpi.DataSource = WorkflowDAL.GetProjectWiseKpiSummary(projectId);
+                gvProjectWiseKpi.DataBind();
+            }
+            catch
+            {
+                gvProjectWiseKpi.DataSource = null;
+                gvProjectWiseKpi.DataBind();
+            }
+        }
+
         /// <summary>Renders the Delete button only for Draft / Pending Review / Pending Approval requests.</summary>
         protected string DeleteButtonHtml(object petFormId, object petRefNo, object status)
         {
@@ -303,6 +338,8 @@ namespace DFM_BPM
             CurrentPage = 1;
             LoadRegisteredProjects();
             LoadKPIs();
+            LoadBulkApproval();
+            LoadProjectWiseKpi();
         }
 
         protected void btnResetFilters_Click(object sender, EventArgs e)
@@ -329,6 +366,51 @@ namespace DFM_BPM
                     WorkflowDAL.DeletePetForm(petId, AuthHelper.CurrentUserShort);
             }
             hfDeletePetId.Value = "0";
+            CurrentPage = 1;
+            LoadAll();
+        }
+
+        protected void btnBulkApproveSelected_Click(object sender, EventArgs e)
+        {
+            BulkDecision(true);
+        }
+
+        protected void btnBulkSendBackSelected_Click(object sender, EventArgs e)
+        {
+            BulkDecision(false);
+        }
+
+        private void BulkDecision(bool approve)
+        {
+            int done = 0;
+            string user = AuthHelper.CurrentUserShort;
+            string comments = txtBulkApprovalComments.Text.Trim();
+
+            for (int i = 0; i < gvBulkApproval.Rows.Count; i++)
+            {
+                GridViewRow row = gvBulkApproval.Rows[i];
+                CheckBox chk = row.FindControl("chkBulkApproval") as CheckBox;
+                if (chk == null || !chk.Checked) continue;
+
+                int petId = Convert.ToInt32(gvBulkApproval.DataKeys[i].Values["PetFormID"]);
+                DataRow form = WorkflowDAL.GetPetForm(petId);
+                if (form == null) continue;
+
+                string status = Val(form, "Status");
+                if (status == "PendingReview" && string.Equals(Val(form, "ReviewerUsername"), user, StringComparison.OrdinalIgnoreCase))
+                {
+                    WorkflowDAL.ReviewPet(petId, user, approve ? "Approve" : "SentBack", comments);
+                    done++;
+                }
+                else if (status == "PendingApproval" && string.Equals(Val(form, "ApproverUsername"), user, StringComparison.OrdinalIgnoreCase))
+                {
+                    WorkflowDAL.ApprovePet(petId, user, approve ? "Approved" : "SentBack", comments);
+                    done++;
+                }
+            }
+
+            lblBulkApprovalMsg.Text = done == 0 ? "No selected pending item was processed." : done + " item(s) processed.";
+            txtBulkApprovalComments.Text = "";
             CurrentPage = 1;
             LoadAll();
         }

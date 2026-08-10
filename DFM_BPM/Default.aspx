@@ -15,6 +15,8 @@
 /* Section header colors — light bg, dark colorful text */
 #sec-filters .dash-sec-hdr  { background:#f8fafc; color:#475569; }
 #sec-projects .dash-sec-hdr { background:#F3F9FD; color:#1F4E78; }
+#sec-bulk-approval .dash-sec-hdr { background:#FFFBEA; color:#7F6000; }
+#sec-project-kpi .dash-sec-hdr { background:#F6FBF4; color:#548235; }
 #sec-pending .dash-sec-hdr  { background:#F5F9FF; color:#2F5597; }
 #sec-myforms .dash-sec-hdr  { background:#F5F9FF; color:#2F5597; }
 #sec-budget .dash-sec-hdr   { background:#F6FBF4; color:#548235; }
@@ -98,6 +100,11 @@
 .project-frame-modal .modal-dialog { width:95%; max-width:1180px; }
 .project-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
 .project-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
+.spend-frame-modal .modal-dialog { width:95%; max-width:1180px; }
+.spend-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
+.spend-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
+.bulk-actions { display:flex; gap:8px; align-items:flex-end; flex-wrap:wrap; padding:12px 14px; border-top:1px solid #e2e8f0; background:#fff; }
+.bulk-actions .form-group { margin:0; min-width:260px; flex:1; }
 </style>
 </asp:Content>
 
@@ -177,6 +184,50 @@
     </div>
 </div>
 
+<!-- ── BULK APPROVAL ── -->
+<div class="dash-section collapsed" id="sec-bulk-approval" data-dash-persist="1" data-default-collapsed="1">
+    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-bulk-approval')">
+        <span><i class="bi bi-check2-square"></i> Bulk Approval
+            <span style="background:#fde68a;color:#7f6000;border-radius:10px;padding:1px 8px;font-size:.8em;margin-left:6px;">
+                <asp:Literal ID="litBulkApprovalCount" runat="server" Text="0" />
+            </span>
+        </span>
+        <i class="bi bi-chevron-down dash-sec-toggle"></i>
+    </div>
+    <div class="dash-sec-body">
+        <div style="overflow-x:auto;">
+            <asp:GridView ID="gvBulkApproval" runat="server" AutoGenerateColumns="false"
+                CssClass="dfm-table action-modal-grid" GridLines="None" DataKeyNames="PetFormID,Status"
+                EmptyDataText="No pending reviewer/approver items for your action.">
+                <Columns>
+                    <asp:TemplateField HeaderText="Select">
+                        <ItemTemplate><asp:CheckBox ID="chkBulkApproval" runat="server" /></ItemTemplate>
+                    </asp:TemplateField>
+                    <asp:BoundField DataField="PetRefNo" HeaderText="Ref No" />
+                    <asp:BoundField DataField="ProjectID" HeaderText="Project ID" />
+                    <asp:BoundField DataField="ProjectName" HeaderText="Project Name" />
+                    <asp:BoundField DataField="Title" HeaderText="Title" />
+                    <asp:BoundField DataField="Status" HeaderText="Status" />
+                    <asp:BoundField DataField="CapexOpexType" HeaderText="Type" />
+                    <asp:BoundField DataField="CreatedBy" HeaderText="Requestor" />
+                    <asp:BoundField DataField="SubmittedDate" HeaderText="Submitted" DataFormatString="{0:dd-MMM-yyyy}" />
+                </Columns>
+            </asp:GridView>
+        </div>
+        <div class="bulk-actions">
+            <div class="form-group">
+                <label>Bulk Comments</label>
+                <asp:TextBox ID="txtBulkApprovalComments" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="2" />
+            </div>
+            <asp:Button ID="btnBulkApproveSelected" runat="server" Text="Approve Selected" CssClass="btn btn-success"
+                OnClick="btnBulkApproveSelected_Click" CausesValidation="false" />
+            <asp:Button ID="btnBulkSendBackSelected" runat="server" Text="Send Back Selected" CssClass="btn btn-warning"
+                OnClick="btnBulkSendBackSelected_Click" CausesValidation="false" />
+            <asp:Label ID="lblBulkApprovalMsg" runat="server" CssClass="label label-info" />
+        </div>
+    </div>
+</div>
+
 <!-- ── KPI CARDS ── -->
 <div class="dash-section collapsed" id="sec-kpi" data-dash-persist="1" data-default-collapsed="1">
     <div class="dash-sec-hdr" onclick="dfmSecTog('sec-kpi')">
@@ -213,6 +264,33 @@
                 <i class="bi bi-receipt kpi-icon"></i>
                 <div><div class="kpi-label">OPEX Budget</div><div class="kpi-val"><asp:Literal ID="litOpexBudget" runat="server" Text="0" /></div></div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── PROJECT-WISE KPI ── -->
+<div class="dash-section collapsed" id="sec-project-kpi" data-dash-persist="1" data-default-collapsed="1">
+    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-project-kpi')">
+        <span><i class="bi bi-bar-chart-line"></i> Project-wise KPI</span>
+        <i class="bi bi-chevron-down dash-sec-toggle"></i>
+    </div>
+    <div class="dash-sec-body">
+        <div style="overflow-x:auto;">
+            <asp:GridView ID="gvProjectWiseKpi" runat="server" AutoGenerateColumns="false"
+                CssClass="dfm-table action-modal-grid" GridLines="None" EmptyDataText="No project KPI data available.">
+                <Columns>
+                    <asp:BoundField DataField="ProjectID" HeaderText="Project ID" />
+                    <asp:BoundField DataField="ProjectName" HeaderText="Project Name" />
+                    <asp:BoundField DataField="SpendRequestCount" HeaderText="Spend Requests" />
+                    <asp:BoundField DataField="PendingReviewerCount" HeaderText="Pending Reviewer" />
+                    <asp:BoundField DataField="PendingApproverCount" HeaderText="Pending Approver" />
+                    <asp:BoundField DataField="BudgetingCount" HeaderText="Budgeting" />
+                    <asp:BoundField DataField="InvoiceCount" HeaderText="Invoices" />
+                    <asp:BoundField DataField="InvoiceSettledCount" HeaderText="Settled" />
+                    <asp:BoundField DataField="InvoicePendingCount" HeaderText="Pending" />
+                    <asp:BoundField DataField="BudgetTotal" HeaderText="Project-wise Budget" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
+                </Columns>
+            </asp:GridView>
         </div>
     </div>
 </div>
@@ -280,9 +358,9 @@
     <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx?new=1") %>" class="btn btn-default">
         <i class="bi bi-folder-plus"></i> New Project
     </a>
-    <a href="<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>" class="btn btn-primary">
+    <button type="button" class="btn btn-primary" onclick="return dfmOpenSpendRequest();">
         <i class="bi bi-plus-circle"></i> New Spend Request
-    </a>
+    </button>
 </div>
 
 <!-- ── Project Action Hidden Fields + Buttons ── -->
@@ -465,6 +543,21 @@
     </div>
 </div>
 
+<!-- ── DASHBOARD SPEND REQUEST MODAL ── -->
+<div class="modal fade spend-frame-modal" id="dashboardSpendRequestModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#2F5597;color:#fff;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
+                <h4 class="modal-title"><i class="bi bi-file-earmark-text"></i> Spend Request</h4>
+            </div>
+            <div class="modal-body">
+                <iframe id="dashboardSpendRequestFrame" title="Spend Request"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- ── PET Delete Hidden Fields + Modal ── -->
 <asp:HiddenField ID="hfDeletePetId" runat="server" Value="0" />
 <asp:Button ID="btnConfirmDeletePet" runat="server" Text="_del" style="display:none;"
@@ -567,6 +660,16 @@ function dfmOpenProject(projId) {
 }
 jQuery('#dashboardProjectModal').on('hidden.bs.modal', function () {
     document.getElementById('dashboardProjectFrame').src = 'about:blank';
+});
+function dfmOpenSpendRequest() {
+    var frame = document.getElementById('dashboardSpendRequestFrame');
+    frame.src = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1';
+    jQuery('#dashboardSpendRequestModal').modal('show');
+    return false;
+}
+jQuery('#dashboardSpendRequestModal').on('hidden.bs.modal', function () {
+    document.getElementById('dashboardSpendRequestFrame').src = 'about:blank';
+    if (window.__doPostBack) window.__doPostBack('<%= btnApply.UniqueID %>', '');
 });
 </script>
 </ContentTemplate>

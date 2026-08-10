@@ -1368,7 +1368,7 @@ function szScore() {
                 <div class="form-grid-4">
                     <div class="form-group">
                         <label>Vendor</label>
-                        <asp:DropDownList ID="ddlBgtVendor" runat="server" CssClass="form-control" />
+                        <asp:TextBox ID="txtBgtVendor" runat="server" CssClass="form-control" />
                     </div>
                     <div class="form-group col-span-2">
                         <label>Justification</label>
@@ -1384,7 +1384,7 @@ function szScore() {
                     </div>
                     <div class="form-group">
                         <label>GL Number</label>
-                        <asp:DropDownList ID="ddlBgtGL" runat="server" CssClass="form-control" />
+                        <asp:TextBox ID="txtBgtGL" runat="server" CssClass="form-control" />
                     </div>
                     <div class="form-group">
                         <label>Request Ref</label>

@@ -1355,7 +1355,7 @@ namespace DFM_BPM.Forms {
 
         protected global::System.Web.UI.WebControls.HiddenField hfEditBudgetLineId;
 
-        protected global::System.Web.UI.WebControls.DropDownList ddlBgtVendor;
+        protected global::System.Web.UI.WebControls.TextBox txtBgtVendor;
 
         protected global::System.Web.UI.WebControls.TextBox txtBgtJustification;
 
@@ -1363,7 +1363,7 @@ namespace DFM_BPM.Forms {
 
         protected global::System.Web.UI.WebControls.DropDownList ddlBgtCcy;
 
-        protected global::System.Web.UI.WebControls.DropDownList ddlBgtGL;
+        protected global::System.Web.UI.WebControls.TextBox txtBgtGL;
 
         protected global::System.Web.UI.WebControls.TextBox txtBgtPetRef;
 
