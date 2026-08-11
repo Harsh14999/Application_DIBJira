@@ -40,6 +40,7 @@
 .tree-item:last-child { border-bottom:none; }
 .tree-item:hover { background:#f8fafc; }
 .project-parent-row { background:#fff; }
+.project-parent-row.has-requests { cursor:pointer; }
 .project-parent-row:hover { background:#f8fafc; }
 .project-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:6px; }
 .project-child-row td { background:#f8fafc; border-top:0; }
@@ -661,9 +662,12 @@ function dfmOpenProject(projId) {
 jQuery('#dashboardProjectModal').on('hidden.bs.modal', function () {
     document.getElementById('dashboardProjectFrame').src = 'about:blank';
 });
-function dfmOpenSpendRequest() {
+function dfmOpenSpendRequest(petId, projectId) {
     var frame = document.getElementById('dashboardSpendRequestFrame');
-    frame.src = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1';
+    var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1';
+    if (petId) url += '&id=' + encodeURIComponent(petId);
+    else if (projectId) url += '&project=' + encodeURIComponent(projectId);
+    frame.src = url;
     jQuery('#dashboardSpendRequestModal').modal('show');
     return false;
 }

@@ -20,9 +20,26 @@
 .dfm-table tr:nth-child(odd)  td { background:#fafbff; }
 .dfm-table tr:nth-child(even) td { background:#ffffff; }
 .dfm-table tr:hover td { background:#eff6ff; }
+.project-parent-row.has-requests { cursor:pointer; }
+.project-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:6px; }
+.project-child-row td { background:#f8fafc !important; border-top:0; }
+.project-child-box { margin:4px 0 8px 24px; border:1px solid #dbeafe; border-radius:8px; overflow:hidden; background:#fff; }
+.project-child-title { padding:8px 10px; background:#eff6ff; color:#1d4ed8; font-weight:700; font-size:.84em; }
+.tree-hidden { display:none !important; }
+.pet-status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.75em; font-weight:700; white-space:nowrap; }
+.st-draft    { background:#f1f5f9; color:#475569; }
+.st-pending  { background:#fef3c7; color:#92400e; }
+.st-review   { background:#dbeafe; color:#1d4ed8; }
+.st-approved { background:#d1fae5; color:#065f46; }
+.st-rejected { background:#fee2e2; color:#991b1b; }
+.st-sent     { background:#ede9fe; color:#5b21b6; }
 .project-modal .modal-dialog { width:95%; max-width:1100px; }
 .project-modal .modal-body { max-height:76vh; overflow-y:auto; padding:16px; }
+.spend-frame-modal .modal-dialog { width:95%; max-width:1180px; }
+.spend-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
+.spend-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
 .portfolio-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+.portfolio-toolbar-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 </style>
 </asp:Content>
 
@@ -45,39 +62,36 @@
 
 <div class="portfolio-toolbar">
     <div style="font-size:.9em;color:#64748b;">Registered Projects (<asp:Literal ID="litProjectPortfolioCount" runat="server" Text="0" />)</div>
-    <asp:Button ID="btnNewProject" runat="server" CssClass="btn btn-primary" Text="New Project" OnClick="btnNewProject_Click" CausesValidation="false" />
+    <div class="portfolio-toolbar-actions">
+        <asp:Button ID="btnNewProject" runat="server" CssClass="btn btn-primary" Text="New Project" OnClick="btnNewProject_Click" CausesValidation="false" />
+        <button type="button" class="btn btn-success" onclick="return prOpenSpendRequest(null, null);"><i class="bi bi-plus-circle"></i> New Spend Request</button>
+    </div>
 </div>
 
 <div class="card-panel panel-spend-request">
     <div class="card-panel-hdr"><i class="bi bi-table"></i> Project Portfolio</div>
     <div class="card-panel-body" style="padding:0;overflow-x:auto;">
-        <asp:GridView ID="gvProjectPortfolio" runat="server" AutoGenerateColumns="false"
-            CssClass="dfm-table" GridLines="None" DataKeyNames="ProjectID" OnRowCommand="gvProjectPortfolio_RowCommand"
-            EmptyDataText="No projects registered yet.">
-            <Columns>
-                <asp:BoundField DataField="ProjectID" HeaderText="Project ID" />
-                <asp:BoundField DataField="ProjectName" HeaderText="Project Name" />
-                <asp:TemplateField HeaderText="Project Type">
-                    <ItemTemplate><%# Convert.ToBoolean(Eval("IsNonJiraProject")) ? "Non-JIRA" : "JIRA" %></ItemTemplate>
-                </asp:TemplateField>
-                <asp:BoundField DataField="AccountableExecLead" HeaderText="Accountable Exec Lead" />
-                <asp:BoundField DataField="SmeLead" HeaderText="SME Lead" />
-                <asp:BoundField DataField="ProjectManager" HeaderText="Project Manager" />
-                <asp:BoundField DataField="CreatedBy" HeaderText="Requestor" />
-                <asp:TemplateField HeaderText="Status">
-                    <ItemTemplate><%# Convert.ToBoolean(Eval("IsActive")) ? "<span class='badge-success'>Active</span>" : "<span class='badge-danger'>Inactive</span>" %></ItemTemplate>
-                </asp:TemplateField>
-                <asp:BoundField DataField="CreatedDate" HeaderText="Created Date" DataFormatString="{0:dd-MMM-yyyy}" />
-                <asp:TemplateField HeaderText="Action">
-                    <ItemTemplate>
-                        <asp:LinkButton runat="server" CssClass="btn btn-xs btn-primary" CommandName="EditProject"
-                            CommandArgument='<%# Eval("ProjectID") %>' CausesValidation="false">
-                            <i class="bi bi-pencil"></i> Edit
-                        </asp:LinkButton>
-                    </ItemTemplate>
-                </asp:TemplateField>
-            </Columns>
-        </asp:GridView>
+        <table class="dfm-table" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>Project ID</th>
+                    <th>Project Name</th>
+                    <th>Project Type</th>
+                    <th>Accountable Exec Lead</th>
+                    <th>SME Lead</th>
+                    <th>Project Manager</th>
+                    <th>Requestor</th>
+                    <th>Status</th>
+                    <th>Created Date</th>
+                    <th>Spend Requests</th>
+                    <th>Requested (AED)</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <asp:Literal ID="litProjectPortfolioRows" runat="server" />
+            </tbody>
+        </table>
     </div>
 </div>
 
@@ -145,11 +159,25 @@
             <div class="modal-footer">
         <asp:Button ID="btnSave" runat="server" CssClass="btn btn-primary" Text="Save Project" OnClick="btnSave_Click" />
         <% if (IsExistingProject) { %>
-        <a href='<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?project=<%= Server.UrlEncode(CurrentProjectId) %>' class="btn btn-success">
+        <button type="button" class="btn btn-success" onclick="return prOpenSpendRequest(null, '<%= System.Web.HttpUtility.JavaScriptStringEncode(CurrentProjectId) %>');">
             <i class="bi bi-plus-circle"></i> Create Spend Request for this Project
-        </a>
+        </button>
         <% } %>
                 <button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade spend-frame-modal" id="projectSpendRequestModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#2F5597;color:#fff;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
+                <h4 class="modal-title"><i class="bi bi-file-earmark-text"></i> Spend Request</h4>
+            </div>
+            <div class="modal-body">
+                <iframe id="projectSpendRequestFrame" title="Spend Request"></iframe>
             </div>
         </div>
     </div>
@@ -381,6 +409,38 @@ function prSzPreSave() {
     }
     return true;
 }
+function prProjectTog(cls) {
+    var rows = document.querySelectorAll('.project-child-row.' + cls);
+    if (!rows.length) return false;
+    var hidden = rows[0].classList.contains('tree-hidden');
+    for (var i = 0; i < rows.length; i++) {
+        if (hidden) rows[i].classList.remove('tree-hidden');
+        else rows[i].classList.add('tree-hidden');
+    }
+    var btns = document.querySelectorAll('[data-project-tog="' + cls + '"]');
+    for (var j = 0; j < btns.length; j++)
+        btns[j].innerHTML = hidden ? '&#9660;' : '&#9658;';
+    return false;
+}
+function prOpenProject(projectId) {
+    var url = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projectId);
+    if (window.location.search.indexOf('embed=1') >= 0) url += '&embed=1';
+    window.location.href = url;
+    return false;
+}
+function prOpenSpendRequest(petId, projectId) {
+    var frame = document.getElementById('projectSpendRequestFrame');
+    var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1';
+    if (petId) url += '&id=' + encodeURIComponent(petId);
+    else if (projectId) url += '&project=' + encodeURIComponent(projectId);
+    frame.src = url;
+    jQuery('#projectSpendRequestModal').modal('show');
+    return false;
+}
+jQuery('#projectSpendRequestModal').on('hidden.bs.modal', function () {
+    document.getElementById('projectSpendRequestFrame').src = 'about:blank';
+    window.location.reload();
+});
 </script>
 
 <!-- Project Delete Confirmation Modal -->

@@ -18,7 +18,7 @@ namespace DFM_BPM.Forms {
         protected global::System.Web.UI.WebControls.Button btnConfirmDeleteProject;
         protected global::System.Web.UI.WebControls.Literal litProjectPortfolioCount;
         protected global::System.Web.UI.WebControls.Button btnNewProject;
-        protected global::System.Web.UI.WebControls.GridView gvProjectPortfolio;
+        protected global::System.Web.UI.WebControls.Literal litProjectPortfolioRows;
         protected global::System.Web.UI.WebControls.Panel pnlCreatedInfo;
         protected global::System.Web.UI.WebControls.Literal litCreatedInfo;
         protected global::System.Web.UI.WebControls.RadioButtonList rblProjectMode;

@@ -1,5 +1,6 @@
 using System;
 using System.Data;
+using System.Text;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 using DFM_BPM.App_Code.DAL;
@@ -75,10 +76,134 @@ namespace DFM_BPM.Forms
 
         private void BindProjectPortfolio()
         {
-            DataTable dt = ProjectDAL.GetProjects();
-            gvProjectPortfolio.DataSource = dt;
-            gvProjectPortfolio.DataBind();
-            litProjectPortfolioCount.Text = dt.Rows.Count.ToString();
+            DataTable projects = ProjectDAL.GetProjects();
+            DataTable allForms = WorkflowDAL.GetPetFormsDashboard(null, null, null, null, null);
+            litProjectPortfolioCount.Text = projects.Rows.Count.ToString();
+
+            var requestsByProject = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<DataRow>>(StringComparer.OrdinalIgnoreCase);
+            foreach (DataRow request in allForms.Rows)
+            {
+                string projectId = Val(request, "ProjectID");
+                if (string.IsNullOrEmpty(projectId)) projectId = "(No Project)";
+                if (!requestsByProject.ContainsKey(projectId))
+                    requestsByProject[projectId] = new System.Collections.Generic.List<DataRow>();
+                requestsByProject[projectId].Add(request);
+            }
+
+            StringBuilder sb = new StringBuilder();
+            foreach (DataRow project in projects.Rows)
+            {
+                string projectId = Val(project, "ProjectID");
+                string safeId = "pf" + Math.Abs(projectId.GetHashCode() & 0x7FFFFFFF).ToString();
+                System.Collections.Generic.List<DataRow> requests;
+                if (!requestsByProject.TryGetValue(projectId, out requests))
+                    requests = new System.Collections.Generic.List<DataRow>();
+
+                decimal requestedTotal = 0m;
+                foreach (DataRow request in requests)
+                    requestedTotal += GetDecimal(request, "TotalRequestedAED");
+
+                string toggle = requests.Count > 0
+                    ? "<span class='project-toggle' data-project-tog='" + safeId + "' onclick=\"event.cancelBubble=true; return prProjectTog('" + safeId + "');\">&#9658;</span>"
+                    : "<span style='display:inline-block;width:18px;'></span>";
+                string statusHtml = GetBool(project, "IsActive")
+                    ? "<span class='badge-success'>Active</span>"
+                    : "<span class='badge-danger'>Inactive</span>";
+                string jsProjectId = System.Web.HttpUtility.JavaScriptStringEncode(projectId);
+
+                sb.AppendFormat(
+                    "<tr class='project-parent-row{12}'{13}>" +
+                    "<td>{0}<strong>{1}</strong></td>" +
+                    "<td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td><td>{8}</td><td>{9}</td>" +
+                    "<td class='text-right'><strong>{10}</strong></td><td class='text-right'><strong>{11}</strong></td>" +
+                    "<td><div class='gv-acts'>" +
+                    "<button type='button' class='btn btn-xs btn-primary' onclick=\"event.cancelBubble=true; return prOpenProject('{14}');\"><i class='bi bi-pencil'></i> Edit</button>" +
+                    "<button type='button' class='btn btn-xs btn-success' onclick=\"event.cancelBubble=true; return prOpenSpendRequest(null, '{14}');\"><i class='bi bi-plus-circle'></i> New SR</button>" +
+                    "</div></td></tr>",
+                    toggle,
+                    Html(projectId),
+                    Html(Val(project, "ProjectName")),
+                    GetBool(project, "IsNonJiraProject") ? "Non-JIRA" : "JIRA",
+                    Html(Val(project, "AccountableExecLead")),
+                    Html(Val(project, "SmeLead")),
+                    Html(Val(project, "ProjectManager")),
+                    Html(Val(project, "CreatedBy")),
+                    statusHtml,
+                    FormatDate(project, "CreatedDate"),
+                    requests.Count.ToString("N0"),
+                    requestedTotal > 0 ? requestedTotal.ToString("N0") : "",
+                    requests.Count > 0 ? " has-requests" : "",
+                    requests.Count > 0 ? " onclick=\"return prProjectTog('" + safeId + "');\"" : "",
+                    jsProjectId);
+
+                if (requests.Count > 0)
+                    AppendPortfolioRequestChildRows(sb, safeId, requests);
+            }
+
+            if (sb.Length == 0)
+                sb.Append("<tr><td colspan='12' style='text-align:center;padding:18px;color:#94a3b8;'>No projects registered yet.</td></tr>");
+
+            litProjectPortfolioRows.Text = sb.ToString();
+        }
+
+        private void AppendPortfolioRequestChildRows(StringBuilder sb, string safeId, System.Collections.Generic.List<DataRow> requests)
+        {
+            requests.Sort(delegate (DataRow a, DataRow b) {
+                int ia = Convert.ToInt32(a["PetFormID"]);
+                int ib = Convert.ToInt32(b["PetFormID"]);
+                return ia.CompareTo(ib);
+            });
+
+            sb.Append("<tr class='project-child-row tree-hidden " + safeId + "'><td colspan='12'>");
+            sb.Append("<div class='project-child-box'><div class='project-child-title'>Spend Requests under this Project</div>");
+            sb.Append("<table class='dfm-table' style='width:100%;font-size:.86em;'><thead><tr>");
+            sb.Append("<th>Code</th><th>Status</th><th>Project</th><th>Type</th><th>Budget Source</th><th class='text-right'>Requested (AED)</th><th>Approver</th><th>Requestor</th><th>Submitted</th><th>Action</th>");
+            sb.Append("</tr></thead><tbody>");
+
+            for (int i = 0; i < requests.Count; i++)
+            {
+                DataRow r = requests[i];
+                string status = Val(r, "Status");
+                string badgeCss = status == "Draft" ? "st-draft"
+                                : status == "PendingReview" ? "st-review"
+                                : status == "PendingApproval" ? "st-pending"
+                                : status == "Approved" ? "st-approved"
+                                : status == "Rejected" ? "st-rejected"
+                                : "st-sent";
+                string petId = Val(r, "PetFormID");
+                string refNo = string.IsNullOrEmpty(Val(r, "PetRefNo")) ? "#" + petId : Val(r, "PetRefNo");
+                string type = Val(r, "CapexOpexType");
+                string typeColor = type == "CAPEX" ? "#2563eb" : (type == "OPEX" ? "#059669" : "#64748b");
+                decimal requested = GetDecimal(r, "TotalRequestedAED");
+                string jsPetId = System.Web.HttpUtility.JavaScriptStringEncode(petId);
+
+                sb.AppendFormat(
+                    "<tr>" +
+                    "<td><strong>v{0} - {1}</strong></td>" +
+                    "<td><span class='pet-status {2}'>{3}</span></td>" +
+                    "<td>{4}</td>" +
+                    "<td><span style='font-weight:700;color:{5};'>{6}</span></td>" +
+                    "<td>{7}</td>" +
+                    "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{8}</td>" +
+                    "<td>{9}</td><td>{10}</td><td>{11}</td>" +
+                    "<td><button type='button' class='btn btn-xs btn-primary' onclick=\"return prOpenSpendRequest('{12}', null);\"><i class='bi bi-arrow-right-circle'></i></button></td>" +
+                    "</tr>",
+                    i + 1,
+                    Html(refNo),
+                    badgeCss,
+                    Html(status),
+                    Html(Val(r, "ProjectID")),
+                    typeColor,
+                    Html(type),
+                    Html(Val(r, "BudgetSourceID")),
+                    requested > 0 ? requested.ToString("N0") : "",
+                    Html(Val(r, "ApproverUsername")),
+                    Html(Val(r, "CreatedBy")),
+                    FormatDate(r, "SubmittedDate"),
+                    jsPetId);
+            }
+
+            sb.Append("</tbody></table></div></td></tr>");
         }
 
         private void BindJiraDropdown()
@@ -393,6 +518,35 @@ namespace DFM_BPM.Forms
         {
             ScriptManager.RegisterStartupScript(this, GetType(), "showProjectRegistrationModal",
                 "$(function(){ $('#projectRegistrationModal').modal('show'); });", true);
+        }
+
+        private static string Val(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return "";
+            return row[col].ToString();
+        }
+
+        private static string Html(string value)
+        {
+            return System.Web.HttpUtility.HtmlEncode(value ?? "");
+        }
+
+        private static bool GetBool(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return false;
+            return Convert.ToBoolean(row[col]);
+        }
+
+        private static decimal GetDecimal(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return 0m;
+            return Convert.ToDecimal(row[col]);
+        }
+
+        private static string FormatDate(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return "";
+            return Convert.ToDateTime(row[col]).ToString("dd-MMM-yyyy");
         }
 
         private void ShowMsg(string msg) { lblMsg.Text = msg; lblMsg.Visible = true; }
