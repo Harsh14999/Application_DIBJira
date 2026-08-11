@@ -300,7 +300,7 @@
             </asp:Panel>
 
             <% if (IsEditable) { %>
-                <div style="margin-top:12px;display:flex;justify-content:flex-end;">
+            <div style="margin-top:14px;display:flex;justify-content:center;">
                 <asp:Button ID="btnSaveHeader" runat="server" CssClass="btn btn-primary"
                     Text="Save" OnClick="btnSaveHeader_Click" />
             </div>
