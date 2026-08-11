@@ -24,7 +24,10 @@
 .project-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:6px; }
 .project-child-row td { background:#f8fafc !important; border-top:0; }
 .project-child-box { margin:4px 0 8px 24px; border:1px solid #dbeafe; border-radius:8px; overflow:hidden; background:#fff; }
-.project-child-title { padding:8px 10px; background:#eff6ff; color:#1d4ed8; font-weight:700; font-size:.84em; }
+.project-child-title { padding:10px 12px; background:#eff6ff; color:#1d4ed8; font-weight:800; font-size:.95em; }
+.project-child-box .dfm-table { font-size:.95em !important; }
+.project-child-box .dfm-table th { font-size:.88em !important; padding:8px 10px !important; }
+.project-child-box .dfm-table td { font-size:.92em !important; padding:8px 10px !important; }
 .tree-hidden { display:none !important; }
 .pet-status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.75em; font-weight:700; white-space:nowrap; }
 .st-draft    { background:#f1f5f9; color:#475569; }

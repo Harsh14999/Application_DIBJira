@@ -45,7 +45,10 @@
 .project-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:6px; }
 .project-child-row td { background:#f8fafc; border-top:0; }
 .project-child-box { margin:4px 0 8px 24px; border:1px solid #dbeafe; border-radius:8px; overflow:hidden; background:#fff; }
-.project-child-title { padding:8px 10px; background:#eff6ff; color:#1d4ed8; font-weight:700; font-size:.84em; }
+.project-child-title { padding:10px 12px; background:#eff6ff; color:#1d4ed8; font-weight:800; font-size:.95em; }
+.project-child-box .dfm-table { font-size:.95em !important; }
+.project-child-box .dfm-table th { font-size:.88em !important; padding:8px 10px !important; }
+.project-child-box .dfm-table td { font-size:.92em !important; padding:8px 10px !important; }
 .project-child-empty { padding:10px 12px; color:#94a3b8; font-size:.86em; }
 .pet-status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.75em; font-weight:700; white-space:nowrap; }
 .st-draft    { background:#f1f5f9; color:#475569; }
@@ -297,7 +300,7 @@
 </div>
 
 <!-- ── CAPEX/OPEX DATA SUMMARY ── -->
-<div class="dash-section" id="sec-capex-opex">
+<div class="dash-section collapsed" id="sec-capex-opex" data-dash-persist="1" data-default-collapsed="1">
     <div class="dash-sec-hdr" onclick="dfmSecTog('sec-capex-opex')">
         <span><i class="bi bi-pie-chart"></i> CAPEX vs OPEX Summary</span>
         <i class="bi bi-chevron-down dash-sec-toggle"></i>
@@ -327,16 +330,12 @@
                         <th>Project Type</th>
                         <th>Accountable Exec Lead</th>
                         <th>SME Lead</th>
-                        <th>Project Size</th>
                         <th>Project Manager</th>
                         <th>Requestor</th>
                         <th>Status</th>
                         <th>Created Date</th>
-                        <th>Approved Spend Request</th>
-                        <th>Budget</th>
-                        <th>Invoice</th>
-                        <th>Invoice Settled</th>
-                        <th>Outstanding</th>
+                        <th>Spend Requests</th>
+                        <th>Requested (AED)</th>
                         <th>Action</th>
                     </tr>
                 </thead>

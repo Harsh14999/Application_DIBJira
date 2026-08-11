@@ -156,7 +156,7 @@ namespace DFM_BPM.Forms
 
             sb.Append("<tr class='project-child-row tree-hidden " + safeId + "'><td colspan='12'>");
             sb.Append("<div class='project-child-box'><div class='project-child-title'>Spend Requests under this Project</div>");
-            sb.Append("<table class='dfm-table' style='width:100%;font-size:.86em;'><thead><tr>");
+            sb.Append("<table class='dfm-table' style='width:100%;'><thead><tr>");
             sb.Append("<th>Code</th><th>Status</th><th>Project</th><th>Type</th><th>Budget Source</th><th class='text-right'>Requested (AED)</th><th>Approver</th><th>Requestor</th><th>Submitted</th><th>Action</th>");
             sb.Append("</tr></thead><tbody>");
 

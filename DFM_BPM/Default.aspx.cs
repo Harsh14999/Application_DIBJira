@@ -117,30 +117,21 @@ namespace DFM_BPM
                     string toggle = requests.Count > 0
                         ? "<span class='project-toggle' data-project-tog='" + safeId + "' onclick=\"event.cancelBubble=true; return dfmProjectTog('" + safeId + "');\">&#9658;</span>"
                         : "<span style='display:inline-block;width:18px;'></span>";
-                    string size = Val(project, "ProjectSize");
-                    string sizeHtml = string.IsNullOrEmpty(size)
-                        ? "<span style='color:#94a3b8;'>--</span>"
-                        : "<span class='ps-size-badge size-" + Html(size).ToLowerInvariant() + "'>" + Html(size) + "</span>";
                     string statusHtml = GetBool(project, "IsActive")
                         ? "<span class='badge-success'>Active</span>"
                         : "<span class='badge-danger'>Inactive</span>";
-                    DataRow financial = WorkflowDAL.GetProjectFinancialSummary(projectId);
-                    decimal approvedSpend = GetDecimal(financial, "ApprovedSpendRequestTotal");
-                    decimal budgetTotal = GetDecimal(financial, "BudgetTotal");
-                    decimal invoiceTotal = GetDecimal(financial, "InvoiceTotal");
-                    decimal invoiceSettled = GetDecimal(financial, "InvoiceSettledTotal");
-                    decimal outstanding = invoiceTotal - invoiceSettled;
+                    decimal requestedTotal = 0m;
+                    foreach (DataRow request in requests)
+                        requestedTotal += GetDecimal(request, "TotalRequestedAED");
 
                     sb.AppendFormat(
-                        "<tr class='project-parent-row{17}'{18}>" +
+                        "<tr class='project-parent-row{12}'{13}>" +
                         "<td>{0}<strong>{1}</strong></td>" +
-                        "<td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td><td>{8}</td><td>{9}</td><td>{10}</td>" +
-                        "<td class='text-right'>{11}</td><td class='text-right'>{12}</td><td class='text-right'>{13}</td><td class='text-right'>{14}</td><td class='text-right'>{15}</td>" +
+                        "<td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td><td>{8}</td><td>{9}</td>" +
+                        "<td class='text-right'><strong>{10}</strong></td><td class='text-right'><strong>{11}</strong></td>" +
                         "<td><div class='gv-acts'>" +
-                        "<button type='button' class='btn btn-xs btn-primary' onclick=\"event.cancelBubble=true; return dfmOpenProject('{16}');\"><i class='bi bi-arrow-right-circle'></i> Open</button>" +
-                        "<button type='button' class='proj-action-btn btn-sr' onclick=\"event.cancelBubble=true; dfmShowSR('{16}');\"><i class='bi bi-file-earmark-text'></i></button>" +
-                        "<button type='button' class='proj-action-btn btn-bgt' onclick=\"event.cancelBubble=true; dfmShowBgt('{16}');\"><i class='bi bi-cash-coin'></i></button>" +
-                        "<button type='button' class='proj-action-btn btn-inv' onclick=\"event.cancelBubble=true; dfmShowInv('{16}');\"><i class='bi bi-receipt'></i></button>" +
+                        "<button type='button' class='btn btn-xs btn-primary' onclick=\"event.cancelBubble=true; return dfmOpenProject('{14}');\"><i class='bi bi-pencil'></i> Edit</button>" +
+                        "<button type='button' class='btn btn-xs btn-success' onclick=\"event.cancelBubble=true; return dfmOpenSpendRequest(null, '{14}');\"><i class='bi bi-plus-circle'></i> New SR</button>" +
                         "</div></td></tr>",
                         toggle,
                         Html(projectId),
@@ -148,32 +139,28 @@ namespace DFM_BPM
                         GetBool(project, "IsNonJiraProject") ? "Non-JIRA" : "JIRA",
                         Html(Val(project, "AccountableExecLead")),
                         Html(Val(project, "SmeLead")),
-                        sizeHtml,
                         Html(Val(project, "ProjectManager")),
                         Html(Val(project, "CreatedBy")),
                         statusHtml,
                         FormatDate(project, "CreatedDate"),
-                        FormatCurrency(approvedSpend),
-                        FormatCurrency(budgetTotal),
-                        FormatCurrency(invoiceTotal),
-                        FormatCurrency(invoiceSettled),
-                        FormatCurrency(outstanding),
-                        System.Web.HttpUtility.JavaScriptStringEncode(projectId),
+                        requests.Count.ToString("N0"),
+                        requestedTotal > 0 ? requestedTotal.ToString("N0") : "",
                         requests.Count > 0 ? " has-requests" : "",
-                        requests.Count > 0 ? " onclick=\"return dfmProjectTog('" + safeId + "');\"" : "");
+                        requests.Count > 0 ? " onclick=\"return dfmProjectTog('" + safeId + "');\"" : "",
+                        System.Web.HttpUtility.JavaScriptStringEncode(projectId));
 
                     if (requests.Count > 0)
                         AppendRequestChildRows(sb, safeId, requests);
                 }
 
                 if (sb.Length == 0)
-                    sb.Append("<tr><td colspan='16' style='text-align:center;padding:18px;color:#94a3b8;'>No registered projects found for the selected filters.</td></tr>");
+                    sb.Append("<tr><td colspan='12' style='text-align:center;padding:18px;color:#94a3b8;'>No registered projects found for the selected filters.</td></tr>");
 
                 litRegisteredProjectRows.Text = sb.ToString();
             }
             catch (Exception ex)
             {
-                litRegisteredProjectRows.Text = "<tr><td colspan='16' style='padding:14px;color:#dc2626;'>Error loading projects: " +
+                litRegisteredProjectRows.Text = "<tr><td colspan='12' style='padding:14px;color:#dc2626;'>Error loading projects: " +
                     System.Web.HttpUtility.HtmlEncode(ex.Message) + "</td></tr>";
             }
         }
@@ -261,10 +248,10 @@ namespace DFM_BPM
                 return ia.CompareTo(ib);
             });
 
-            sb.Append("<tr class='project-child-row tree-hidden " + safeId + "'><td colspan='16'>");
+            sb.Append("<tr class='project-child-row tree-hidden " + safeId + "'><td colspan='12'>");
             sb.Append("<div class='project-child-box'><div class='project-child-title'>Spend Requests under this Project</div>");
-            sb.Append("<table class='dfm-table' style='width:100%;font-size:.86em;'><thead><tr>");
-            sb.Append("<th>Request</th><th>Status</th><th>Type</th><th>Budget Source</th><th class='text-right'>Requested (AED)</th><th>Approver</th><th>Requestor</th><th>Submitted</th><th>Action</th>");
+            sb.Append("<table class='dfm-table' style='width:100%;'><thead><tr>");
+            sb.Append("<th>Code</th><th>Status</th><th>Project</th><th>Type</th><th>Budget Source</th><th class='text-right'>Requested (AED)</th><th>Approver</th><th>Requestor</th><th>Submitted</th><th>Action</th>");
             sb.Append("</tr></thead><tbody>");
 
             for (int i = 0; i < requests.Count; i++)
@@ -287,17 +274,19 @@ namespace DFM_BPM
                     "<tr>" +
                     "<td><a href='javascript:void(0);' onclick=\"return dfmOpenSpendRequest('{0}', null);\" style='font-weight:700;color:#1a3c5e;'>v{1} &ndash; {2}</a></td>" +
                     "<td><span class='pet-status {3}'>{4}</span></td>" +
-                    "<td><span style='font-weight:700;color:{5};'>{6}</span></td>" +
-                    "<td>{7}</td>" +
-                    "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{8}</td>" +
-                    "<td>{9}</td><td>{10}</td><td>{11}</td>" +
-                    "<td><div class='gv-acts'><button type='button' class='btn btn-xs btn-primary' onclick=\"return dfmOpenSpendRequest('{0}', null);\"><i class='bi bi-arrow-right-circle'></i> Open Request</button>{12}</div></td>" +
+                    "<td>{5}</td>" +
+                    "<td><span style='font-weight:700;color:{6};'>{7}</span></td>" +
+                    "<td>{8}</td>" +
+                    "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{9}</td>" +
+                    "<td>{10}</td><td>{11}</td><td>{12}</td>" +
+                    "<td><div class='gv-acts'><button type='button' class='btn btn-xs btn-primary' onclick=\"return dfmOpenSpendRequest('{0}', null);\"><i class='bi bi-arrow-right-circle'></i></button>{13}</div></td>" +
                     "</tr>",
                     petId,
                     i + 1,
                     Html(refNo),
                     badgeCss,
                     Html(status),
+                    Html(Val(r, "ProjectID")),
                     typeColor,
                     Html(type),
                     Html(Val(r, "BudgetSourceID")),

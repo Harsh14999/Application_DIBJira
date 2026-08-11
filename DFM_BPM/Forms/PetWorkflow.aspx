@@ -300,9 +300,9 @@
             </asp:Panel>
 
             <% if (IsEditable) { %>
-            <div style="margin-top:10px;">
+                <div style="margin-top:12px;display:flex;justify-content:flex-end;">
                 <asp:Button ID="btnSaveHeader" runat="server" CssClass="btn btn-primary"
-                    Text="Save Header" OnClick="btnSaveHeader_Click" />
+                    Text="Save" OnClick="btnSaveHeader_Click" />
             </div>
             <% } %>
         </div>
@@ -585,7 +585,7 @@
         <% } else { %>
         <p style="font-size:.85em;color:#92400e;margin:4px 0 0;background:#fef3c7;border:1px solid #fde68a;border-radius:6px;padding:8px 10px;">
             <i class="bi bi-info-circle"></i> No Approver is assigned, so this project is currently tracked as <strong>Draft</strong> only.
-            Select an Approver above and click <strong>Save Header</strong> if you want to submit it for approval.
+            Select an Approver above and click <strong>Save</strong> if you want to submit it for approval.
         </p>
         <% } %>
     </div>
