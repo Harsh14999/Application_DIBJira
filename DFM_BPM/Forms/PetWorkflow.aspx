@@ -242,13 +242,13 @@
                         </td>
                     </tr>
                     <tr>
-                        <td class="lbl"><i class="bi bi-person-check"></i>Reviewer <small>(optional)</small></td>
+                        <td class="lbl"><i class="bi bi-person-check"></i>Reviewer <span style="color:#dc2626;">*</span></td>
                         <td class="val">
                             <asp:DropDownList ID="ddlReviewer" runat="server" CssClass="form-control select2-enable">
-                                <asp:ListItem Value="">-- Skip reviewer (direct to approver) --</asp:ListItem>
+                                <asp:ListItem Value="">-- Select Reviewer --</asp:ListItem>
                             </asp:DropDownList>
                         </td>
-                        <td class="lbl"><i class="bi bi-person-badge"></i>Approver <small style="color:#64748b;">(optional)</small></td>
+                        <td class="lbl"><i class="bi bi-person-badge"></i>Approver <span style="color:#dc2626;">*</span></td>
                         <td class="val">
                             <asp:DropDownList ID="ddlApprover" runat="server" CssClass="form-control select2-enable" />
                         </td>

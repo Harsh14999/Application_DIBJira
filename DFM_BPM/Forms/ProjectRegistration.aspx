@@ -54,8 +54,8 @@
         </div>
     </div>
     <div class="ux-actions">
-        <asp:Button ID="btnNewProject" runat="server" CssClass="btn btn-primary" Text="New Project" OnClick="btnNewProject_Click" CausesValidation="false" />
-        <button type="button" class="btn btn-success" onclick="return prOpenSpendRequest(null, null);"><i class="bi bi-plus-circle"></i> New Spend Request</button>
+        <asp:Button ID="btnNewProject" runat="server" CssClass="btn btn-new-project" Text="New Project" OnClick="btnNewProject_Click" CausesValidation="false" />
+        <button type="button" class="btn btn-new-spend" onclick="return prOpenSpendRequest(null, null);"><i class="bi bi-plus-circle"></i> New Spend Request</button>
         <% if (CanDeleteProject) { %>
         <asp:Button ID="btnDeleteProject" runat="server" CssClass="btn btn-danger"
             Text="Delete This Project" OnClientClick="$('#projectDelModal').modal('show');return false;"

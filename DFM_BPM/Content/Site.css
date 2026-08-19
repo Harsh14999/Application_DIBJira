@@ -82,6 +82,10 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .ux-subtitle { color: #64748b; font-size: .86em; margin-top: 3px; }
 .ux-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .ux-actions .btn { font-weight: 700; border-radius: 6px; padding: 7px 12px; }
+.btn-new-project { background: #fff4df; border-color: #f0ad4e; color: #8a5200; }
+.btn-new-project:hover, .btn-new-project:focus { background: #ffe7bd; border-color: #ec971f; color: #6b3f00; }
+.btn-new-spend { background: #55b957; border-color: #45a747; color: #fff; }
+.btn-new-spend:hover, .btn-new-spend:focus { background: #449d44; border-color: #398439; color: #fff; }
 .ux-section-hint { color: #64748b; font-size: .84em; font-weight: 600; margin-left: 6px; }
 .ux-table-wrap { border: 1px solid #dbe5f1; border-radius: 8px; overflow: auto; background: #fff; }
 .ux-table-wrap .dfm-table th { font-size: .84em; padding: 9px 10px; }
@@ -89,6 +93,8 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .ux-form-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding-top: 14px; margin-top: 12px; border-top: 1px solid #e2e8f0; }
 .ux-form-actions .btn { min-width: 120px; font-weight: 800; }
 .ux-muted-pill { display: inline-block; background: #f1f5f9; color: #475569; border-radius: 999px; padding: 2px 9px; font-size: .78em; font-weight: 800; }
+.next-step-message { display: block; padding: 12px 14px; background: #ecfdf5; color: #065f46; border: 1px solid #86efac; border-left: 4px solid #16a34a; border-radius: 8px; margin-bottom: 12px; font-size: .9em; font-weight: 700; }
+.next-step-toast { position: fixed; right: 22px; top: 72px; z-index: 9999; max-width: 420px; background: #ecfdf5; color: #065f46; border: 1px solid #86efac; border-left: 4px solid #16a34a; border-radius: 8px; padding: 12px 14px; box-shadow: 0 12px 28px rgba(15, 23, 42, .18); font-size: .9em; font-weight: 700; }
 
 /* ---- Cards ---- */
 .card-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }

@@ -61,6 +61,12 @@ namespace DFM_BPM.Forms
                     pnlProjectDetails.Visible = false;
                     pnlNoProject.Visible = true;
                 }
+
+                if (Session["ProjectNextStep"] != null)
+                {
+                    ShowNextStep(Session["ProjectNextStep"].ToString());
+                    Session.Remove("ProjectNextStep");
+                }
             }
             else
             {
@@ -355,6 +361,7 @@ namespace DFM_BPM.Forms
                 txtProjectManager.Text.Trim(), null, ddlActive.SelectedValue == "Yes", AuthHelper.CurrentUserShort,
                 accExecLead, smeLead);
 
+            Session["ProjectNextStep"] = "Project saved. Next: create a Spend Request for this project, then add line items and submit it for approval.";
             Response.Redirect("~/Forms/ProjectRegistration.aspx?pid=" + Server.UrlEncode(projectId));
         }
 
@@ -489,7 +496,7 @@ namespace DFM_BPM.Forms
             ProjectDAL.SaveProjectSizing(CurrentProjectId, q1, q2, q3, q4, q5, q6, q7,
                 weighted, sizeResult, capacityMap, AuthHelper.CurrentUserShort);
 
-            ShowMsg("Sizing saved. Size: " + sizeResult + " (Score: " + weighted.ToString("F4") + ")");
+            ShowNextStep("Sizing saved. Size: " + sizeResult + " (Score: " + weighted.ToString("F4") + "). Next: create or continue the Spend Request for this project.");
             LoadProjectSizing(CurrentProjectId);
         }
 
@@ -549,6 +556,16 @@ namespace DFM_BPM.Forms
             return Convert.ToDateTime(row[col]).ToString("dd-MMM-yyyy");
         }
 
-        private void ShowMsg(string msg) { lblMsg.Text = msg; lblMsg.Visible = true; }
+        private void ShowMsg(string msg) { lblMsg.Text = msg; lblMsg.CssClass = "alert alert-info"; lblMsg.Visible = true; }
+
+        private void ShowNextStep(string msg)
+        {
+            lblMsg.Text = msg;
+            lblMsg.CssClass = "next-step-message";
+            lblMsg.Visible = true;
+            string safe = System.Web.HttpUtility.JavaScriptStringEncode(msg);
+            string script = "(function(){var t=document.createElement('div');t.className='next-step-toast';t.innerHTML='" + safe + "';document.body.appendChild(t);setTimeout(function(){if(t&&t.parentNode)t.parentNode.removeChild(t);},7000);})();";
+            ScriptManager.RegisterStartupScript(this, GetType(), "projectNextStepToast" + DateTime.Now.Ticks.ToString(), script, true);
+        }
     }
 }

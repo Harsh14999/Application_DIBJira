@@ -120,10 +120,10 @@
         <div class="ux-subtitle">Work queue, registered projects, approvals, and spend request actions in one place. Last Sync: <asp:Literal ID="litLastSync" runat="server" Text="–" /></div>
     </div>
     <div class="ux-actions">
-        <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx?new=1") %>" class="btn btn-default">
+        <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx?new=1") %>" class="btn btn-new-project">
             <i class="bi bi-folder-plus"></i> New Project
         </a>
-        <button type="button" class="btn btn-primary" onclick="return dfmOpenSpendRequest();">
+        <button type="button" class="btn btn-new-spend" onclick="return dfmOpenSpendRequest();">
             <i class="bi bi-plus-circle"></i> New Spend Request
         </button>
     </div>

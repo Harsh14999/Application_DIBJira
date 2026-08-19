@@ -134,6 +134,11 @@ namespace DFM_BPM.Forms
                         ActiveTab = Request.QueryString["tab"];
                         hfActiveTab.Value = ActiveTab;
                     }
+                    if (Session["PetNextStep"] != null)
+                    {
+                        ShowNextStep(Session["PetNextStep"].ToString());
+                        Session.Remove("PetNextStep");
+                    }
                 }
                 else
                 {
@@ -237,7 +242,7 @@ namespace DFM_BPM.Forms
             ddlReviewer.DataTextField  = "FullName";
             ddlReviewer.DataValueField = "Username";
             ddlReviewer.DataBind();
-            ddlReviewer.Items.Insert(0, new ListItem("-- Skip reviewer (direct to approver) --", ""));
+            ddlReviewer.Items.Insert(0, new ListItem("-- Select Reviewer --", ""));
 
             // Approvers
             DataTable dtApp = MastersDAL.GetApprovers();
@@ -709,6 +714,9 @@ namespace DFM_BPM.Forms
             string approverVal = ddlApprover.SelectedValue == "" ? null : ddlApprover.SelectedValue;
             string budgetSrc   = ddlBudgetSource.SelectedValue == "" ? null : ddlBudgetSource.SelectedValue;
 
+            if (string.IsNullOrEmpty(reviewerVal)) { ShowMsg("Reviewer is required before saving the Spend Request."); return; }
+            if (string.IsNullOrEmpty(approverVal)) { ShowMsg("Approver is required before saving the Spend Request."); return; }
+
             if (CurrentPetFormId == 0)
             {
                 int newId = WorkflowDAL.CreatePetForm(
@@ -717,6 +725,7 @@ namespace DFM_BPM.Forms
                     reviewerVal, approverVal, AuthHelper.CurrentUserShort,
                     isNonJira, projectName);
                 CurrentPetFormId = newId;
+                Session["PetNextStep"] = "Spend Request saved. Next: add line items, attach supporting documents if needed, then submit it for approval.";
                 Response.Redirect("~/Forms/PetWorkflow.aspx?id=" + newId);
                 return;
             }
@@ -729,7 +738,7 @@ namespace DFM_BPM.Forms
                     isNonJira, projectName);
             }
 
-            ShowMsg("Header saved.");
+            ShowNextStep("Spend Request saved. Next: review or add line items, attach documents if needed, then submit it for approval.");
             pnlLines.Visible = true;
             pnlLinesGrid.Visible = true;
             ShowBudgetAmounts(ddlType.SelectedValue, ddlBudgetSource.SelectedValue);
@@ -804,6 +813,7 @@ namespace DFM_BPM.Forms
 
             hfEditLineId.Value = "";
             BindLines(CurrentPetFormId);
+            ShowNextStep("Line item saved. Next: add another line item if required, or go to Approval and submit the Spend Request.");
         }
 
         protected void gvLines_RowCommand(object sender, GridViewCommandEventArgs e)
@@ -990,7 +1000,7 @@ namespace DFM_BPM.Forms
             ActiveTab = "sizing";
             hfActiveTab.Value = "sizing";
             LoadSizingForProject(projectId);
-            ShowMsg("Sizing saved. Size: " + sizeResult + "  (Weighted score: " + weighted.ToString("F4") + ")");
+            ShowNextStep("Sizing saved. Size: " + sizeResult + "  (Weighted score: " + weighted.ToString("F4") + "). Next: continue the Spend Request details or submit for approval when line items are ready.");
         }
 
         /// <summary>Loads the single (upsert-model) sizing record for a registered Project -- shared 1:1 with
@@ -1035,7 +1045,17 @@ namespace DFM_BPM.Forms
         }
 
         // ===== Helpers =====
-        private void ShowMsg(string msg) { lblMsg.Text = msg; lblMsg.Visible = true; }
+        private void ShowMsg(string msg) { lblMsg.Text = msg; lblMsg.CssClass = "alert alert-info"; lblMsg.Visible = true; }
+
+        private void ShowNextStep(string msg)
+        {
+            lblMsg.Text = msg;
+            lblMsg.CssClass = "next-step-message";
+            lblMsg.Visible = true;
+            string safe = System.Web.HttpUtility.JavaScriptStringEncode(msg);
+            string script = "(function(){var t=document.createElement('div');t.className='next-step-toast';t.innerHTML='" + safe + "';document.body.appendChild(t);setTimeout(function(){if(t&&t.parentNode)t.parentNode.removeChild(t);},7000);})();";
+            ScriptManager.RegisterStartupScript(this, GetType(), "nextStepToast" + DateTime.Now.Ticks.ToString(), script, true);
+        }
 
         /// <summary>
         /// Defensive fix for the "loader overlay stuck after file upload" issue: file-upload postbacks
@@ -1279,6 +1299,7 @@ namespace DFM_BPM.Forms
             hfEditBudgetLineId.Value = "";
             ActiveTab = "budget"; hfActiveTab.Value = "budget";
             BindBudgetLines(CurrentPetFormId);
+            ShowNextStep("Budget row saved. Next: add or update invoice details for this budget line when available.");
         }
 
         protected void gvBudgetLines_RowCommand(object sender, GridViewCommandEventArgs e)
