@@ -70,6 +70,26 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
 .page-title { font-size: 1.35em; font-weight: 800; color: #1a3c5e; margin: 0 0 16px; }
 .page-title i { margin-right: 8px; }
 
+/* ---- Simplified workflow view ---- */
+.ux-page-head {
+    background: #fff; border: 1px solid #dbe5f1; border-radius: 10px;
+    padding: 14px 16px; margin-bottom: 14px;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap;
+    box-shadow: 0 1px 4px rgba(15, 23, 42, .05);
+}
+.ux-title { display: flex; align-items: center; gap: 10px; color: #12395f; font-weight: 800; font-size: 1.24em; }
+.ux-title i { color: #2563eb; font-size: 1.15em; }
+.ux-subtitle { color: #64748b; font-size: .86em; margin-top: 3px; }
+.ux-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.ux-actions .btn { font-weight: 700; border-radius: 6px; padding: 7px 12px; }
+.ux-section-hint { color: #64748b; font-size: .84em; font-weight: 600; margin-left: 6px; }
+.ux-table-wrap { border: 1px solid #dbe5f1; border-radius: 8px; overflow: auto; background: #fff; }
+.ux-table-wrap .dfm-table th { font-size: .84em; padding: 9px 10px; }
+.ux-table-wrap .dfm-table td { font-size: .9em; padding: 9px 10px; line-height: 1.35; }
+.ux-form-actions { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding-top: 14px; margin-top: 12px; border-top: 1px solid #e2e8f0; }
+.ux-form-actions .btn { min-width: 120px; font-weight: 800; }
+.ux-muted-pill { display: inline-block; background: #f1f5f9; color: #475569; border-radius: 999px; padding: 2px 9px; font-size: .78em; font-weight: 800; }
+
 /* ---- Cards ---- */
 .card-panel { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 16px; overflow: hidden; }
 .card-panel-hdr { background: #f8fafc; padding: 11px 16px; border-bottom: 1px solid #e2e8f0;
@@ -216,4 +236,6 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background:
     .sidebar { width: 56px; }
     .sidebar .brand-text, .sidebar .nav-item span, .sidebar .nav-section-title { display: none; }
     .form-grid-4 { grid-template-columns: repeat(2,1fr); }
+    .ux-page-head { align-items: flex-start; }
+    .ux-actions { width: 100%; }
 }

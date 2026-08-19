@@ -114,12 +114,20 @@
 
 <asp:Content ID="MainCt" ContentPlaceHolderID="MainContent" runat="server">
 <asp:ScriptManager ID="smDashboard" runat="server" />
-<h1 class="page-title">
-    <i class="bi bi-house"></i> Dashboard
-    <span style="font-size:.55em;color:#94a3b8;font-weight:400;margin-left:12px;">
-        Last Sync: <asp:Literal ID="litLastSync" runat="server" Text="–" />
-    </span>
-</h1>
+<div class="ux-page-head">
+    <div>
+        <div class="ux-title"><i class="bi bi-house"></i> Dashboard</div>
+        <div class="ux-subtitle">Work queue, registered projects, approvals, and spend request actions in one place. Last Sync: <asp:Literal ID="litLastSync" runat="server" Text="–" /></div>
+    </div>
+    <div class="ux-actions">
+        <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx?new=1") %>" class="btn btn-default">
+            <i class="bi bi-folder-plus"></i> New Project
+        </a>
+        <button type="button" class="btn btn-primary" onclick="return dfmOpenSpendRequest();">
+            <i class="bi bi-plus-circle"></i> New Spend Request
+        </button>
+    </div>
+</div>
 
 <!-- ── FILTER SECTION ── -->
 <div class="dash-section collapsed" id="sec-filters" data-dash-persist="1" data-default-collapsed="1">
@@ -321,7 +329,7 @@
         <i class="bi bi-chevron-down dash-sec-toggle"></i>
     </div>
     <div class="dash-sec-body">
-        <div class="card-panel" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
+        <div class="card-panel ux-table-wrap" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;">
             <table class="dfm-table" style="width:100%;">
                 <thead>
                     <tr>
@@ -352,15 +360,6 @@
             </div>
         </div>
     </div>
-</div>
-
-<div style="margin-top:10px;">
-    <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx?new=1") %>" class="btn btn-default">
-        <i class="bi bi-folder-plus"></i> New Project
-    </a>
-    <button type="button" class="btn btn-primary" onclick="return dfmOpenSpendRequest();">
-        <i class="bi bi-plus-circle"></i> New Spend Request
-    </button>
 </div>
 
 <!-- ── Project Action Hidden Fields + Buttons ── -->

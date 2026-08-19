@@ -42,38 +42,38 @@
 .spend-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
 .spend-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
 .portfolio-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
-.portfolio-toolbar-actions { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
 </style>
 </asp:Content>
 
 <asp:Content ID="MainCt" ContentPlaceHolderID="MainContent" runat="server">
-<h1 class="page-title"><i class="bi bi-folder-plus"></i> Project Portfolio
-    <% if (IsExistingProject) { %>
-        &nbsp;<span style="font-size:.6em;color:#2563eb;"><%= Server.HtmlEncode(CurrentProjectId) %></span>
-    <% } %>
-    <% if (CanDeleteProject) { %>
-    <span style="float:right;margin-top:4px;">
-        <asp:Button ID="btnDeleteProject" runat="server" CssClass="btn btn-sm btn-danger"
+<div class="ux-page-head">
+    <div>
+        <div class="ux-title"><i class="bi bi-folder-plus"></i> Project Portfolio</div>
+        <div class="ux-subtitle">Register projects, review project spend requests, and start new requests without leaving the page.
+            <% if (IsExistingProject) { %><span class="ux-muted-pill"><%= Server.HtmlEncode(CurrentProjectId) %></span><% } %>
+        </div>
+    </div>
+    <div class="ux-actions">
+        <asp:Button ID="btnNewProject" runat="server" CssClass="btn btn-primary" Text="New Project" OnClick="btnNewProject_Click" CausesValidation="false" />
+        <button type="button" class="btn btn-success" onclick="return prOpenSpendRequest(null, null);"><i class="bi bi-plus-circle"></i> New Spend Request</button>
+        <% if (CanDeleteProject) { %>
+        <asp:Button ID="btnDeleteProject" runat="server" CssClass="btn btn-danger"
             Text="Delete This Project" OnClientClick="$('#projectDelModal').modal('show');return false;"
             CausesValidation="false" />
-    </span>
-    <% } %>
-</h1>
+        <% } %>
+    </div>
+</div>
 
 <asp:Label ID="lblMsg" runat="server" CssClass="alert alert-info" Visible="false" />
 <asp:HiddenField ID="hfProjectId" runat="server" Value="" />
 
 <div class="portfolio-toolbar">
     <div style="font-size:.9em;color:#64748b;">Registered Projects (<asp:Literal ID="litProjectPortfolioCount" runat="server" Text="0" />)</div>
-    <div class="portfolio-toolbar-actions">
-        <asp:Button ID="btnNewProject" runat="server" CssClass="btn btn-primary" Text="New Project" OnClick="btnNewProject_Click" CausesValidation="false" />
-        <button type="button" class="btn btn-success" onclick="return prOpenSpendRequest(null, null);"><i class="bi bi-plus-circle"></i> New Spend Request</button>
-    </div>
 </div>
 
 <div class="card-panel panel-spend-request">
     <div class="card-panel-hdr"><i class="bi bi-table"></i> Project Portfolio</div>
-    <div class="card-panel-body" style="padding:0;overflow-x:auto;">
+    <div class="card-panel-body ux-table-wrap" style="padding:0;">
         <table class="dfm-table" style="width:100%;">
             <thead>
                 <tr>

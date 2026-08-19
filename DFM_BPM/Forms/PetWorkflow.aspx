@@ -17,7 +17,7 @@
 .step::after { content:'>'; position:absolute; right:-12px; top:50%; transform:translateY(-50%);
                font-size:1.4em; z-index:2; color:#94a3b8; }
 .step:last-child::after { display:none; }
-.workflow-breadcrumb { margin-bottom:12px; }
+.workflow-breadcrumb { margin-bottom:12px; background:#fff; border:1px solid #dbe5f1; border-radius:10px; padding:8px; }
 .workflow-breadcrumb .step { min-height:38px; display:flex; align-items:center; justify-content:center; }
 .workflow-breadcrumb .step.rejected { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
 .pet-line-tbl th { background:#1a3c5e; color:#fff; padding:6px 8px; font-size:.78em; white-space:nowrap; }
@@ -155,20 +155,21 @@
 </asp:Content>
 
 <asp:Content ID="MainCt" ContentPlaceHolderID="MainContent" runat="server">
-<h1 class="page-title"><i class="bi bi-file-earmark-text"></i> Spend Request
-    <% if (!string.IsNullOrEmpty(PetRefNo)) { %>
-        &nbsp;<span style="font-size:.6em;color:#2563eb;"><%= Server.HtmlEncode(PetRefNo) %></span>
-    <% } %>
-    <% if (CanDeletePet) { %>
-    <span style="float:right;margin-top:4px;">
+<div class="ux-page-head">
+    <div>
+        <div class="ux-title"><i class="bi bi-file-earmark-text"></i> Spend Request</div>
+        <div class="ux-subtitle">Create, review, approve, and track budget or invoice details from one workflow view.
+            <% if (!string.IsNullOrEmpty(PetRefNo)) { %><span class="ux-muted-pill"><%= Server.HtmlEncode(PetRefNo) %></span><% } %>
+        </div>
+    </div>
+    <div class="ux-actions">
+        <% if (CanDeletePet) { %>
         <asp:Button ID="btnDeleteThisPet" runat="server" CssClass="btn btn-sm btn-danger"
             Text="Delete This Spend Request" OnClientClick="$('#petFormDelModal').modal('show');return false;"
             CausesValidation="false" />
-    </span>
-    <% } %>
-</h1>
-
-
+        <% } %>
+    </div>
+</div>
 
 <asp:Label ID="lblMsg" runat="server" CssClass="alert alert-info" Visible="false" />
 <asp:HiddenField ID="hfPetFormId" runat="server" Value="0" />
@@ -300,7 +301,7 @@
             </asp:Panel>
 
             <% if (IsEditable) { %>
-            <div style="margin-top:14px;display:flex;justify-content:center;">
+            <div class="ux-form-actions">
                 <asp:Button ID="btnSaveHeader" runat="server" CssClass="btn btn-primary"
                     Text="Save" OnClick="btnSaveHeader_Click" />
             </div>
