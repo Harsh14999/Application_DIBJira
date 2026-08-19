@@ -42,6 +42,25 @@
 .project-parent-row { background:#fff; }
 .project-parent-row.has-requests { cursor:pointer; }
 .project-parent-row:hover { background:#f8fafc; }
+.registered-project-table { table-layout:fixed; min-width:1320px; }
+.registered-project-table th, .registered-project-table td { word-break:normal; overflow-wrap:break-word; }
+.registered-project-table .col-project-id { width:118px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; }
+.registered-project-table .col-project-name { width:190px; }
+.registered-project-table .col-project-type { width:100px; }
+.registered-project-table .col-lead { width:160px; }
+.registered-project-table .col-manager { width:150px; }
+.registered-project-table .col-requestor { width:95px; }
+.registered-project-table .col-status { width:90px; }
+.registered-project-table .col-date { width:110px; }
+.registered-project-table .col-count { width:112px; text-align:right; }
+.registered-project-table .col-amount { width:125px; text-align:right; }
+.registered-project-table .col-action { width:170px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
+.registered-project-table th.col-action { background:#1a3c5e !important; color:#fff !important; z-index:4; }
+.registered-project-table td.col-action { background:#fff; }
+.registered-project-table tr:nth-child(even) td.col-action { background:#f8fafc; }
+.registered-project-table tr:hover td.col-action { background:#eff6ff !important; }
+.registered-project-table .gv-acts { display:flex; gap:5px; align-items:center; flex-wrap:nowrap; }
+.registered-project-table .gv-acts .btn { margin-right:0; }
 .project-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:6px; }
 .project-child-row td { background:#f8fafc; border-top:0; }
 .project-child-box { margin:4px 0 8px 24px; border:1px solid #dbeafe; border-radius:8px; overflow:hidden; background:#fff; }
@@ -330,21 +349,21 @@
     </div>
     <div class="dash-sec-body">
         <div class="card-panel ux-table-wrap" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;">
-            <table class="dfm-table" style="width:100%;">
+            <table class="dfm-table registered-project-table" style="width:100%;">
                 <thead>
                     <tr>
-                        <th>Project ID</th>
-                        <th>Project Name</th>
-                        <th>Project Type</th>
-                        <th>Accountable Exec Lead</th>
-                        <th>SME Lead</th>
-                        <th>Project Manager</th>
-                        <th>Requestor</th>
-                        <th>Status</th>
-                        <th>Created Date</th>
-                        <th>Spend Requests</th>
-                        <th>Requested (AED)</th>
-                        <th>Action</th>
+                        <th class="col-project-id">Project ID</th>
+                        <th class="col-project-name">Project Name</th>
+                        <th class="col-project-type">Project Type</th>
+                        <th class="col-lead">Accountable Exec Lead</th>
+                        <th class="col-lead">SME Lead</th>
+                        <th class="col-manager">Project Manager</th>
+                        <th class="col-requestor">Requestor</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-date">Created Date</th>
+                        <th class="col-count">Spend Requests</th>
+                        <th class="col-amount">Requested (AED)</th>
+                        <th class="col-action">Action</th>
                     </tr>
                 </thead>
                 <tbody>
