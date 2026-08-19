@@ -20,6 +20,27 @@
 .dfm-table tr:nth-child(odd)  td { background:#fafbff; }
 .dfm-table tr:nth-child(even) td { background:#ffffff; }
 .dfm-table tr:hover td { background:#eff6ff; }
+.portfolio-project-table { table-layout:fixed; min-width:1260px; }
+.portfolio-project-table th, .portfolio-project-table td { word-break:normal; overflow-wrap:break-word; }
+.portfolio-project-table .col-project-id { width:96px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
+.portfolio-project-table .project-id-cell { display:inline-block; vertical-align:middle; }
+.portfolio-project-table .project-id-stack span { display:block; line-height:1.15; }
+.portfolio-project-table .col-project-name { width:170px; }
+.portfolio-project-table .col-project-type { width:100px; }
+.portfolio-project-table .col-lead { width:150px; }
+.portfolio-project-table .col-manager { width:140px; }
+.portfolio-project-table .col-requestor { width:95px; }
+.portfolio-project-table .col-status { width:90px; }
+.portfolio-project-table .col-date { width:110px; }
+.portfolio-project-table .col-count { width:112px; text-align:right; }
+.portfolio-project-table .col-amount { width:125px; text-align:right; }
+.portfolio-project-table .col-action { width:160px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
+.portfolio-project-table th.col-action { background:#1a3c5e !important; color:#fff !important; z-index:4; }
+.portfolio-project-table td.col-action { background:#fff; }
+.portfolio-project-table tr:nth-child(even) td.col-action { background:#f8fafc; }
+.portfolio-project-table tr:hover td.col-action { background:#eff6ff !important; }
+.portfolio-project-table .gv-acts { display:flex; gap:5px; align-items:center; flex-wrap:nowrap; }
+.portfolio-project-table .gv-acts .btn { margin-right:0; }
 .project-parent-row.has-requests { cursor:pointer; }
 .project-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:6px; }
 .project-child-row td { background:#f8fafc !important; border-top:0; }
@@ -74,21 +95,21 @@
 <div class="card-panel panel-spend-request">
     <div class="card-panel-hdr"><i class="bi bi-table"></i> Project Portfolio</div>
     <div class="card-panel-body ux-table-wrap" style="padding:0;">
-        <table class="dfm-table" style="width:100%;">
+        <table class="dfm-table portfolio-project-table" style="width:100%;">
             <thead>
                 <tr>
-                    <th>Project ID</th>
-                    <th>Project Name</th>
-                    <th>Project Type</th>
-                    <th>Accountable Exec Lead</th>
-                    <th>SME Lead</th>
-                    <th>Project Manager</th>
-                    <th>Requestor</th>
-                    <th>Status</th>
-                    <th>Created Date</th>
-                    <th>Spend Requests</th>
-                    <th>Requested (AED)</th>
-                    <th>Action</th>
+                    <th class="col-project-id">Project ID</th>
+                    <th class="col-project-name">Project Name</th>
+                    <th class="col-project-type">Project Type</th>
+                    <th class="col-lead">Accountable Exec Lead</th>
+                    <th class="col-lead">SME Lead</th>
+                    <th class="col-manager">Project Manager</th>
+                    <th class="col-requestor">Requestor</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-date">Created Date</th>
+                    <th class="col-count">Spend Requests</th>
+                    <th class="col-amount">Requested (AED)</th>
+                    <th class="col-action">Action</th>
                 </tr>
             </thead>
             <tbody>

@@ -901,6 +901,7 @@ namespace DFM_BPM.Forms
             if (lineCount == 0) { ShowMsg("Please add at least one line item before submitting."); return; }
 
             WorkflowDAL.SubmitPet(CurrentPetFormId, AuthHelper.CurrentUserShort, txtSubmitComments.Text.Trim());
+            Session["PetNextStep"] = "Spend Request submitted successfully. Next: the reviewer will review it and route it to the approver.";
             Response.Redirect("~/Forms/PetWorkflow.aspx?id=" + CurrentPetFormId);
         }
 
@@ -911,15 +912,22 @@ namespace DFM_BPM.Forms
             if (f == null) return;
             string status = f["Status"].ToString();
             if (status == "PendingReview")
+            {
                 WorkflowDAL.ReviewPet(CurrentPetFormId, AuthHelper.CurrentUserShort, "Approve", txtDecisionComments.Text.Trim());
+                Session["PetNextStep"] = "Review submitted successfully. Next: the approver will approve or send back this Spend Request.";
+            }
             else if (status == "PendingApproval")
+            {
                 WorkflowDAL.ApprovePet(CurrentPetFormId, AuthHelper.CurrentUserShort, "Approved", txtDecisionComments.Text.Trim());
+                Session["PetNextStep"] = "Spend Request approved successfully. Next: the requestor can manage Budget and Invoice details.";
+            }
             Response.Redirect("~/Forms/PetWorkflow.aspx?id=" + CurrentPetFormId);
         }
 
         protected void btnReject_Click(object sender, EventArgs e)
         {
             WorkflowDAL.ApprovePet(CurrentPetFormId, AuthHelper.CurrentUserShort, "Rejected", txtDecisionComments.Text.Trim());
+            Session["PetNextStep"] = "Spend Request rejected successfully. Next: the requestor can review the comments and create a revised request if needed.";
             Response.Redirect("~/Forms/PetWorkflow.aspx?id=" + CurrentPetFormId);
         }
 
@@ -932,6 +940,7 @@ namespace DFM_BPM.Forms
                 WorkflowDAL.ReviewPet(CurrentPetFormId, AuthHelper.CurrentUserShort, "SentBack", txtDecisionComments.Text.Trim());
             else if (status == "PendingApproval")
                 WorkflowDAL.ApprovePet(CurrentPetFormId, AuthHelper.CurrentUserShort, "SentBack", txtDecisionComments.Text.Trim());
+            Session["PetNextStep"] = "Spend Request sent back successfully. Next: the requestor should update it and submit again.";
             Response.Redirect("~/Forms/PetWorkflow.aspx?id=" + CurrentPetFormId);
         }
 

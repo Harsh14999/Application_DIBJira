@@ -42,19 +42,21 @@
 .project-parent-row { background:#fff; }
 .project-parent-row.has-requests { cursor:pointer; }
 .project-parent-row:hover { background:#f8fafc; }
-.registered-project-table { table-layout:fixed; min-width:1320px; }
+.registered-project-table { table-layout:fixed; min-width:1260px; }
 .registered-project-table th, .registered-project-table td { word-break:normal; overflow-wrap:break-word; }
-.registered-project-table .col-project-id { width:118px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; }
-.registered-project-table .col-project-name { width:190px; }
+.registered-project-table .col-project-id { width:96px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
+.registered-project-table .project-id-cell { display:inline-block; vertical-align:middle; }
+.registered-project-table .project-id-stack span { display:block; line-height:1.15; }
+.registered-project-table .col-project-name { width:170px; }
 .registered-project-table .col-project-type { width:100px; }
-.registered-project-table .col-lead { width:160px; }
-.registered-project-table .col-manager { width:150px; }
+.registered-project-table .col-lead { width:150px; }
+.registered-project-table .col-manager { width:140px; }
 .registered-project-table .col-requestor { width:95px; }
 .registered-project-table .col-status { width:90px; }
 .registered-project-table .col-date { width:110px; }
 .registered-project-table .col-count { width:112px; text-align:right; }
 .registered-project-table .col-amount { width:125px; text-align:right; }
-.registered-project-table .col-action { width:170px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
+.registered-project-table .col-action { width:160px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
 .registered-project-table th.col-action { background:#1a3c5e !important; color:#fff !important; z-index:4; }
 .registered-project-table td.col-action { background:#fff; }
 .registered-project-table tr:nth-child(even) td.col-action { background:#f8fafc; }

@@ -20,6 +20,10 @@
 .workflow-breadcrumb { margin-bottom:12px; background:#fff; border:1px solid #dbe5f1; border-radius:10px; padding:8px; }
 .workflow-breadcrumb .step { min-height:38px; display:flex; align-items:center; justify-content:center; }
 .workflow-breadcrumb .step.rejected { background:#fee2e2; color:#991b1b; border-color:#ef4444; }
+.project-overview-stack { margin-left:0; margin-right:0; }
+.project-overview-stack .col-md-6 { width:100%; float:none; padding-left:0; padding-right:0; }
+.project-overview-stack .card-panel { margin-bottom:14px; }
+.project-overview-stack .card-panel-body { overflow-x:auto; }
 .pet-line-tbl th { background:#1a3c5e; color:#fff; padding:6px 8px; font-size:.78em; white-space:nowrap; }
 .pet-line-tbl td { padding:4px 6px; border:1px solid #e2e8f0; vertical-align:middle; font-size:.82em; }
 .total-bar { background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:8px 14px;
@@ -311,7 +315,7 @@
 
     <!-- Project Overview — the Project is the main item: show all PET forms (incl. Draft) and Budget/Invoice for it -->
     <asp:Panel ID="pnlProjectOverview" runat="server" Visible="false">
-    <div class="row">
+    <div class="row project-overview-stack">
         <div class="col-md-6">
             <div class="card-panel panel-spend-request">
                 <div class="card-panel-hdr"><i class="bi bi-file-earmark-text"></i> Spend Requests for this Project <small style="font-weight:400;color:#94a3b8;">(including Draft)</small></div>
@@ -404,7 +408,7 @@
             </asp:Panel>
         </div>
     </div>
-    <div class="row" style="margin-top:14px;">
+    <div class="row project-overview-stack" style="margin-top:14px;">
         <div class="col-md-6">
             <div class="card-panel panel-budget-line-items">
                 <div class="card-panel-hdr"><i class="bi bi-cash-coin"></i> Budget for this Project <small style="font-weight:400;color:#2563eb;">&mdash; <%= Server.HtmlEncode(string.IsNullOrEmpty(PetRefNo) ? "(unsaved)" : PetRefNo) %></small></div>

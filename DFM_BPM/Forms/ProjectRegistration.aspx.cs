@@ -119,15 +119,15 @@ namespace DFM_BPM.Forms
 
                 sb.AppendFormat(
                     "<tr class='project-parent-row{12}'{13}>" +
-                    "<td>{0}<strong>{1}</strong></td>" +
-                    "<td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td><td>{8}</td><td>{9}</td>" +
-                    "<td class='text-right'><strong>{10}</strong></td><td class='text-right'><strong>{11}</strong></td>" +
-                    "<td><div class='gv-acts'>" +
+                    "<td class='col-project-id'>{0}<strong class='project-id-cell'>{1}</strong></td>" +
+                    "<td class='col-project-name'>{2}</td><td class='col-project-type'>{3}</td><td class='col-lead'>{4}</td><td class='col-lead'>{5}</td><td class='col-manager'>{6}</td><td class='col-requestor'>{7}</td><td class='col-status'>{8}</td><td class='col-date'>{9}</td>" +
+                    "<td class='col-count text-right'><strong>{10}</strong></td><td class='col-amount text-right'><strong>{11}</strong></td>" +
+                    "<td class='col-action'><div class='gv-acts'>" +
                     "<button type='button' class='btn btn-xs btn-primary' onclick=\"event.cancelBubble=true; return prOpenProject('{14}');\"><i class='bi bi-pencil'></i> Edit</button>" +
                     "<button type='button' class='btn btn-xs btn-success' onclick=\"event.cancelBubble=true; return prOpenSpendRequest(null, '{14}');\"><i class='bi bi-plus-circle'></i> New SR</button>" +
                     "</div></td></tr>",
                     toggle,
-                    Html(projectId),
+                    FormatProjectId(projectId),
                     Html(Val(project, "ProjectName")),
                     GetBool(project, "IsNonJiraProject") ? "Non-JIRA" : "JIRA",
                     Html(Val(project, "AccountableExecLead")),
@@ -554,6 +554,14 @@ namespace DFM_BPM.Forms
         {
             if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return "";
             return Convert.ToDateTime(row[col]).ToString("dd-MMM-yyyy");
+        }
+
+        private static string FormatProjectId(string projectId)
+        {
+            string value = projectId ?? "";
+            int hyphen = value.IndexOf('-');
+            if (hyphen <= 0 || hyphen >= value.Length - 1) return Html(value);
+            return "<span class='project-id-stack'><span>" + Html(value.Substring(0, hyphen + 1)) + "</span><span>" + Html(value.Substring(hyphen + 1)) + "</span></span>";
         }
 
         private void ShowMsg(string msg) { lblMsg.Text = msg; lblMsg.CssClass = "alert alert-info"; lblMsg.Visible = true; }
