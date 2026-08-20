@@ -18,6 +18,8 @@ namespace DFM_BPM.Forms
 
         protected bool IsExistingProject { get { return !string.IsNullOrEmpty(CurrentProjectId); } }
 
+        private bool InlineProjectModal { get { return Request.QueryString["inline"] == "1"; } }
+
         /// <summary>Delete is only offered for an already-registered project, when no active Spend Request
         /// references it yet (ProjectDAL.HasPetForms is the hard-delete safety net), and only to Admins or
         /// the user who originally registered it.</summary>
@@ -523,8 +525,16 @@ namespace DFM_BPM.Forms
 
         private void ShowProjectModal()
         {
-            ScriptManager.RegisterStartupScript(this, GetType(), "showProjectRegistrationModal",
-                "$(function(){ $('#projectRegistrationModal').modal('show'); });", true);
+            if (InlineProjectModal)
+            {
+                ScriptManager.RegisterStartupScript(this, GetType(), "showProjectRegistrationInline",
+                    "$(function(){ var m=$('#projectRegistrationModal'); m.removeClass('modal fade').addClass('project-modal-inline').css({display:'block',position:'static'}); m.find('.modal-dialog').css({width:'100%',maxWidth:'none',margin:'0'}); m.find('.modal-content').css({border:'0',boxShadow:'none'}); m.find('[data-dismiss=\"modal\"]').hide(); $('.modal-backdrop').remove(); $('body').removeClass('modal-open').css('padding-right',''); });", true);
+            }
+            else
+            {
+                ScriptManager.RegisterStartupScript(this, GetType(), "showProjectRegistrationModal",
+                    "$(function(){ $('#projectRegistrationModal').modal('show'); });", true);
+            }
         }
 
         private static string Val(DataRow row, string col)

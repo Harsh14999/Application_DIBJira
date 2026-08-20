@@ -650,6 +650,33 @@ namespace DFM_BPM.App_Code.DAL
                 Db.P("@pid", projectId));
         }
 
+        public static DataTable GetProjectBudgetTracker(string projectId)
+        {
+            return Db.Query(@"SELECT bl.BudgetLineID,
+                                     bl.VendorName AS Vendor,
+                                     bl.Justification,
+                                     bl.Cost,
+                                     bl.Currency,
+                                     bl.GLNumber,
+                                     COALESCE(NULLIF(bl.PetRef,''), p.PetRefNo, '') AS PetID,
+                                     bl.CamId,
+                                     bl.CamStatus,
+                                     bl.CamComments,
+                                     bl.LpoRequest,
+                                     bl.LpoStatus,
+                                     bl.LpoComments,
+                                     i.InvoiceNo,
+                                     i.InvoiceAmount,
+                                     i.InvoiceStatus,
+                                     i.PaymentDate
+                              FROM dbo.PetBudgetLine bl
+                              INNER JOIN dbo.PetForm p ON p.PetFormID = bl.PetFormID
+                              LEFT JOIN dbo.PetBudgetInvoice i ON i.BudgetLineID = bl.BudgetLineID
+                              WHERE p.ProjectID=@pid AND p.Status<>'Deleted'
+                              ORDER BY bl.BudgetLineID DESC, i.InvoiceID DESC",
+                Db.P("@pid", projectId));
+        }
+
         public static DataRow GetProjectFinancialSummary(string projectId)
         {
             return Db.QueryRow(@"SELECT

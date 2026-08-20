@@ -166,15 +166,6 @@ namespace DFM_BPM {
         protected global::System.Web.UI.WebControls.Literal litOpexBudget;
         
         /// <summary>
-        /// litCapexOpexSummary control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.Literal litCapexOpexSummary;
-        
-        /// <summary>
         /// litRegisteredProjectsCount control.
         /// </summary>
         /// <remarks>
@@ -261,12 +252,28 @@ namespace DFM_BPM {
         protected global::System.Web.UI.UpdatePanel updDashboardActions;
 
         protected global::System.Web.UI.WebControls.HiddenField hfActionProjectId;
+        protected global::System.Web.UI.WebControls.Button btnShowProjectTracker;
         protected global::System.Web.UI.WebControls.Button btnShowSpendRequests;
         protected global::System.Web.UI.WebControls.Button btnShowBudget;
         protected global::System.Web.UI.WebControls.Button btnShowInvoices;
         protected global::System.Web.UI.WebControls.Literal litSRModalProject;
         protected global::System.Web.UI.WebControls.GridView gvModalSpendRequests;
         protected global::System.Web.UI.WebControls.GridView gvModalLineItems;
+        protected global::System.Web.UI.WebControls.Literal litTrackerModalProject;
+        protected global::System.Web.UI.WebControls.Literal litTrackerProjectTitle;
+        protected global::System.Web.UI.WebControls.Literal litTrackerProjectName;
+        protected global::System.Web.UI.WebControls.Literal litTrackerDemandId;
+        protected global::System.Web.UI.WebControls.Literal litTrackerApprovedBudget;
+        protected global::System.Web.UI.WebControls.Literal litTrackerCapexId;
+        protected global::System.Web.UI.WebControls.Literal litTrackerApprovedBudgetTile;
+        protected global::System.Web.UI.WebControls.Literal litTrackerCommitted;
+        protected global::System.Web.UI.WebControls.Literal litTrackerInvoiced;
+        protected global::System.Web.UI.WebControls.Literal litTrackerRemaining;
+        protected global::System.Web.UI.WebControls.Literal litTrackerUtilization;
+        protected global::System.Web.UI.WebControls.Literal litTrackerLpoIssued;
+        protected global::System.Web.UI.WebControls.Literal litTrackerPendingCamLpo;
+        protected global::System.Web.UI.WebControls.Literal litTrackerPaidInvoices;
+        protected global::System.Web.UI.WebControls.GridView gvProjectBudgetTracker;
         protected global::System.Web.UI.WebControls.Literal litBgtModalProject;
         protected global::System.Web.UI.WebControls.GridView gvModalBudgetLines;
         protected global::System.Web.UI.WebControls.Panel pnlBudgetInvoiceDetail;

@@ -19,7 +19,6 @@
 #sec-project-kpi .dash-sec-hdr { background:#F6FBF4; color:#548235; }
 #sec-pending .dash-sec-hdr  { background:#F5F9FF; color:#2F5597; }
 #sec-myforms .dash-sec-hdr  { background:#F5F9FF; color:#2F5597; }
-#sec-budget .dash-sec-hdr   { background:#F6FBF4; color:#548235; }
 /* ── filter ── */
 .horizontal-filter-panel { padding:14px 16px; }
 .filter-grid { display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end; }
@@ -47,6 +46,8 @@
 .registered-project-table .col-project-id { width:96px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
 .registered-project-table .project-id-cell { display:inline-block; vertical-align:middle; }
 .registered-project-table .project-id-stack span { display:block; line-height:1.15; }
+.registered-project-table .project-id-link { color:#1a3c5e; text-decoration:none; display:inline-block; }
+.registered-project-table .project-id-link:hover { color:#2563eb; text-decoration:underline; }
 .registered-project-table .col-project-name { width:170px; }
 .registered-project-table .col-project-type { width:100px; }
 .registered-project-table .col-lead { width:150px; }
@@ -99,15 +100,22 @@
 .card-panel.panel-budget-invoice { border-color:#F4B183; background:#fff; }
 .card-panel.panel-budget-invoice .card-panel-hdr { background:#FFF8F2; color:#C55A11; border-bottom:2px solid #F4B183; }
 .card-panel.panel-budget-invoice .dfm-table th { background:#FFF0E5 !important; color:#7c3006; border-bottom:1px solid #F4B183; }
-/* ── CAPEX/OPEX summary ── */
-.budget-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; padding:12px 14px; }
-.budget-summary-card { border:1px solid #e2e8f0; border-radius:8px; padding:12px; background:#fff; }
-.budget-summary-title { font-weight:800; color:#1e293b; margin-bottom:6px; }
-.budget-summary-value { font-size:1.25em; font-weight:900; color:#1a3c5e; margin-bottom:8px; }
-.budget-bar { height:10px; border-radius:999px; background:#e2e8f0; overflow:hidden; }
-.budget-bar span { display:block; height:100%; border-radius:999px; }
-.budget-capex { background:#2563eb; }
-.budget-opex { background:#059669; }
+.tracker-modal .modal-dialog { width:96%; max-width:1280px; }
+.tracker-modal .modal-body { padding:18px; max-height:78vh; overflow-y:auto; background:#fff; }
+.tracker-title { font-size:1.85em; font-weight:900; color:#0f2742; margin-bottom:2px; }
+.tracker-subtitle { color:#64748b; margin-bottom:16px; }
+.tracker-meta { display:grid; grid-template-columns:repeat(4,minmax(180px,1fr)); gap:10px; border:1px solid #dbe5f1; border-radius:10px; padding:12px; margin-bottom:14px; }
+.tracker-card { border:1px solid #dbe5f1; border-radius:8px; padding:12px; background:#fff; min-height:62px; }
+.tracker-label { font-size:.75em; font-weight:800; color:#64748b; margin-bottom:6px; }
+.tracker-value { font-size:1.08em; font-weight:900; color:#0f172a; overflow-wrap:anywhere; }
+.tracker-kpis { display:grid; grid-template-columns:repeat(4,minmax(180px,1fr)); gap:10px; margin-bottom:14px; }
+.tracker-kpis .tracker-value { color:#047857; font-size:1.35em; }
+.tracker-table-wrap { border:1px solid #dbe5f1; border-radius:10px; overflow:auto; }
+.tracker-table { min-width:1420px; margin:0; }
+.tracker-table th { background:#007a3d !important; color:#fff !important; font-weight:900; white-space:nowrap; }
+.tracker-table td { white-space:normal; vertical-align:middle !important; }
+@media (max-width:900px) { .tracker-meta, .tracker-kpis { grid-template-columns:1fr 1fr; } }
+@media (max-width:560px) { .tracker-meta, .tracker-kpis { grid-template-columns:1fr; } }
 /* ── action buttons ── */
 .proj-action-btn { font-size:.75em; padding:2px 6px; margin-right:2px; border-radius:4px; font-weight:600; cursor:pointer; border:none; }
 .proj-action-btn.btn-sr { background:#E8F0FE; color:#2F5597; border:1px solid #B4C7E7; }
@@ -328,17 +336,6 @@
     </div>
 </div>
 
-<!-- ── CAPEX/OPEX DATA SUMMARY ── -->
-<div class="dash-section collapsed" id="sec-capex-opex" data-dash-persist="1" data-default-collapsed="1">
-    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-capex-opex')">
-        <span><i class="bi bi-pie-chart"></i> CAPEX vs OPEX Summary</span>
-        <i class="bi bi-chevron-down dash-sec-toggle"></i>
-    </div>
-    <div class="dash-sec-body">
-        <asp:Literal ID="litCapexOpexSummary" runat="server" />
-    </div>
-</div>
-
 <!-- ── REGISTERED PROJECTS ── -->
 <div class="dash-section" id="sec-projects">
     <div class="dash-sec-hdr" onclick="dfmSecTog('sec-projects')">
@@ -387,6 +384,8 @@
 <asp:UpdatePanel ID="updDashboardActions" runat="server" UpdateMode="Conditional">
 <ContentTemplate>
 <asp:HiddenField ID="hfActionProjectId" runat="server" Value="" />
+<asp:Button ID="btnShowProjectTracker" runat="server" Text="_trk" style="display:none;"
+    OnClick="btnShowProjectTracker_Click" CausesValidation="false" />
 <asp:Button ID="btnShowSpendRequests" runat="server" Text="_sr" style="display:none;"
     OnClick="btnShowSpendRequests_Click" CausesValidation="false" />
 <asp:Button ID="btnShowBudget" runat="server" Text="_bgt" style="display:none;"
@@ -445,6 +444,64 @@
                             </Columns>
                         </asp:GridView>
                     </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal"><i class="bi bi-x-lg"></i> Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── PROJECT BUDGET TRACKER MODAL ── -->
+<div class="modal fade tracker-modal" id="projectTrackerModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header" style="background:#fff;color:#0f2742;border-bottom:1px solid #dbe5f1;">
+                <button type="button" class="close" data-dismiss="modal" style="color:#0f2742;opacity:.8;">&times;</button>
+                <h4 class="modal-title"><i class="bi bi-table"></i> Project Budget Tracker &mdash; <asp:Literal ID="litTrackerModalProject" runat="server" /></h4>
+            </div>
+            <div class="modal-body">
+                <div class="tracker-title"><asp:Literal ID="litTrackerProjectTitle" runat="server" /></div>
+                <div class="tracker-subtitle">Read-only CAPEX / GL / PET / CAM / LPO / Invoice dashboard</div>
+                <div class="tracker-meta">
+                    <div class="tracker-card"><div class="tracker-label">Project Name</div><div class="tracker-value"><asp:Literal ID="litTrackerProjectName" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">Demand ID</div><div class="tracker-value"><asp:Literal ID="litTrackerDemandId" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">Approved Budget</div><div class="tracker-value"><asp:Literal ID="litTrackerApprovedBudget" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">CAPEX ID</div><div class="tracker-value"><asp:Literal ID="litTrackerCapexId" runat="server" /></div></div>
+                </div>
+                <div class="tracker-kpis">
+                    <div class="tracker-card"><div class="tracker-label">Approved Budget</div><div class="tracker-value"><asp:Literal ID="litTrackerApprovedBudgetTile" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">Total Committed</div><div class="tracker-value"><asp:Literal ID="litTrackerCommitted" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">Total Invoiced</div><div class="tracker-value"><asp:Literal ID="litTrackerInvoiced" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">Remaining Budget</div><div class="tracker-value"><asp:Literal ID="litTrackerRemaining" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">Utilization</div><div class="tracker-value"><asp:Literal ID="litTrackerUtilization" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">LPO Issued</div><div class="tracker-value"><asp:Literal ID="litTrackerLpoIssued" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">Pending CAM / LPO</div><div class="tracker-value"><asp:Literal ID="litTrackerPendingCamLpo" runat="server" /></div></div>
+                    <div class="tracker-card"><div class="tracker-label">Paid Invoices</div><div class="tracker-value"><asp:Literal ID="litTrackerPaidInvoices" runat="server" /></div></div>
+                </div>
+                <div class="tracker-table-wrap">
+                    <asp:GridView ID="gvProjectBudgetTracker" runat="server" AutoGenerateColumns="false"
+                        CssClass="dfm-table action-modal-grid tracker-table" GridLines="None" EmptyDataText="No budget tracker details for this project yet.">
+                        <Columns>
+                            <asp:BoundField DataField="Vendor" HeaderText="Vendor" />
+                            <asp:BoundField DataField="Justification" HeaderText="Justification" />
+                            <asp:BoundField DataField="Cost" HeaderText="Cost" DataFormatString="{0:N2} AED" ItemStyle-CssClass="text-right" />
+                            <asp:BoundField DataField="Currency" HeaderText="Currency" />
+                            <asp:BoundField DataField="GLNumber" HeaderText="GL ID" />
+                            <asp:BoundField DataField="PetID" HeaderText="PET ID" />
+                            <asp:BoundField DataField="CamId" HeaderText="CAM ID" />
+                            <asp:BoundField DataField="CamStatus" HeaderText="CAM Status" />
+                            <asp:BoundField DataField="CamComments" HeaderText="CAM Comments" />
+                            <asp:BoundField DataField="LpoRequest" HeaderText="LPO Request ID" />
+                            <asp:BoundField DataField="LpoStatus" HeaderText="LPO Status" />
+                            <asp:BoundField DataField="LpoComments" HeaderText="LPO Comments" />
+                            <asp:BoundField DataField="InvoiceNo" HeaderText="Invoice No" />
+                            <asp:BoundField DataField="InvoiceAmount" HeaderText="Invoice Amount" DataFormatString="{0:N2} AED" ItemStyle-CssClass="text-right" />
+                            <asp:BoundField DataField="InvoiceStatus" HeaderText="Invoice Status" />
+                            <asp:BoundField DataField="PaymentDate" HeaderText="Payment Date" DataFormatString="{0:dd-MMM-yyyy}" />
+                        </Columns>
+                    </asp:GridView>
                 </div>
             </div>
             <div class="modal-footer">
@@ -664,6 +721,11 @@ function dfmShowSR(projId) {
     document.getElementById('<%= hfActionProjectId.ClientID %>').value = projId;
     document.getElementById('<%= btnShowSpendRequests.ClientID %>').click();
 }
+function dfmShowTracker(projId) {
+    document.getElementById('<%= hfActionProjectId.ClientID %>').value = projId;
+    document.getElementById('<%= btnShowProjectTracker.ClientID %>').click();
+    return false;
+}
 function dfmShowBgt(projId) {
     document.getElementById('<%= hfActionProjectId.ClientID %>').value = projId;
     document.getElementById('<%= btnShowBudget.ClientID %>').click();
@@ -674,8 +736,9 @@ function dfmShowInv(projId) {
 }
 function dfmOpenProject(projId) {
     var frame = document.getElementById('dashboardProjectFrame');
-    frame.src = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projId) + '&embed=1';
-    jQuery('#dashboardProjectModal').modal('show');
+    frame.src = 'about:blank';
+    frame.src = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projId) + '&embed=1&inline=1';
+    jQuery('#dashboardProjectModal').modal({ show:true });
     return false;
 }
 jQuery('#dashboardProjectModal').on('hidden.bs.modal', function () {

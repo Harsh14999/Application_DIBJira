@@ -190,11 +190,9 @@ namespace DFM_BPM
                     litRejected.Text    = Fmt(kpi, "TotalRejected");
                     litCapexBudget.Text = FmtAmt(kpi, "TotalCapexBudget");
                     litOpexBudget.Text  = FmtAmt(kpi, "TotalOpexBudget");
-                    litCapexOpexSummary.Text = RenderCapexOpexSummary(
-                        GetDecimal(kpi, "TotalCapexBudget"), GetDecimal(kpi, "TotalOpexBudget"));
                 }
             }
-            catch { litCapexOpexSummary.Text = "<div class='project-child-empty'>CAPEX/OPEX data is not available.</div>"; }
+            catch { }
         }
 
         private void LoadBulkApproval()
@@ -298,28 +296,6 @@ namespace DFM_BPM
             }
 
             sb.Append("</tbody></table></div></td></tr>");
-        }
-
-        private static string RenderCapexOpexSummary(decimal capex, decimal opex)
-        {
-            decimal total = capex + opex;
-            decimal capexPct = total > 0 ? Math.Round((capex / total) * 100m, 1) : 0m;
-            decimal opexPct = total > 0 ? Math.Round((opex / total) * 100m, 1) : 0m;
-            return "<div class='budget-summary'>" +
-                   RenderBudgetSummaryCard("CAPEX", capex, capexPct, "budget-capex") +
-                   RenderBudgetSummaryCard("OPEX", opex, opexPct, "budget-opex") +
-                   "<div class='budget-summary-card'><div class='budget-summary-title'>Total Budget</div><div class='budget-summary-value'>" +
-                   FormatCurrency(total) + "</div><div style='color:#64748b;font-size:.86em;'>CAPEX " + capexPct.ToString("N1") +
-                   "% / OPEX " + opexPct.ToString("N1") + "%</div></div></div>";
-        }
-
-        private static string RenderBudgetSummaryCard(string label, decimal value, decimal pct, string barCss)
-        {
-            return "<div class='budget-summary-card'><div class='budget-summary-title'>" + label +
-                   "</div><div class='budget-summary-value'>" + FormatCurrency(value) +
-                   "</div><div class='budget-bar'><span class='" + barCss + "' style='width:" + pct.ToString("0.##") +
-                   "%;'></span></div><div style='margin-top:6px;color:#64748b;font-size:.84em;'>" + pct.ToString("N1") +
-                   "% of total</div></div>";
         }
 
         // ===== Events =====
@@ -439,6 +415,67 @@ namespace DFM_BPM
                 "$(function(){ $('#spendRequestModal').modal('show'); });", true);
         }
 
+        protected void btnShowProjectTracker_Click(object sender, EventArgs e)
+        {
+            string projId = hfActionProjectId.Value;
+            if (string.IsNullOrEmpty(projId)) return;
+
+            DataRow project = ProjectDAL.GetProjectById(projId);
+            DataRow summary = WorkflowDAL.GetProjectFinancialSummary(projId);
+            DataTable forms = WorkflowDAL.GetPetFormsDashboard(projId, null, null, null, null);
+            DataTable tracker = WorkflowDAL.GetProjectBudgetTracker(projId);
+
+            string projectName = project != null ? Val(project, "ProjectName") : "";
+            if (string.IsNullOrEmpty(projectName)) projectName = projId;
+            string capexId = FirstValue(forms, "BudgetSourceID");
+            decimal approvedBudget = GetDecimal(summary, "ApprovedSpendRequestTotal");
+            decimal committed = GetDecimal(summary, "BudgetTotal");
+            decimal invoiced = GetDecimal(summary, "InvoiceTotal");
+            decimal remaining = approvedBudget - committed;
+            decimal utilization = approvedBudget > 0 ? Math.Round((committed / approvedBudget) * 100m, 0) : 0m;
+
+            int lpoIssued = 0;
+            int pendingCamLpo = 0;
+            int paidInvoices = 0;
+            var lpoLines = new System.Collections.Generic.HashSet<int>();
+            var pendingLines = new System.Collections.Generic.HashSet<int>();
+            foreach (DataRow row in tracker.Rows)
+            {
+                int budgetLineId = Convert.ToInt32(row["BudgetLineID"]);
+                string lpoRequest = Val(row, "LpoRequest");
+                string camStatus = Val(row, "CamStatus");
+                string lpoStatus = Val(row, "LpoStatus");
+                string invoiceStatus = Val(row, "InvoiceStatus");
+
+                if (!string.IsNullOrEmpty(lpoRequest)) lpoLines.Add(budgetLineId);
+                if (!StatusComplete(camStatus) || !StatusComplete(lpoStatus)) pendingLines.Add(budgetLineId);
+                if (IsPaidInvoice(invoiceStatus)) paidInvoices++;
+            }
+            lpoIssued = lpoLines.Count;
+            pendingCamLpo = pendingLines.Count;
+
+            litTrackerModalProject.Text = Server.HtmlEncode(projId);
+            litTrackerProjectTitle.Text = Server.HtmlEncode(projectName);
+            litTrackerProjectName.Text = Server.HtmlEncode(projectName);
+            litTrackerDemandId.Text = Server.HtmlEncode(projId);
+            litTrackerCapexId.Text = Server.HtmlEncode(string.IsNullOrEmpty(capexId) ? "-" : capexId);
+            litTrackerApprovedBudget.Text = FormatMoneyAed(approvedBudget);
+            litTrackerApprovedBudgetTile.Text = FormatMoneyAed(approvedBudget);
+            litTrackerCommitted.Text = FormatMoneyAed(committed);
+            litTrackerInvoiced.Text = FormatMoneyAed(invoiced);
+            litTrackerRemaining.Text = FormatMoneyAed(remaining);
+            litTrackerUtilization.Text = utilization.ToString("N0") + "%";
+            litTrackerLpoIssued.Text = lpoIssued.ToString("N0");
+            litTrackerPendingCamLpo.Text = pendingCamLpo.ToString("N0");
+            litTrackerPaidInvoices.Text = paidInvoices.ToString("N0");
+
+            gvProjectBudgetTracker.DataSource = tracker;
+            gvProjectBudgetTracker.DataBind();
+
+            ScriptManager.RegisterStartupScript(this, GetType(), "showProjectTrackerModal",
+                "$(function(){ $('#projectTrackerModal').modal('show'); });", true);
+        }
+
         protected void btnShowBudget_Click(object sender, EventArgs e)
         {
             string projId = hfActionProjectId.Value;
@@ -519,6 +556,40 @@ namespace DFM_BPM
             return "AED " + value.ToString("N0");
         }
 
+        private static string FormatMoneyAed(decimal value)
+        {
+            return value.ToString("N2") + " AED";
+        }
+
+        private static string FirstValue(DataTable table, string column)
+        {
+            if (table == null || !table.Columns.Contains(column)) return "";
+            foreach (DataRow row in table.Rows)
+            {
+                string value = Val(row, column);
+                if (!string.IsNullOrEmpty(value)) return value;
+            }
+            return "";
+        }
+
+        private static bool StatusComplete(string status)
+        {
+            if (string.IsNullOrEmpty(status)) return false;
+            return status.Equals("Approved", StringComparison.OrdinalIgnoreCase)
+                || status.Equals("Issued", StringComparison.OrdinalIgnoreCase)
+                || status.Equals("Completed", StringComparison.OrdinalIgnoreCase)
+                || status.Equals("Closed", StringComparison.OrdinalIgnoreCase)
+                || status.Equals("Paid", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static bool IsPaidInvoice(string status)
+        {
+            if (string.IsNullOrEmpty(status)) return false;
+            return status.Equals("Paid", StringComparison.OrdinalIgnoreCase)
+                || status.Equals("Processed / Archived", StringComparison.OrdinalIgnoreCase)
+                || status.Equals("Received", StringComparison.OrdinalIgnoreCase);
+        }
+
         private static string Val(DataRow row, string col)
         {
             if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return "";
@@ -552,8 +623,11 @@ namespace DFM_BPM
         {
             string value = projectId ?? "";
             int hyphen = value.IndexOf('-');
-            if (hyphen <= 0 || hyphen >= value.Length - 1) return Html(value);
-            return "<span class='project-id-stack'><span>" + Html(value.Substring(0, hyphen + 1)) + "</span><span>" + Html(value.Substring(hyphen + 1)) + "</span></span>";
+            string body = hyphen <= 0 || hyphen >= value.Length - 1
+                ? Html(value)
+                : "<span class='project-id-stack'><span>" + Html(value.Substring(0, hyphen + 1)) + "</span><span>" + Html(value.Substring(hyphen + 1)) + "</span></span>";
+            string js = System.Web.HttpUtility.JavaScriptStringEncode(value);
+            return "<a href='javascript:void(0);' class='project-id-link' title='Open Project Budget Tracker' onclick=\"event.cancelBubble=true; return dfmShowTracker('" + js + "');\">" + body + "</a>";
         }
     }
 }
