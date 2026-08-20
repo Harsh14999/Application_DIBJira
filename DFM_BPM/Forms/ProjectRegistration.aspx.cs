@@ -568,10 +568,7 @@ namespace DFM_BPM.Forms
 
         private static string FormatProjectId(string projectId)
         {
-            string value = projectId ?? "";
-            int hyphen = value.IndexOf('-');
-            if (hyphen <= 0 || hyphen >= value.Length - 1) return Html(value);
-            return "<span class='project-id-stack'><span>" + Html(value.Substring(0, hyphen + 1)) + "</span><span>" + Html(value.Substring(hyphen + 1)) + "</span></span>";
+            return Html(projectId);
         }
 
         private void ShowMsg(string msg) { lblMsg.Text = msg; lblMsg.CssClass = "alert alert-info"; lblMsg.Visible = true; }

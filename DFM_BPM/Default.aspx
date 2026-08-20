@@ -41,23 +41,22 @@
 .project-parent-row { background:#fff; }
 .project-parent-row.has-requests { cursor:pointer; }
 .project-parent-row:hover { background:#f8fafc; }
-.registered-project-table { table-layout:fixed; min-width:1260px; }
+.registered-project-table { table-layout:fixed; min-width:1180px; }
 .registered-project-table th, .registered-project-table td { word-break:normal; overflow-wrap:break-word; }
-.registered-project-table .col-project-id { width:96px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
+.registered-project-table .col-project-id { width:108px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
 .registered-project-table .project-id-cell { display:inline-block; vertical-align:middle; }
-.registered-project-table .project-id-stack span { display:block; line-height:1.15; }
-.registered-project-table .project-id-link { color:#1a3c5e; text-decoration:none; display:inline-block; }
+.registered-project-table .project-id-link { color:#1a3c5e; text-decoration:none; display:inline-block; white-space:nowrap; }
 .registered-project-table .project-id-link:hover { color:#2563eb; text-decoration:underline; }
 .registered-project-table .col-project-name { width:170px; }
-.registered-project-table .col-project-type { width:100px; }
-.registered-project-table .col-lead { width:150px; }
-.registered-project-table .col-manager { width:140px; }
-.registered-project-table .col-requestor { width:95px; }
-.registered-project-table .col-status { width:90px; }
-.registered-project-table .col-date { width:110px; }
-.registered-project-table .col-count { width:112px; text-align:right; }
-.registered-project-table .col-amount { width:125px; text-align:right; }
-.registered-project-table .col-action { width:160px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
+.registered-project-table .col-project-type { width:76px; }
+.registered-project-table .col-lead { width:128px; }
+.registered-project-table .col-manager { width:126px; }
+.registered-project-table .col-requestor { width:86px; }
+.registered-project-table .col-status { width:76px; }
+.registered-project-table .col-date { width:96px; }
+.registered-project-table .col-count { width:90px; text-align:right; }
+.registered-project-table .col-amount { width:112px; text-align:right; }
+.registered-project-table .col-action { width:145px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
 .registered-project-table th.col-action { background:#1a3c5e !important; color:#fff !important; z-index:4; }
 .registered-project-table td.col-action { background:#fff; }
 .registered-project-table tr:nth-child(even) td.col-action { background:#f8fafc; }
@@ -101,15 +100,22 @@
 .card-panel.panel-budget-invoice .card-panel-hdr { background:#FFF8F2; color:#C55A11; border-bottom:2px solid #F4B183; }
 .card-panel.panel-budget-invoice .dfm-table th { background:#FFF0E5 !important; color:#7c3006; border-bottom:1px solid #F4B183; }
 .tracker-modal .modal-dialog { width:96%; max-width:1280px; }
-.tracker-modal .modal-body { padding:18px; max-height:78vh; overflow-y:auto; background:#fff; }
+.tracker-modal .modal-content { border:0; border-radius:12px; overflow:hidden; box-shadow:0 18px 48px rgba(15,39,66,.25); }
+.tracker-modal .modal-header { background:linear-gradient(90deg,#007a3d 0%,#0f8f5f 45%,#1a3c5e 100%) !important; color:#fff !important; border-bottom:0 !important; }
+.tracker-modal .modal-header .close { color:#fff !important; opacity:.9 !important; }
+.tracker-modal .modal-body { padding:18px; max-height:78vh; overflow-y:auto; background:#f8fafc; }
 .tracker-title { font-size:1.85em; font-weight:900; color:#0f2742; margin-bottom:2px; }
 .tracker-subtitle { color:#64748b; margin-bottom:16px; }
-.tracker-meta { display:grid; grid-template-columns:repeat(4,minmax(180px,1fr)); gap:10px; border:1px solid #dbe5f1; border-radius:10px; padding:12px; margin-bottom:14px; }
-.tracker-card { border:1px solid #dbe5f1; border-radius:8px; padding:12px; background:#fff; min-height:62px; }
+.tracker-meta { display:grid; grid-template-columns:repeat(4,minmax(180px,1fr)); gap:10px; border:1px solid #dbe5f1; border-radius:10px; padding:12px; margin-bottom:14px; background:#fff; }
+.tracker-card { border:1px solid #dbe5f1; border-radius:8px; padding:12px; background:#fff; min-height:62px; box-shadow:0 1px 3px rgba(15,23,42,.06); }
 .tracker-label { font-size:.75em; font-weight:800; color:#64748b; margin-bottom:6px; }
 .tracker-value { font-size:1.08em; font-weight:900; color:#0f172a; overflow-wrap:anywhere; }
 .tracker-kpis { display:grid; grid-template-columns:repeat(4,minmax(180px,1fr)); gap:10px; margin-bottom:14px; }
 .tracker-kpis .tracker-value { color:#047857; font-size:1.35em; }
+.tracker-kpis .tracker-card:nth-child(1), .tracker-kpis .tracker-card:nth-child(4) { border-top:4px solid #047857; }
+.tracker-kpis .tracker-card:nth-child(2), .tracker-kpis .tracker-card:nth-child(6) { border-top:4px solid #2563eb; }
+.tracker-kpis .tracker-card:nth-child(3), .tracker-kpis .tracker-card:nth-child(8) { border-top:4px solid #f59e0b; }
+.tracker-kpis .tracker-card:nth-child(5), .tracker-kpis .tracker-card:nth-child(7) { border-top:4px solid #0f8f5f; }
 .tracker-table-wrap { border:1px solid #dbe5f1; border-radius:10px; overflow:auto; }
 .tracker-table { min-width:1420px; margin:0; }
 .tracker-table th { background:#007a3d !important; color:#fff !important; font-weight:900; white-space:nowrap; }
@@ -457,8 +463,8 @@
 <div class="modal fade tracker-modal" id="projectTrackerModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
         <div class="modal-content">
-            <div class="modal-header" style="background:#fff;color:#0f2742;border-bottom:1px solid #dbe5f1;">
-                <button type="button" class="close" data-dismiss="modal" style="color:#0f2742;opacity:.8;">&times;</button>
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
                 <h4 class="modal-title"><i class="bi bi-table"></i> Project Budget Tracker &mdash; <asp:Literal ID="litTrackerModalProject" runat="server" /></h4>
             </div>
             <div class="modal-body">
@@ -726,6 +732,16 @@ function dfmShowTracker(projId) {
     document.getElementById('<%= btnShowProjectTracker.ClientID %>').click();
     return false;
 }
+function dfmOpenProjectFrom(source, evt) {
+    if (evt && evt.stopPropagation) evt.stopPropagation();
+    if (window.event) window.event.cancelBubble = true;
+    return dfmOpenProject(source.getAttribute('data-project-id'));
+}
+function dfmOpenSpendRequestForProject(source, evt) {
+    if (evt && evt.stopPropagation) evt.stopPropagation();
+    if (window.event) window.event.cancelBubble = true;
+    return dfmOpenSpendRequest(null, source.getAttribute('data-project-id'));
+}
 function dfmShowBgt(projId) {
     document.getElementById('<%= hfActionProjectId.ClientID %>').value = projId;
     document.getElementById('<%= btnShowBudget.ClientID %>').click();
@@ -735,6 +751,7 @@ function dfmShowInv(projId) {
     document.getElementById('<%= btnShowInvoices.ClientID %>').click();
 }
 function dfmOpenProject(projId) {
+    if (!projId) return false;
     var frame = document.getElementById('dashboardProjectFrame');
     frame.src = 'about:blank';
     frame.src = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projId) + '&embed=1&inline=1';

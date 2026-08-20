@@ -33,14 +33,18 @@ namespace DFM_BPM
         {
             try
             {
-                DataTable dt = MastersDAL.GetJiraDropdown();
+                DataTable dt = ProjectDAL.GetProjects();
                 ddlProject.Items.Clear();
                 ddlProject.Items.Add(new System.Web.UI.WebControls.ListItem("All Projects", "ALL"));
                 foreach (DataRow r in dt.Rows)
+                {
+                    string projectId = Val(r, "ProjectID");
+                    string projectName = Val(r, "ProjectName");
                     ddlProject.Items.Add(new System.Web.UI.WebControls.ListItem(
-                        r["DisplayName"].ToString(), r["JiraID"].ToString()));
+                        string.IsNullOrEmpty(projectName) ? projectId : projectId + " - " + projectName, projectId));
+                }
             }
-            catch { /* no JIRA data yet */ }
+            catch { /* no registered projects yet */ }
         }
 
         private void LoadAll()
@@ -71,15 +75,6 @@ namespace DFM_BPM
                 DataTable allForms = WorkflowDAL.GetPetFormsDashboard(
                     jiraFilter, typeFilter, statFilter, fromDate, toDate, viewFilter, viewUser);
 
-                var projectRows = new System.Collections.Generic.List<DataRow>();
-                foreach (DataRow project in projects.Rows)
-                {
-                    string projectId = Val(project, "ProjectID");
-                    if (!string.IsNullOrEmpty(jiraFilter) && !string.Equals(projectId, jiraFilter, StringComparison.OrdinalIgnoreCase))
-                        continue;
-                    projectRows.Add(project);
-                }
-
                 var requestsByProject = new System.Collections.Generic.Dictionary<string, System.Collections.Generic.List<DataRow>>(StringComparer.OrdinalIgnoreCase);
                 foreach (DataRow request in allForms.Rows)
                 {
@@ -88,6 +83,23 @@ namespace DFM_BPM
                     if (!requestsByProject.ContainsKey(projectId))
                         requestsByProject[projectId] = new System.Collections.Generic.List<DataRow>();
                     requestsByProject[projectId].Add(request);
+                }
+
+                bool restrictToMatchingRequests = !string.IsNullOrEmpty(typeFilter)
+                    || !string.IsNullOrEmpty(statFilter)
+                    || fromDate.HasValue
+                    || toDate.HasValue
+                    || !string.Equals(viewFilter, "ALL", StringComparison.OrdinalIgnoreCase);
+
+                var projectRows = new System.Collections.Generic.List<DataRow>();
+                foreach (DataRow project in projects.Rows)
+                {
+                    string projectId = Val(project, "ProjectID");
+                    if (!string.IsNullOrEmpty(jiraFilter) && !string.Equals(projectId, jiraFilter, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    if (restrictToMatchingRequests && !requestsByProject.ContainsKey(projectId))
+                        continue;
+                    projectRows.Add(project);
                 }
 
                 int totalProjects = projectRows.Count;
@@ -130,8 +142,8 @@ namespace DFM_BPM
                         "<td class='col-project-name'>{2}</td><td class='col-project-type'>{3}</td><td class='col-lead'>{4}</td><td class='col-lead'>{5}</td><td class='col-manager'>{6}</td><td class='col-requestor'>{7}</td><td class='col-status'>{8}</td><td class='col-date'>{9}</td>" +
                         "<td class='col-count text-right'><strong>{10}</strong></td><td class='col-amount text-right'><strong>{11}</strong></td>" +
                         "<td class='col-action'><div class='gv-acts'>" +
-                        "<button type='button' class='btn btn-xs btn-primary' onclick=\"event.cancelBubble=true; return dfmOpenProject('{14}');\"><i class='bi bi-pencil'></i> Edit</button>" +
-                        "<button type='button' class='btn btn-xs btn-success' onclick=\"event.cancelBubble=true; return dfmOpenSpendRequest(null, '{14}');\"><i class='bi bi-plus-circle'></i> New SR</button>" +
+                        "<button type='button' class='btn btn-xs btn-primary' data-project-id='{14}' onclick=\"return dfmOpenProjectFrom(this, event);\"><i class='bi bi-pencil'></i> Edit</button>" +
+                        "<button type='button' class='btn btn-xs btn-success' data-project-id='{14}' onclick=\"return dfmOpenSpendRequestForProject(this, event);\"><i class='bi bi-plus-circle'></i> New SR</button>" +
                         "</div></td></tr>",
                         toggle,
                         FormatProjectId(projectId),
@@ -147,7 +159,7 @@ namespace DFM_BPM
                         requestedTotal > 0 ? requestedTotal.ToString("N0") : "",
                         requests.Count > 0 ? " has-requests" : "",
                         requests.Count > 0 ? " onclick=\"return dfmProjectTog('" + safeId + "');\"" : "",
-                        System.Web.HttpUtility.JavaScriptStringEncode(projectId));
+                        Attr(projectId));
 
                     if (requests.Count > 0)
                         AppendRequestChildRows(sb, safeId, requests);
@@ -601,6 +613,11 @@ namespace DFM_BPM
             return System.Web.HttpUtility.HtmlEncode(value ?? "");
         }
 
+        private static string Attr(string value)
+        {
+            return System.Web.HttpUtility.HtmlAttributeEncode(value ?? "");
+        }
+
         private static bool GetBool(DataRow row, string col)
         {
             if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return false;
@@ -622,12 +639,8 @@ namespace DFM_BPM
         private static string FormatProjectId(string projectId)
         {
             string value = projectId ?? "";
-            int hyphen = value.IndexOf('-');
-            string body = hyphen <= 0 || hyphen >= value.Length - 1
-                ? Html(value)
-                : "<span class='project-id-stack'><span>" + Html(value.Substring(0, hyphen + 1)) + "</span><span>" + Html(value.Substring(hyphen + 1)) + "</span></span>";
             string js = System.Web.HttpUtility.JavaScriptStringEncode(value);
-            return "<a href='javascript:void(0);' class='project-id-link' title='Open Project Budget Tracker' onclick=\"event.cancelBubble=true; return dfmShowTracker('" + js + "');\">" + body + "</a>";
+            return "<a href='javascript:void(0);' class='project-id-link' title='Open Project Budget Tracker' onclick=\"event.cancelBubble=true; return dfmShowTracker('" + js + "');\">" + Html(value) + "</a>";
         }
     }
 }

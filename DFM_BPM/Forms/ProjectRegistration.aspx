@@ -20,21 +20,20 @@
 .dfm-table tr:nth-child(odd)  td { background:#fafbff; }
 .dfm-table tr:nth-child(even) td { background:#ffffff; }
 .dfm-table tr:hover td { background:#eff6ff; }
-.portfolio-project-table { table-layout:fixed; min-width:1260px; }
+.portfolio-project-table { table-layout:fixed; min-width:1180px; }
 .portfolio-project-table th, .portfolio-project-table td { word-break:normal; overflow-wrap:break-word; }
-.portfolio-project-table .col-project-id { width:96px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
+.portfolio-project-table .col-project-id { width:108px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
 .portfolio-project-table .project-id-cell { display:inline-block; vertical-align:middle; }
-.portfolio-project-table .project-id-stack span { display:block; line-height:1.15; }
 .portfolio-project-table .col-project-name { width:170px; }
-.portfolio-project-table .col-project-type { width:100px; }
-.portfolio-project-table .col-lead { width:150px; }
-.portfolio-project-table .col-manager { width:140px; }
-.portfolio-project-table .col-requestor { width:95px; }
-.portfolio-project-table .col-status { width:90px; }
-.portfolio-project-table .col-date { width:110px; }
-.portfolio-project-table .col-count { width:112px; text-align:right; }
-.portfolio-project-table .col-amount { width:125px; text-align:right; }
-.portfolio-project-table .col-action { width:160px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
+.portfolio-project-table .col-project-type { width:76px; }
+.portfolio-project-table .col-lead { width:128px; }
+.portfolio-project-table .col-manager { width:126px; }
+.portfolio-project-table .col-requestor { width:86px; }
+.portfolio-project-table .col-status { width:76px; }
+.portfolio-project-table .col-date { width:96px; }
+.portfolio-project-table .col-count { width:90px; text-align:right; }
+.portfolio-project-table .col-amount { width:112px; text-align:right; }
+.portfolio-project-table .col-action { width:145px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
 .portfolio-project-table th.col-action { background:#1a3c5e !important; color:#fff !important; z-index:4; }
 .portfolio-project-table td.col-action { background:#fff; }
 .portfolio-project-table tr:nth-child(even) td.col-action { background:#f8fafc; }
@@ -449,6 +448,7 @@ function prProjectTog(cls) {
 function prOpenProject(projectId) {
     var url = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projectId);
     if (window.location.search.indexOf('embed=1') >= 0) url += '&embed=1';
+    if (window.location.search.indexOf('inline=1') >= 0) url += '&inline=1';
     window.location.href = url;
     return false;
 }
