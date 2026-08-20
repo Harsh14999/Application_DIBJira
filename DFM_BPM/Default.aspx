@@ -41,7 +41,7 @@
 .project-parent-row { background:#fff; }
 .project-parent-row.has-requests { cursor:pointer; }
 .project-parent-row:hover { background:#f8fafc; }
-.registered-project-table { table-layout:fixed; min-width:1180px; }
+.registered-project-table { table-layout:fixed; min-width:1320px; }
 .registered-project-table th, .registered-project-table td { word-break:normal; overflow-wrap:break-word; }
 .registered-project-table .col-project-id { width:108px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
 .registered-project-table .project-id-cell { display:inline-block; vertical-align:middle; }
@@ -54,8 +54,8 @@
 .registered-project-table .col-requestor { width:86px; }
 .registered-project-table .col-status { width:76px; }
 .registered-project-table .col-date { width:96px; }
-.registered-project-table .col-count { width:90px; text-align:right; }
-.registered-project-table .col-amount { width:112px; text-align:right; }
+.registered-project-table .col-count { width:102px; text-align:right; }
+.registered-project-table .col-amount { width:140px; text-align:right; white-space:nowrap; }
 .registered-project-table .col-action { width:145px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
 .registered-project-table th.col-action { background:#1a3c5e !important; color:#fff !important; z-index:4; }
 .registered-project-table td.col-action { background:#fff; }
@@ -353,7 +353,7 @@
         <i class="bi bi-chevron-down dash-sec-toggle"></i>
     </div>
     <div class="dash-sec-body">
-        <div class="card-panel ux-table-wrap" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;">
+        <div class="card-panel ux-table-wrap" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
             <table class="dfm-table registered-project-table" style="width:100%;">
                 <thead>
                     <tr>

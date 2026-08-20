@@ -49,6 +49,8 @@
 .project-child-box .dfm-table th { font-size:.88em !important; padding:8px 10px !important; }
 .project-child-box .dfm-table td { font-size:.92em !important; padding:8px 10px !important; }
 .portfolio-request-row td { background:#fbfff7 !important; border-top:1px solid #d9ead3; }
+.portfolio-nested-row td { background:#fff !important; }
+.portfolio-nested-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:8px; }
 .portfolio-budget-shell { border:1px solid #f4b183; border-radius:6px; overflow:hidden; margin:4px 0 10px; }
 .portfolio-budget-shell .dfm-table th { background:#fff4e8 !important; color:#8a4b12 !important; border-bottom:1px solid #f4b183; }
 .portfolio-invoice-shell { border:1px solid #f4b183; margin:6px 14px 8px; overflow:hidden; }
@@ -462,16 +464,28 @@ function prProjectTog(cls) {
     return false;
 }
 function prExpandAll() {
-    var rows = document.querySelectorAll('.project-child-row');
+    var rows = document.querySelectorAll('.project-child-row, .portfolio-nested-row');
     for (var i = 0; i < rows.length; i++) rows[i].classList.remove('tree-hidden');
-    var btns = document.querySelectorAll('[data-project-tog]');
+    var btns = document.querySelectorAll('[data-project-tog], [data-portfolio-tog]');
     for (var j = 0; j < btns.length; j++) btns[j].innerHTML = '&#9660;';
 }
 function prCollapseAll() {
-    var rows = document.querySelectorAll('.project-child-row');
+    var rows = document.querySelectorAll('.project-child-row, .portfolio-nested-row');
     for (var i = 0; i < rows.length; i++) rows[i].classList.add('tree-hidden');
-    var btns = document.querySelectorAll('[data-project-tog]');
+    var btns = document.querySelectorAll('[data-project-tog], [data-portfolio-tog]');
     for (var j = 0; j < btns.length; j++) btns[j].innerHTML = '&#9658;';
+}
+function prNestedTog(cls) {
+    var rows = document.querySelectorAll('.portfolio-nested-row.' + cls);
+    if (!rows.length) return false;
+    var hidden = rows[0].classList.contains('tree-hidden');
+    for (var i = 0; i < rows.length; i++) {
+        if (hidden) rows[i].classList.remove('tree-hidden');
+        else rows[i].classList.add('tree-hidden');
+    }
+    var btns = document.querySelectorAll('[data-portfolio-tog="' + cls + '"]');
+    for (var j = 0; j < btns.length; j++) btns[j].innerHTML = hidden ? '&#9660;' : '&#9658;';
+    return false;
 }
 function prFilterProjects() {
     var input = document.getElementById('portfolioProjectSearch');

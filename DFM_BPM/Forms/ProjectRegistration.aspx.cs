@@ -184,18 +184,23 @@ namespace DFM_BPM.Forms
                 decimal requested = GetDecimal(requestRow, "TotalRequestedAED");
                 string jsPetId = System.Web.HttpUtility.JavaScriptStringEncode(petId);
                 int budgetCount = CountBudgetRows(budgetRows, petFormId);
+                string requestClass = "sr" + petFormId.ToString();
+                string requestToggle = budgetCount > 0
+                    ? "<span class='portfolio-nested-toggle' data-portfolio-tog='" + requestClass + "' onclick=\"event.cancelBubble=true; return prNestedTog('" + requestClass + "');\">&#9658;</span>"
+                    : "<span style='display:inline-block;width:18px;'></span>";
 
                 sb.AppendFormat(
                     "<tr class='portfolio-request-row'>" +
-                    "<td><strong>v{0} - {1}</strong></td>" +
-                    "<td>{2}</td>" +
-                    "<td><span style='font-weight:700;color:{3};'>{4}</span></td>" +
-                    "<td>{5}</td>" +
-                    "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{6}</td>" +
-                    "<td>{7}</td><td>{8}</td><td>{9}</td>" +
-                    "<td><span class='label label-info'>{10} item(s)</span></td>" +
-                    "<td><button type='button' class='btn btn-xs btn-primary' onclick=\"return prOpenSpendRequest('{11}', null);\"><i class='bi bi-arrow-right-circle'></i></button></td>" +
+                    "<td>{0}<strong>v{1} - {2}</strong></td>" +
+                    "<td>{3}</td>" +
+                    "<td><span style='font-weight:700;color:{4};'>{5}</span></td>" +
+                    "<td>{6}</td>" +
+                    "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{7}</td>" +
+                    "<td>{8}</td><td>{9}</td><td>{10}</td>" +
+                    "<td><span class='label label-info'>{11} item(s)</span></td>" +
+                    "<td><button type='button' class='btn btn-xs btn-primary' onclick=\"return prOpenSpendRequest('{12}', null);\"><i class='bi bi-arrow-right-circle'></i></button></td>" +
                     "</tr>",
+                    requestToggle,
                     i + 1,
                     Html(refNo),
                     StatusBadge(status),
@@ -209,15 +214,15 @@ namespace DFM_BPM.Forms
                     budgetCount.ToString("N0"),
                     jsPetId);
 
-                AppendBudgetInvoiceRows(sb, petFormId, budgetRows, invoiceRows);
+                AppendBudgetInvoiceRows(sb, petFormId, requestClass, budgetRows, invoiceRows);
             }
 
             sb.Append("</tbody></table></div></td></tr>");
         }
 
-        private void AppendBudgetInvoiceRows(StringBuilder sb, int petFormId, DataTable budgetRows, DataTable invoiceRows)
+        private void AppendBudgetInvoiceRows(StringBuilder sb, int petFormId, string requestClass, DataTable budgetRows, DataTable invoiceRows)
         {
-            sb.Append("<tr><td colspan='10'><div class='portfolio-budget-shell'>");
+            sb.Append("<tr class='portfolio-nested-row tree-hidden " + requestClass + "'><td colspan='10'><div class='portfolio-budget-shell'>");
             if (CountBudgetRows(budgetRows, petFormId) == 0)
             {
                 sb.Append("<div class='portfolio-empty'>No CAM/LPO records for this Spend Request.</div>");
@@ -234,12 +239,17 @@ namespace DFM_BPM.Forms
                 if (GetInt(budgetRow, "PetFormID") != petFormId) continue;
                 int budgetLineId = GetInt(budgetRow, "BudgetLineID");
                 int invoiceCount = CountInvoiceRows(invoiceRows, budgetLineId);
+                string invoiceClass = "inv" + budgetLineId.ToString();
+                string invoiceToggle = invoiceCount > 0
+                    ? "<span class='portfolio-nested-toggle' data-portfolio-tog='" + invoiceClass + "' onclick=\"event.cancelBubble=true; return prNestedTog('" + invoiceClass + "');\">&#9658;</span>"
+                    : "<span style='display:inline-block;width:18px;'></span>";
 
                 sb.AppendFormat(
                     "<tr>" +
-                    "<td>{0}</td><td>{1}</td><td>{2}</td><td class='text-right'>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td>" +
-                    "<td>{7}</td><td>{8}</td><td>{9}</td><td>{10}</td><td>{11}</td><td>{12}</td><td><strong>{13} invoice(s)</strong></td>" +
+                    "<td>{0}{1}</td><td>{2}</td><td>{3}</td><td class='text-right'>{4}</td><td>{5}</td><td>{6}</td><td>{7}</td>" +
+                    "<td>{8}</td><td>{9}</td><td>{10}</td><td>{11}</td><td>{12}</td><td>{13}</td><td><strong>{14} invoice(s)</strong></td>" +
                     "</tr>",
+                    invoiceToggle,
                     Html(Val(budgetRow, "SerialNo")),
                     Html(Val(budgetRow, "VendorName")),
                     Html(Val(budgetRow, "Justification")),
@@ -256,15 +266,15 @@ namespace DFM_BPM.Forms
                     invoiceCount.ToString("N0"));
 
                 if (invoiceCount > 0)
-                    AppendInvoiceRows(sb, budgetLineId, invoiceRows);
+                    AppendInvoiceRows(sb, budgetLineId, invoiceClass, invoiceRows);
             }
 
             sb.Append("</tbody></table></div></td></tr>");
         }
 
-        private void AppendInvoiceRows(StringBuilder sb, int budgetLineId, DataTable invoiceRows)
+        private void AppendInvoiceRows(StringBuilder sb, int budgetLineId, string invoiceClass, DataTable invoiceRows)
         {
-            sb.Append("<tr><td colspan='14'><div class='portfolio-invoice-shell'>");
+            sb.Append("<tr class='portfolio-nested-row tree-hidden " + invoiceClass + "'><td colspan='14'><div class='portfolio-invoice-shell'>");
             sb.Append("<table class='dfm-table' style='width:100%;'><thead><tr>");
             sb.Append("<th>Row #</th><th>Vendor Name</th><th>Justification</th><th>GL Number</th><th>Invoice ID</th><th>Invoice Number</th><th class='text-right'>Invoice Amount</th><th>Invoice Status</th><th>Payment Date</th>");
             sb.Append("</tr></thead><tbody>");

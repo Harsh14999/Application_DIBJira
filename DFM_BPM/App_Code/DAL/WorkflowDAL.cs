@@ -54,7 +54,7 @@ namespace DFM_BPM.App_Code.DAL
             else
                 { sql += " AND p.Status=@st"; ps.Add(Db.P("@st", statusFilter)); }
             if (fromDate.HasValue) { sql += " AND p.CreatedDate >= @fd"; ps.Add(Db.P("@fd", fromDate.Value)); }
-            if (toDate.HasValue)   { sql += " AND p.CreatedDate <= @td"; ps.Add(Db.P("@td", toDate.Value.AddDays(1))); }
+            if (toDate.HasValue)   { sql += " AND p.CreatedDate < @td"; ps.Add(Db.P("@td", toDate.Value.Date.AddDays(1))); }
             if (viewFilter == "MYAPPROVAL" && !string.IsNullOrEmpty(viewUser))
             {
                 sql += " AND ((p.ReviewerUsername=@vu AND p.Status='PendingReview')" +
