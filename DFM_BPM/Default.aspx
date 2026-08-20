@@ -617,7 +617,7 @@
         <div class="modal-content">
             <div class="modal-header" style="background:#1a3c5e;color:#fff;">
                 <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
-                <h4 class="modal-title"><i class="bi bi-folder-plus"></i> Project Portfolio</h4>
+                <h4 class="modal-title"><i class="bi bi-pencil-square"></i> Edit Project</h4>
             </div>
             <div class="modal-body">
                 <iframe id="dashboardProjectFrame" title="Project Portfolio"></iframe>
@@ -754,7 +754,7 @@ function dfmOpenProject(projId) {
     if (!projId) return false;
     var frame = document.getElementById('dashboardProjectFrame');
     frame.src = 'about:blank';
-    frame.src = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projId) + '&embed=1&inline=1';
+    frame.src = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projId) + '&embed=1&inline=1&editOnly=1';
     jQuery('#dashboardProjectModal').modal({ show:true });
     return false;
 }

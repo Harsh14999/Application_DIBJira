@@ -48,6 +48,13 @@
 .project-child-box .dfm-table { font-size:.95em !important; }
 .project-child-box .dfm-table th { font-size:.88em !important; padding:8px 10px !important; }
 .project-child-box .dfm-table td { font-size:.92em !important; padding:8px 10px !important; }
+.portfolio-request-row td { background:#fbfff7 !important; border-top:1px solid #d9ead3; }
+.portfolio-budget-shell { border:1px solid #f4b183; border-radius:6px; overflow:hidden; margin:4px 0 10px; }
+.portfolio-budget-shell .dfm-table th { background:#fff4e8 !important; color:#8a4b12 !important; border-bottom:1px solid #f4b183; }
+.portfolio-invoice-shell { border:1px solid #f4b183; margin:6px 14px 8px; overflow:hidden; }
+.portfolio-invoice-shell .dfm-table th { background:#fff8ef !important; color:#8a4b12 !important; }
+.portfolio-empty { padding:10px 14px; color:#94a3b8; font-style:italic; text-align:center; }
+.portfolio-project-search { min-width:260px; max-width:360px; }
 .tree-hidden { display:none !important; }
 .pet-status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.75em; font-weight:700; white-space:nowrap; }
 .st-draft    { background:#f1f5f9; color:#475569; }
@@ -66,6 +73,7 @@
 </asp:Content>
 
 <asp:Content ID="MainCt" ContentPlaceHolderID="MainContent" runat="server">
+<% if (!EditOnlyEmbed) { %>
 <div class="ux-page-head">
     <div>
         <div class="ux-title"><i class="bi bi-folder-plus"></i> Project Portfolio</div>
@@ -83,12 +91,19 @@
         <% } %>
     </div>
 </div>
+<% } %>
 
 <asp:Label ID="lblMsg" runat="server" CssClass="alert alert-info" Visible="false" />
 <asp:HiddenField ID="hfProjectId" runat="server" Value="" />
 
+<% if (!EditOnlyEmbed) { %>
 <div class="portfolio-toolbar">
     <div style="font-size:.9em;color:#64748b;">Registered Projects (<asp:Literal ID="litProjectPortfolioCount" runat="server" Text="0" />)</div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="text" class="form-control portfolio-project-search" id="portfolioProjectSearch" placeholder="Search projects, leads, PM..." onkeyup="prFilterProjects();" />
+        <button type="button" class="btn btn-default btn-sm" onclick="prExpandAll(); return false;"><i class="bi bi-arrows-expand"></i> Expand All</button>
+        <button type="button" class="btn btn-default btn-sm" onclick="prCollapseAll(); return false;"><i class="bi bi-arrows-collapse"></i> Collapse All</button>
+    </div>
 </div>
 
 <div class="card-panel panel-spend-request">
@@ -117,6 +132,7 @@
         </table>
     </div>
 </div>
+<% } %>
 
 <div class="modal fade project-modal" id="projectRegistrationModal" tabindex="-1" role="dialog">
     <div class="modal-dialog" role="document">
@@ -444,6 +460,35 @@ function prProjectTog(cls) {
     for (var j = 0; j < btns.length; j++)
         btns[j].innerHTML = hidden ? '&#9660;' : '&#9658;';
     return false;
+}
+function prExpandAll() {
+    var rows = document.querySelectorAll('.project-child-row');
+    for (var i = 0; i < rows.length; i++) rows[i].classList.remove('tree-hidden');
+    var btns = document.querySelectorAll('[data-project-tog]');
+    for (var j = 0; j < btns.length; j++) btns[j].innerHTML = '&#9660;';
+}
+function prCollapseAll() {
+    var rows = document.querySelectorAll('.project-child-row');
+    for (var i = 0; i < rows.length; i++) rows[i].classList.add('tree-hidden');
+    var btns = document.querySelectorAll('[data-project-tog]');
+    for (var j = 0; j < btns.length; j++) btns[j].innerHTML = '&#9658;';
+}
+function prFilterProjects() {
+    var input = document.getElementById('portfolioProjectSearch');
+    var term = input ? input.value.toLowerCase() : '';
+    var parents = document.querySelectorAll('.project-parent-row');
+    for (var i = 0; i < parents.length; i++) {
+        var parent = parents[i];
+        var show = !term || parent.textContent.toLowerCase().indexOf(term) >= 0;
+        parent.style.display = show ? '' : 'none';
+        var cls = '';
+        var toggles = parent.querySelectorAll('[data-project-tog]');
+        if (toggles.length) cls = toggles[0].getAttribute('data-project-tog');
+        if (cls) {
+            var children = document.querySelectorAll('.project-child-row.' + cls);
+            for (var j = 0; j < children.length; j++) children[j].style.display = show ? '' : 'none';
+        }
+    }
 }
 function prOpenProject(projectId) {
     var url = '<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>?pid=' + encodeURIComponent(projectId);

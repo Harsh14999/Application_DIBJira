@@ -19,6 +19,7 @@ namespace DFM_BPM.Forms
         protected bool IsExistingProject { get { return !string.IsNullOrEmpty(CurrentProjectId); } }
 
         private bool InlineProjectModal { get { return Request.QueryString["inline"] == "1"; } }
+        protected bool EditOnlyEmbed { get { return InlineProjectModal && Request.QueryString["editOnly"] == "1"; } }
 
         /// <summary>Delete is only offered for an already-registered project, when no active Spend Request
         /// references it yet (ProjectDAL.HasPetForms is the hard-delete safety net), and only to Admins or
@@ -40,7 +41,7 @@ namespace DFM_BPM.Forms
             if (!IsPostBack)
             {
                 LoadDropdowns();
-                BindProjectPortfolio();
+                if (!EditOnlyEmbed) BindProjectPortfolio();
 
                 string pid = Request.QueryString["pid"];
                 if (!string.IsNullOrEmpty(pid))
@@ -145,7 +146,7 @@ namespace DFM_BPM.Forms
                     jsProjectId);
 
                 if (requests.Count > 0)
-                    AppendPortfolioRequestChildRows(sb, safeId, requests);
+                    AppendPortfolioRequestChildRows(sb, safeId, projectId, requests);
             }
 
             if (sb.Length == 0)
@@ -154,7 +155,7 @@ namespace DFM_BPM.Forms
             litProjectPortfolioRows.Text = sb.ToString();
         }
 
-        private void AppendPortfolioRequestChildRows(StringBuilder sb, string safeId, System.Collections.Generic.List<DataRow> requests)
+        private void AppendPortfolioRequestChildRows(StringBuilder sb, string safeId, string projectId, System.Collections.Generic.List<DataRow> requests)
         {
             requests.Sort(delegate (DataRow a, DataRow b) {
                 int ia = Convert.ToInt32(a["PetFormID"]);
@@ -162,53 +163,128 @@ namespace DFM_BPM.Forms
                 return ia.CompareTo(ib);
             });
 
+            DataTable budgetRows = WorkflowDAL.GetBudgetLinesByProject(projectId);
+            DataTable invoiceRows = WorkflowDAL.GetInvoicesByProject(projectId);
+
             sb.Append("<tr class='project-child-row tree-hidden " + safeId + "'><td colspan='12'>");
             sb.Append("<div class='project-child-box'><div class='project-child-title'>Spend Requests under this Project</div>");
             sb.Append("<table class='dfm-table' style='width:100%;'><thead><tr>");
-            sb.Append("<th>Code</th><th>Status</th><th>Project</th><th>Type</th><th>Budget Source</th><th class='text-right'>Requested (AED)</th><th>Approver</th><th>Requestor</th><th>Submitted</th><th>Action</th>");
+            sb.Append("<th>Ref No</th><th>Status</th><th>Type</th><th>Budget Source</th><th class='text-right'>Requested (AED)</th><th>Approver</th><th>Requestor</th><th>Submitted</th><th>Spend Items</th><th>Action</th>");
             sb.Append("</tr></thead><tbody>");
 
             for (int i = 0; i < requests.Count; i++)
             {
-                DataRow r = requests[i];
-                string status = Val(r, "Status");
-                string badgeCss = status == "Draft" ? "st-draft"
-                                : status == "PendingReview" ? "st-review"
-                                : status == "PendingApproval" ? "st-pending"
-                                : status == "Approved" ? "st-approved"
-                                : status == "Rejected" ? "st-rejected"
-                                : "st-sent";
-                string petId = Val(r, "PetFormID");
-                string refNo = string.IsNullOrEmpty(Val(r, "PetRefNo")) ? "#" + petId : Val(r, "PetRefNo");
-                string type = Val(r, "CapexOpexType");
+                DataRow requestRow = requests[i];
+                string status = Val(requestRow, "Status");
+                int petFormId = GetInt(requestRow, "PetFormID");
+                string petId = petFormId.ToString();
+                string refNo = string.IsNullOrEmpty(Val(requestRow, "PetRefNo")) ? "#" + petId : Val(requestRow, "PetRefNo");
+                string type = Val(requestRow, "CapexOpexType");
                 string typeColor = type == "CAPEX" ? "#2563eb" : (type == "OPEX" ? "#059669" : "#64748b");
-                decimal requested = GetDecimal(r, "TotalRequestedAED");
+                decimal requested = GetDecimal(requestRow, "TotalRequestedAED");
                 string jsPetId = System.Web.HttpUtility.JavaScriptStringEncode(petId);
+                int budgetCount = CountBudgetRows(budgetRows, petFormId);
 
                 sb.AppendFormat(
-                    "<tr>" +
+                    "<tr class='portfolio-request-row'>" +
                     "<td><strong>v{0} - {1}</strong></td>" +
-                    "<td><span class='pet-status {2}'>{3}</span></td>" +
-                    "<td>{4}</td>" +
-                    "<td><span style='font-weight:700;color:{5};'>{6}</span></td>" +
-                    "<td>{7}</td>" +
-                    "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{8}</td>" +
-                    "<td>{9}</td><td>{10}</td><td>{11}</td>" +
-                    "<td><button type='button' class='btn btn-xs btn-primary' onclick=\"return prOpenSpendRequest('{12}', null);\"><i class='bi bi-arrow-right-circle'></i></button></td>" +
+                    "<td>{2}</td>" +
+                    "<td><span style='font-weight:700;color:{3};'>{4}</span></td>" +
+                    "<td>{5}</td>" +
+                    "<td class='text-right' style='font-weight:700;color:#1a3c5e;'>{6}</td>" +
+                    "<td>{7}</td><td>{8}</td><td>{9}</td>" +
+                    "<td><span class='label label-info'>{10} item(s)</span></td>" +
+                    "<td><button type='button' class='btn btn-xs btn-primary' onclick=\"return prOpenSpendRequest('{11}', null);\"><i class='bi bi-arrow-right-circle'></i></button></td>" +
                     "</tr>",
                     i + 1,
                     Html(refNo),
-                    badgeCss,
-                    Html(status),
-                    Html(Val(r, "ProjectID")),
+                    StatusBadge(status),
                     typeColor,
                     Html(type),
-                    Html(Val(r, "BudgetSourceID")),
+                    Html(Val(requestRow, "BudgetSourceID")),
                     requested > 0 ? requested.ToString("N0") : "",
-                    Html(Val(r, "ApproverUsername")),
-                    Html(Val(r, "CreatedBy")),
-                    FormatDate(r, "SubmittedDate"),
+                    Html(Val(requestRow, "ApproverUsername")),
+                    Html(Val(requestRow, "CreatedBy")),
+                    FormatDate(requestRow, "SubmittedDate"),
+                    budgetCount.ToString("N0"),
                     jsPetId);
+
+                AppendBudgetInvoiceRows(sb, petFormId, budgetRows, invoiceRows);
+            }
+
+            sb.Append("</tbody></table></div></td></tr>");
+        }
+
+        private void AppendBudgetInvoiceRows(StringBuilder sb, int petFormId, DataTable budgetRows, DataTable invoiceRows)
+        {
+            sb.Append("<tr><td colspan='10'><div class='portfolio-budget-shell'>");
+            if (CountBudgetRows(budgetRows, petFormId) == 0)
+            {
+                sb.Append("<div class='portfolio-empty'>No CAM/LPO records for this Spend Request.</div>");
+                sb.Append("</div></td></tr>");
+                return;
+            }
+
+            sb.Append("<table class='dfm-table' style='width:100%;'><thead><tr>");
+            sb.Append("<th>#</th><th>Vendor</th><th>Justification</th><th class='text-right'>Cost</th><th>CCY</th><th>GL#</th><th>PET Ref</th><th>CAM ID</th><th>CAM Status</th><th>CAM Comments</th><th>LPO Request</th><th>LPO Status</th><th>LPO Comments</th><th>Invoices</th>");
+            sb.Append("</tr></thead><tbody>");
+
+            foreach (DataRow budgetRow in budgetRows.Rows)
+            {
+                if (GetInt(budgetRow, "PetFormID") != petFormId) continue;
+                int budgetLineId = GetInt(budgetRow, "BudgetLineID");
+                int invoiceCount = CountInvoiceRows(invoiceRows, budgetLineId);
+
+                sb.AppendFormat(
+                    "<tr>" +
+                    "<td>{0}</td><td>{1}</td><td>{2}</td><td class='text-right'>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td>" +
+                    "<td>{7}</td><td>{8}</td><td>{9}</td><td>{10}</td><td>{11}</td><td>{12}</td><td><strong>{13} invoice(s)</strong></td>" +
+                    "</tr>",
+                    Html(Val(budgetRow, "SerialNo")),
+                    Html(Val(budgetRow, "VendorName")),
+                    Html(Val(budgetRow, "Justification")),
+                    GetDecimal(budgetRow, "Cost").ToString("N2"),
+                    Html(Val(budgetRow, "Currency")),
+                    Html(Val(budgetRow, "GLNumber")),
+                    Html(FirstNonEmpty(Val(budgetRow, "PetRef"), Val(budgetRow, "PetRefNo"))),
+                    Html(Val(budgetRow, "CamId")),
+                    StatusBadge(Val(budgetRow, "CamStatus")),
+                    Html(Val(budgetRow, "CamComments")),
+                    Html(Val(budgetRow, "LpoRequest")),
+                    StatusBadge(Val(budgetRow, "LpoStatus")),
+                    Html(Val(budgetRow, "LpoComments")),
+                    invoiceCount.ToString("N0"));
+
+                if (invoiceCount > 0)
+                    AppendInvoiceRows(sb, budgetLineId, invoiceRows);
+            }
+
+            sb.Append("</tbody></table></div></td></tr>");
+        }
+
+        private void AppendInvoiceRows(StringBuilder sb, int budgetLineId, DataTable invoiceRows)
+        {
+            sb.Append("<tr><td colspan='14'><div class='portfolio-invoice-shell'>");
+            sb.Append("<table class='dfm-table' style='width:100%;'><thead><tr>");
+            sb.Append("<th>Row #</th><th>Vendor Name</th><th>Justification</th><th>GL Number</th><th>Invoice ID</th><th>Invoice Number</th><th class='text-right'>Invoice Amount</th><th>Invoice Status</th><th>Payment Date</th>");
+            sb.Append("</tr></thead><tbody>");
+
+            int rowNumber = 1;
+            foreach (DataRow invoiceRow in invoiceRows.Rows)
+            {
+                if (GetInt(invoiceRow, "BudgetLineID") != budgetLineId) continue;
+                sb.AppendFormat(
+                    "<tr><td>{0}</td><td>{1}</td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td class='text-right'>{6}</td><td>{7}</td><td>{8}</td></tr>",
+                    rowNumber.ToString("N0"),
+                    Html(Val(invoiceRow, "VendorName")),
+                    Html(Val(invoiceRow, "Justification")),
+                    Html(Val(invoiceRow, "GLNumber")),
+                    Html(Val(invoiceRow, "InvoiceID")),
+                    Html(Val(invoiceRow, "InvoiceNo")),
+                    GetDecimal(invoiceRow, "InvoiceAmount").ToString("N2"),
+                    StatusBadge(Val(invoiceRow, "InvoiceStatus")),
+                    FormatDate(invoiceRow, "PaymentDate"));
+                rowNumber++;
             }
 
             sb.Append("</tbody></table></div></td></tr>");
@@ -558,6 +634,48 @@ namespace DFM_BPM.Forms
         {
             if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return 0m;
             return Convert.ToDecimal(row[col]);
+        }
+
+        private static int GetInt(DataRow row, string col)
+        {
+            if (row == null || !row.Table.Columns.Contains(col) || row[col] == DBNull.Value) return 0;
+            return Convert.ToInt32(row[col]);
+        }
+
+        private static int CountBudgetRows(DataTable budgetRows, int petFormId)
+        {
+            int count = 0;
+            if (budgetRows == null) return count;
+            foreach (DataRow budgetRow in budgetRows.Rows)
+                if (GetInt(budgetRow, "PetFormID") == petFormId) count++;
+            return count;
+        }
+
+        private static int CountInvoiceRows(DataTable invoiceRows, int budgetLineId)
+        {
+            int count = 0;
+            if (invoiceRows == null) return count;
+            foreach (DataRow invoiceRow in invoiceRows.Rows)
+                if (GetInt(invoiceRow, "BudgetLineID") == budgetLineId) count++;
+            return count;
+        }
+
+        private static string FirstNonEmpty(string first, string second)
+        {
+            return string.IsNullOrEmpty(first) ? second : first;
+        }
+
+        private static string StatusBadge(string status)
+        {
+            if (string.IsNullOrEmpty(status)) return "<span style='color:#94a3b8;'>-</span>";
+            string value = status.ToLowerInvariant();
+            string css = value.IndexOf("draft") >= 0 ? "st-draft"
+                : value.IndexOf("review") >= 0 ? "st-review"
+                : value.IndexOf("pending") >= 0 || value.IndexOf("progress") >= 0 ? "st-pending"
+                : value.IndexOf("approved") >= 0 || value.IndexOf("issued") >= 0 || value.IndexOf("paid") >= 0 || value.IndexOf("received") >= 0 ? "st-approved"
+                : value.IndexOf("reject") >= 0 || value.IndexOf("not") >= 0 ? "st-rejected"
+                : "st-sent";
+            return "<span class='pet-status " + css + "'>" + Html(status) + "</span>";
         }
 
         private static string FormatDate(DataRow row, string col)

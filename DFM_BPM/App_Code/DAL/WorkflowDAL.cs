@@ -627,8 +627,10 @@ namespace DFM_BPM.App_Code.DAL
         /// <summary>All budget lines raised against any PET form under a given Project (the Project is the main item).</summary>
         public static DataTable GetBudgetLinesByProject(string projectId)
         {
-            return Db.Query(@"SELECT bl.BudgetLineID, bl.PetFormID, p.PetRefNo, bl.VendorName, bl.Justification,
-                                     bl.Cost, bl.Currency, bl.GLNumber, bl.CamStatus, bl.LpoStatus, bl.CreatedDate,
+            return Db.Query(@"SELECT bl.BudgetLineID, bl.PetFormID, bl.SerialNo, p.PetRefNo, bl.VendorName, bl.Justification,
+                                     bl.Cost, bl.Currency, bl.GLNumber, bl.PetRef, bl.CamId, bl.CamStatus,
+                                     bl.CamComments, bl.LpoRequest, bl.LpoStatus, bl.LpoComments, bl.CreatedDate,
+                                     ISNULL((SELECT COUNT(*) FROM dbo.PetBudgetInvoice i WHERE i.BudgetLineID=bl.BudgetLineID),0) AS InvoiceCount,
                                      ISNULL((SELECT SUM(i.InvoiceAmount) FROM dbo.PetBudgetInvoice i WHERE i.BudgetLineID=bl.BudgetLineID),0) AS InvoiceTotal
                               FROM dbo.PetBudgetLine bl
                               INNER JOIN dbo.PetForm p ON p.PetFormID = bl.PetFormID
@@ -641,7 +643,7 @@ namespace DFM_BPM.App_Code.DAL
         public static DataTable GetInvoicesByProject(string projectId)
         {
             return Db.Query(@"SELECT i.InvoiceID, i.InvoiceNo, i.InvoiceAmount, i.InvoiceStatus, i.PaymentDate,
-                                     bl.BudgetLineID, bl.VendorName, p.PetFormID, p.PetRefNo
+                                     bl.BudgetLineID, bl.VendorName, bl.Justification, bl.GLNumber, p.PetFormID, p.PetRefNo
                               FROM dbo.PetBudgetInvoice i
                               INNER JOIN dbo.PetBudgetLine bl ON bl.BudgetLineID = i.BudgetLineID
                               INNER JOIN dbo.PetForm p ON p.PetFormID = bl.PetFormID
