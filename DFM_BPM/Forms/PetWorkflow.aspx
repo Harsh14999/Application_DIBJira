@@ -152,6 +152,10 @@
 .ps-history-grid.audit-trail-grid tr:nth-child(even) td { background:#ffffff; }
 .ps-history-grid.audit-trail-grid tr:hover td { background:#D9C2E9; }
 
+.workflow-frame-modal .modal-dialog { width:95%; max-width:1180px; }
+.workflow-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
+.workflow-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
+
 .dfm-table tr:nth-child(even) td { background:#ffffff; }
 .dfm-table tr:hover td { background:#eff6ff; }
 .dfm-table td.text-right { text-align:right; font-weight:600; color:#1e3a5f; }
@@ -334,7 +338,7 @@
                             <asp:BoundField DataField="TotalRequestedAED" HeaderText="Requested (AED)" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
                             <asp:TemplateField HeaderText="Action">
                                 <ItemTemplate>
-                                    <a href='<%# ResolveUrl("~/Forms/PetWorkflow.aspx") %>?id=<%# Eval("PetFormID") %>' class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
+                                    <a href='<%# ResolveUrl("~/Forms/PetWorkflow.aspx") + "?embed=1&id=" + Eval("PetFormID") %>' onclick="return petOpenWorkflowLink(this);" class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
                                 </ItemTemplate>
                             </asp:TemplateField>
                         </Columns>
@@ -429,7 +433,7 @@
                             <asp:BoundField DataField="InvoiceTotal"   HeaderText="Invoiced" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
                             <asp:TemplateField HeaderText="Action">
                                 <ItemTemplate>
-                                    <a href='<%# ResolveUrl("~/Forms/PetWorkflow.aspx") %>?id=<%# Eval("PetFormID") %>&tab=budget' class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
+                                    <a href='<%# ResolveUrl("~/Forms/PetWorkflow.aspx") + "?embed=1&id=" + Eval("PetFormID") + "&tab=budget" %>' onclick="return petOpenWorkflowLink(this);" class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
                                 </ItemTemplate>
                             </asp:TemplateField>
                         </Columns>
@@ -452,7 +456,7 @@
                             <asp:BoundField DataField="PaymentDate"   HeaderText="Payment Date" DataFormatString="{0:dd-MMM-yyyy}" />
                             <asp:TemplateField HeaderText="Action">
                                 <ItemTemplate>
-                                    <a href='<%# ResolveUrl("~/Forms/PetWorkflow.aspx") %>?id=<%# Eval("PetFormID") %>&tab=budget' class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
+                                    <a href='<%# ResolveUrl("~/Forms/PetWorkflow.aspx") + "?embed=1&id=" + Eval("PetFormID") + "&tab=budget" %>' onclick="return petOpenWorkflowLink(this);" class="btn btn-xs btn-primary"><i class="bi bi-arrow-right-circle"></i> Open</a>
                                 </ItemTemplate>
                             </asp:TemplateField>
                         </Columns>
@@ -462,6 +466,20 @@
         </div>
     </div>
     </asp:Panel>
+
+    <div class="modal fade workflow-frame-modal" id="petWorkflowFrameModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" style="background:#2F5597;color:#fff;">
+                    <button type="button" class="close" data-dismiss="modal" style="color:#fff;opacity:.8;">&times;</button>
+                    <h4 class="modal-title"><i class="bi bi-file-earmark-text"></i> Spend Request</h4>
+                </div>
+                <div class="modal-body">
+                    <iframe id="petWorkflowFrame" title="Spend Request"></iframe>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Line Item Add / Edit Modal + Attachments + Submit -->
     <asp:Panel ID="pnlLines" runat="server" Visible="false">
@@ -1335,6 +1353,20 @@ function szClear() {
     if (res) { res.className = 'ps-result-panel'; }
     var bd = document.getElementById('szBreakdownDiv');
     if (bd) bd.style.display = 'none';
+}
+
+function petOpenWorkflowLink(link) {
+    var frame = document.getElementById('petWorkflowFrame');
+    if (!frame || typeof jQuery === 'undefined') return true;
+    frame.src = link.href;
+    jQuery('#petWorkflowFrameModal').modal('show');
+    return false;
+}
+
+if (typeof jQuery !== 'undefined') {
+    jQuery('#petWorkflowFrameModal').on('hidden.bs.modal', function () {
+        document.getElementById('petWorkflowFrame').src = 'about:blank';
+    });
 }
 
 // Project Sizing live score
