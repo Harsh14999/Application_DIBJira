@@ -107,11 +107,9 @@
 .spend-frame-modal .modal-dialog { width:95%; max-width:1180px; }
 .spend-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
 .spend-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
-.spend-frame-modal.detail-edit-frame .modal-header { height:0; padding:0; border:0; overflow:visible; background:transparent !important; }
-.spend-frame-modal.detail-edit-frame .modal-title { display:none; }
-.spend-frame-modal.detail-edit-frame .modal-header .close { position:absolute; right:10px; top:8px; z-index:20; color:#fff; opacity:.95; text-shadow:none; }
-.spend-frame-modal.detail-edit-frame .modal-content { border:0; box-shadow:none; background:transparent; }
-.spend-frame-modal.detail-edit-frame .modal-body { height:86vh; background:transparent; }
+.detail-frame-host { display:none; position:fixed; left:0; top:0; right:0; bottom:0; z-index:1060; background:transparent; }
+.detail-frame-host.is-open { display:block; }
+.detail-frame-host iframe { width:100%; height:100%; border:0; display:block; background:transparent; }
 .portfolio-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
 </style>
 </asp:Content>
@@ -274,6 +272,10 @@
             </div>
         </div>
     </div>
+</div>
+
+<div class="detail-frame-host" id="projectDetailFrameHost">
+    <iframe id="projectDetailFrame" title="Budget or Invoice Editor"></iframe>
 </div>
 
 <asp:Panel ID="pnlProjectDetails" runat="server" Visible="false">
@@ -571,17 +573,30 @@ function prOpenSpendRequest(petId, projectId) {
 }
 function prOpenSpendBudget(petId, budgetLineId) {
     var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1&id=' + encodeURIComponent(petId) + '&tab=budget&budgetLine=' + encodeURIComponent(budgetLineId) + '&hostClose=1';
-    return prOpenSpendRequestUrl(url);
+    return prOpenDetailFrameUrl(url);
 }
 function prOpenSpendInvoice(petId, budgetLineId, invoiceId) {
     var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1&id=' + encodeURIComponent(petId) + '&tab=budget&invoiceLine=' + encodeURIComponent(budgetLineId) + '&invoiceId=' + encodeURIComponent(invoiceId) + '&hostClose=1';
-    return prOpenSpendRequestUrl(url);
+    return prOpenDetailFrameUrl(url);
+}
+function prOpenDetailFrameUrl(url) {
+    var host = document.getElementById('projectDetailFrameHost');
+    var frame = document.getElementById('projectDetailFrame');
+    if (!host || !frame) return prOpenSpendRequestUrl(url);
+    frame.src = url;
+    host.classList.add('is-open');
+    return false;
+}
+function prCloseDetailFrame() {
+    var host = document.getElementById('projectDetailFrameHost');
+    var frame = document.getElementById('projectDetailFrame');
+    if (frame) frame.src = 'about:blank';
+    if (host) host.classList.remove('is-open');
+    return false;
 }
 function prOpenSpendRequestUrl(url) {
     var frame = document.getElementById('projectSpendRequestFrame');
     var modal = jQuery('#projectSpendRequestModal');
-    var isDetailEdit = url.indexOf('budgetLine=') >= 0 || url.indexOf('invoiceLine=') >= 0;
-    modal.toggleClass('detail-edit-frame', isDetailEdit);
     frame.setAttribute('data-refresh-on-close', url.indexOf('project=') >= 0 ? '1' : '0');
     frame.src = url;
     modal.modal('show');
@@ -592,7 +607,6 @@ jQuery('#projectSpendRequestModal').on('hidden.bs.modal', function () {
     var refreshOnClose = frame.getAttribute('data-refresh-on-close') === '1';
     frame.src = 'about:blank';
     frame.removeAttribute('data-refresh-on-close');
-    jQuery(this).removeClass('detail-edit-frame');
     if (refreshOnClose) window.location.reload();
 });
 </script>

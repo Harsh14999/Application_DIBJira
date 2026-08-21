@@ -1318,7 +1318,10 @@ window.addEventListener('load', function() {
     if (typeof jQuery !== 'undefined') {
         jQuery('#budgetLineModal,#invoiceModal').on('hidden.bs.modal', function () {
             try {
-                if (window.parent && window.parent !== window && window.parent.jQuery) {
+                if (window.parent && window.parent !== window && window.parent.prCloseDetailFrame) {
+                    window.parent.prCloseDetailFrame();
+                }
+                else if (window.parent && window.parent !== window && window.parent.jQuery) {
                     window.parent.jQuery('#projectSpendRequestModal').modal('hide');
                 }
             } catch (e) { }
