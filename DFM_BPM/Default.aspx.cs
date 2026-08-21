@@ -325,7 +325,7 @@ namespace DFM_BPM
             ddlProject.SelectedValue = "ALL";
             ddlType.SelectedValue    = "ALL";
             ddlStatus.SelectedValue  = "ALL";
-            ddlView.SelectedValue    = "MYAPPROVAL";
+            ddlView.SelectedValue    = "ALL";
             txtFromDate.Text = txtToDate.Text = "";
             CurrentPage = 1;
             LoadAll();

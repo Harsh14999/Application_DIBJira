@@ -193,9 +193,9 @@
                     <label>View</label>
                     <asp:DropDownList ID="ddlView" runat="server" CssClass="form-control no-select2"
                         AutoPostBack="true" OnSelectedIndexChanged="Filter_Changed">
+                        <asp:ListItem Text="All Items" Value="ALL" />
                         <asp:ListItem Text="Pending My Action" Value="MYAPPROVAL" />
                         <asp:ListItem Text="My Requests" Value="MYREQUESTS" />
-                        <asp:ListItem Text="All Items" Value="ALL" />
                     </asp:DropDownList>
                 </div>
                 <div class="form-group">
@@ -226,6 +226,50 @@
                     OnClick="Filter_Changed" />
                 <asp:Button ID="btnReset" runat="server" Text="Reset" CssClass="btn btn-default"
                     OnClick="btnResetFilters_Click" CausesValidation="false" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ── REGISTERED PROJECTS ── -->
+<div class="dash-section" id="sec-projects">
+    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-projects')">
+        <span><i class="bi bi-folder2-open"></i> Registered Projects
+            <span style="background:#93c5fd;color:#1e3a5f;border-radius:10px;padding:1px 8px;font-size:.8em;margin-left:6px;">
+                <asp:Literal ID="litRegisteredProjectsCount" runat="server" Text="0" />
+            </span>
+        </span>
+        <i class="bi bi-chevron-down dash-sec-toggle"></i>
+    </div>
+    <div class="dash-sec-body">
+        <div class="card-panel ux-table-wrap" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
+            <table class="dfm-table registered-project-table" style="width:100%;">
+                <thead>
+                    <tr>
+                        <th class="col-project-id">Project ID</th>
+                        <th class="col-project-name">Project Name</th>
+                        <th class="col-project-type">Project Type</th>
+                        <th class="col-lead">Accountable Exec Lead</th>
+                        <th class="col-lead">SME Lead</th>
+                        <th class="col-manager">Project Manager</th>
+                        <th class="col-requestor">Requestor</th>
+                        <th class="col-status">Status</th>
+                        <th class="col-date">Created Date</th>
+                        <th class="col-count">Spend Requests</th>
+                        <th class="col-amount">Requested (AED)</th>
+                        <th class="col-action">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <asp:Literal ID="litRegisteredProjectRows" runat="server" />
+                </tbody>
+            </table>
+            <div class="page-nav">
+                <asp:LinkButton ID="btnPrevPage" runat="server" CssClass="btn btn-default btn-sm"
+                    Text="&#8249; Prev" OnClick="btnPrevPage_Click" CausesValidation="false" />
+                <asp:Literal ID="litPageInfo" runat="server" />
+                <asp:LinkButton ID="btnNextPage" runat="server" CssClass="btn btn-default btn-sm"
+                    Text="Next &#8250;" OnClick="btnNextPage_Click" CausesValidation="false" />
             </div>
         </div>
     </div>
@@ -338,50 +382,6 @@
                     <asp:BoundField DataField="BudgetTotal" HeaderText="Project-wise Budget" DataFormatString="{0:N2}" ItemStyle-CssClass="text-right" />
                 </Columns>
             </asp:GridView>
-        </div>
-    </div>
-</div>
-
-<!-- ── REGISTERED PROJECTS ── -->
-<div class="dash-section" id="sec-projects">
-    <div class="dash-sec-hdr" onclick="dfmSecTog('sec-projects')">
-        <span><i class="bi bi-folder2-open"></i> Registered Projects
-            <span style="background:#93c5fd;color:#1e3a5f;border-radius:10px;padding:1px 8px;font-size:.8em;margin-left:6px;">
-                <asp:Literal ID="litRegisteredProjectsCount" runat="server" Text="0" />
-            </span>
-        </span>
-        <i class="bi bi-chevron-down dash-sec-toggle"></i>
-    </div>
-    <div class="dash-sec-body">
-        <div class="card-panel ux-table-wrap" style="border-top:none;border-radius:0 0 8px 8px;margin:0;padding:0;overflow-x:auto;">
-            <table class="dfm-table registered-project-table" style="width:100%;">
-                <thead>
-                    <tr>
-                        <th class="col-project-id">Project ID</th>
-                        <th class="col-project-name">Project Name</th>
-                        <th class="col-project-type">Project Type</th>
-                        <th class="col-lead">Accountable Exec Lead</th>
-                        <th class="col-lead">SME Lead</th>
-                        <th class="col-manager">Project Manager</th>
-                        <th class="col-requestor">Requestor</th>
-                        <th class="col-status">Status</th>
-                        <th class="col-date">Created Date</th>
-                        <th class="col-count">Spend Requests</th>
-                        <th class="col-amount">Requested (AED)</th>
-                        <th class="col-action">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <asp:Literal ID="litRegisteredProjectRows" runat="server" />
-                </tbody>
-            </table>
-            <div class="page-nav">
-                <asp:LinkButton ID="btnPrevPage" runat="server" CssClass="btn btn-default btn-sm"
-                    Text="&#8249; Prev" OnClick="btnPrevPage_Click" CausesValidation="false" />
-                <asp:Literal ID="litPageInfo" runat="server" />
-                <asp:LinkButton ID="btnNextPage" runat="server" CssClass="btn btn-default btn-sm"
-                    Text="Next &#8250;" OnClick="btnNextPage_Click" CausesValidation="false" />
-            </div>
         </div>
     </div>
 </div>
