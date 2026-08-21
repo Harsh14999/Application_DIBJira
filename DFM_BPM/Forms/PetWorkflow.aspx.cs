@@ -134,6 +134,7 @@ namespace DFM_BPM.Forms
                         ActiveTab = Request.QueryString["tab"];
                         hfActiveTab.Value = ActiveTab;
                     }
+                    OpenDeepLinkEditor();
                     if (Session["PetNextStep"] != null)
                     {
                         ShowNextStep(Session["PetNextStep"].ToString());
@@ -1330,28 +1331,66 @@ namespace DFM_BPM.Forms
             }
             else if (e.CommandName == "PopupEdit")
             {
-                int id = Convert.ToInt32(e.CommandArgument);
-                DataRow r = WorkflowDAL.GetBudgetLine(id);
-                if (r == null) return;
-
-                hfEditBudgetLineId.Value = id.ToString();
-                litBudgetModalTitle.Text = "Edit Budget Row #" + (r["SerialNo"] == DBNull.Value ? id.ToString() : r["SerialNo"].ToString());
-                txtBgtVendor.Text = r["VendorName"] == DBNull.Value ? "" : r["VendorName"].ToString();
-                txtBgtJustification.Text = r["Justification"] == DBNull.Value ? "" : r["Justification"].ToString();
-                txtBgtCost.Text = Dec(r, "Cost").ToString("N2");
-                SetDdl(ddlBgtCcy, r["Currency"] == DBNull.Value ? "AED" : r["Currency"].ToString());
-                txtBgtGL.Text = r["GLNumber"] == DBNull.Value ? "" : r["GLNumber"].ToString();
-                txtBgtPetRef.Text       = r["PetRef"]      == DBNull.Value ? "" : r["PetRef"].ToString();
-                txtBgtCamId.Text        = r["CamId"]       == DBNull.Value ? "" : r["CamId"].ToString();
-                txtBgtCamStatus.Text    = r["CamStatus"]   == DBNull.Value ? "" : r["CamStatus"].ToString();
-                txtBgtCamComments.Text  = r["CamComments"] == DBNull.Value ? "" : r["CamComments"].ToString();
-                txtBgtLpoRequest.Text   = r["LpoRequest"]  == DBNull.Value ? "" : r["LpoRequest"].ToString();
-                txtBgtLpoStatus.Text    = r["LpoStatus"]   == DBNull.Value ? "" : r["LpoStatus"].ToString();
-                txtBgtLpoComments.Text  = r["LpoComments"] == DBNull.Value ? "" : r["LpoComments"].ToString();
-
-                ScriptManager.RegisterStartupScript(this, GetType(), "showBudgetModal",
-                    "$(function(){ $('#budgetLineModal').modal('show'); });", true);
+                OpenBudgetLineEditor(Convert.ToInt32(e.CommandArgument));
             }
+        }
+
+        private void OpenDeepLinkEditor()
+        {
+            int invoiceId = QueryInt("invoiceId");
+            int invoiceLineId = QueryInt("invoiceLine", "invoiceLineId");
+            if (invoiceLineId <= 0 && invoiceId > 0)
+                invoiceLineId = QueryInt("budgetLine", "budgetLineId");
+            if (invoiceLineId > 0)
+            {
+                ActiveTab = "budget";
+                hfActiveTab.Value = "budget";
+                OpenInvoiceModal(invoiceLineId, invoiceId);
+                return;
+            }
+
+            int budgetLineId = QueryInt("budgetLine", "budgetLineId");
+            if (budgetLineId > 0)
+            {
+                ActiveTab = "budget";
+                hfActiveTab.Value = "budget";
+                if (CanManageBudget) OpenBudgetLineEditor(budgetLineId);
+            }
+        }
+
+        private int QueryInt(params string[] names)
+        {
+            for (int i = 0; i < names.Length; i++)
+            {
+                int value;
+                if (int.TryParse(Request.QueryString[names[i]], out value) && value > 0)
+                    return value;
+            }
+            return 0;
+        }
+
+        private void OpenBudgetLineEditor(int budgetLineId)
+        {
+            DataRow r = WorkflowDAL.GetBudgetLine(budgetLineId);
+            if (r == null) return;
+
+            hfEditBudgetLineId.Value = budgetLineId.ToString();
+            litBudgetModalTitle.Text = "Edit Budget Row #" + (r["SerialNo"] == DBNull.Value ? budgetLineId.ToString() : r["SerialNo"].ToString());
+            txtBgtVendor.Text = r["VendorName"] == DBNull.Value ? "" : r["VendorName"].ToString();
+            txtBgtJustification.Text = r["Justification"] == DBNull.Value ? "" : r["Justification"].ToString();
+            txtBgtCost.Text = Dec(r, "Cost").ToString("N2");
+            SetDdl(ddlBgtCcy, r["Currency"] == DBNull.Value ? "AED" : r["Currency"].ToString());
+            txtBgtGL.Text = r["GLNumber"] == DBNull.Value ? "" : r["GLNumber"].ToString();
+            txtBgtPetRef.Text       = r["PetRef"]      == DBNull.Value ? "" : r["PetRef"].ToString();
+            txtBgtCamId.Text        = r["CamId"]       == DBNull.Value ? "" : r["CamId"].ToString();
+            txtBgtCamStatus.Text    = r["CamStatus"]   == DBNull.Value ? "" : r["CamStatus"].ToString();
+            txtBgtCamComments.Text  = r["CamComments"] == DBNull.Value ? "" : r["CamComments"].ToString();
+            txtBgtLpoRequest.Text   = r["LpoRequest"]  == DBNull.Value ? "" : r["LpoRequest"].ToString();
+            txtBgtLpoStatus.Text    = r["LpoStatus"]   == DBNull.Value ? "" : r["LpoStatus"].ToString();
+            txtBgtLpoComments.Text  = r["LpoComments"] == DBNull.Value ? "" : r["LpoComments"].ToString();
+
+            ScriptManager.RegisterStartupScript(this, GetType(), "showBudgetModal",
+                "$(function(){ $('#budgetLineModal').modal('show'); });", true);
         }
 
         protected void gvBudgetLines_RowEditing(object sender, GridViewEditEventArgs e)
@@ -1402,6 +1441,11 @@ namespace DFM_BPM.Forms
 
         private void OpenInvoiceModal(int budgetLineId)
         {
+            OpenInvoiceModal(budgetLineId, 0);
+        }
+
+        private void OpenInvoiceModal(int budgetLineId, int editInvoiceId)
+        {
             hfActiveBudgetLineId.Value = budgetLineId.ToString();
             DataRow bl = WorkflowDAL.GetBudgetLine(budgetLineId);
             litInvoiceModalVendor.Text = bl != null && bl["VendorName"] != DBNull.Value
@@ -1410,11 +1454,26 @@ namespace DFM_BPM.Forms
                 ? Server.HtmlEncode(bl["Justification"].ToString()) : "";
             litInvoiceModalGL.Text = bl != null && bl["GLNumber"] != DBNull.Value
                 ? Server.HtmlEncode(bl["GLNumber"].ToString()) : "";
-            BindInvoicesForLine(budgetLineId);
+            DataTable invoices = WorkflowDAL.GetBudgetInvoices(budgetLineId);
+            if (editInvoiceId > 0 && CanManageBudget)
+                gvInvoices.EditIndex = FindInvoiceEditIndex(invoices, editInvoiceId);
+            gvInvoices.DataSource = invoices;
+            gvInvoices.DataBind();
             BindBudgetLines(CurrentPetFormId);
             ActiveTab = "budget"; hfActiveTab.Value = "budget";
             ScriptManager.RegisterStartupScript(this, GetType(), "showInvoiceModal",
                 "$(function(){ $('#invoiceModal').modal('show'); });", true);
+        }
+
+        private int FindInvoiceEditIndex(DataTable invoices, int invoiceId)
+        {
+            if (invoices == null) return -1;
+            for (int i = 0; i < invoices.Rows.Count; i++)
+            {
+                if (GetInt(invoices.Rows[i], "InvoiceID") == invoiceId)
+                    return i;
+            }
+            return -1;
         }
 
         private void BindInvoicesForLine(int budgetLineId)

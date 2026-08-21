@@ -20,43 +20,67 @@
 .dfm-table tr:nth-child(odd)  td { background:#fafbff; }
 .dfm-table tr:nth-child(even) td { background:#ffffff; }
 .dfm-table tr:hover td { background:#eff6ff; }
-.portfolio-project-table { table-layout:fixed; min-width:1180px; }
+.portfolio-structure { display:flex; gap:10px; align-items:center; flex-wrap:wrap; padding:10px 14px; border-bottom:1px solid #dbeafe; color:#94a3b8; font-size:.8em; font-weight:800; text-transform:uppercase; }
+.portfolio-structure .chip { text-transform:none; border:1px solid #bfdbfe; border-radius:999px; padding:4px 14px; background:#f8fbff; color:#1d4ed8; font-size:1.05em; }
+.portfolio-structure .chip.spend { border-color:#c7d2fe; color:#2f5597; }
+.portfolio-structure .chip.lines { border-color:#c6e0b4; color:#548235; }
+.portfolio-structure .chip.invoice { border-color:#f4b183; color:#c55a11; }
+.portfolio-project-table { table-layout:fixed; min-width:1500px; }
 .portfolio-project-table th, .portfolio-project-table td { word-break:normal; overflow-wrap:break-word; }
-.portfolio-project-table .col-project-id { width:108px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
+.portfolio-project-table .col-project-main { width:390px; white-space:normal; overflow-wrap:break-word; text-align:left; }
 .portfolio-project-table .project-id-cell { display:inline-block; vertical-align:middle; }
-.portfolio-project-table .col-project-name { width:170px; }
-.portfolio-project-table .col-project-type { width:76px; }
-.portfolio-project-table .col-lead { width:128px; }
-.portfolio-project-table .col-manager { width:126px; }
-.portfolio-project-table .col-requestor { width:86px; }
-.portfolio-project-table .col-status { width:76px; }
-.portfolio-project-table .col-date { width:96px; }
+.portfolio-project-table .project-main-text strong { color:#0f2742; white-space:nowrap; }
+.portfolio-project-table .project-name-muted { color:#64748b; font-size:.9em; }
+.portfolio-project-table .col-project-type { width:70px; }
+.portfolio-project-table .col-lead { width:210px; }
+.portfolio-project-table .col-size { width:55px; text-align:center; }
+.portfolio-project-table .col-manager { width:210px; }
+.portfolio-project-table .col-requestor { width:95px; }
+.portfolio-project-table .col-status { width:80px; }
+.portfolio-project-table .col-date { width:90px; }
 .portfolio-project-table .col-count { width:90px; text-align:right; }
-.portfolio-project-table .col-amount { width:112px; text-align:right; }
-.portfolio-project-table .col-action { width:145px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
+.portfolio-project-table .col-amount { width:120px; text-align:right; white-space:nowrap; }
+.portfolio-project-table .col-action { width:130px; white-space:nowrap; position:sticky; right:0; z-index:3; box-shadow:-1px 0 0 #e2e8f0; }
 .portfolio-project-table th.col-action { background:#1a3c5e !important; color:#fff !important; z-index:4; }
 .portfolio-project-table td.col-action { background:#fff; }
 .portfolio-project-table tr:nth-child(even) td.col-action { background:#f8fafc; }
 .portfolio-project-table tr:hover td.col-action { background:#eff6ff !important; }
 .portfolio-project-table .gv-acts { display:flex; gap:5px; align-items:center; flex-wrap:nowrap; }
 .portfolio-project-table .gv-acts .btn { margin-right:0; }
+.project-parent-row td { border-top:2px solid #bfdbfe !important; }
 .project-parent-row.has-requests { cursor:pointer; }
 .project-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:6px; }
+.project-main-text { display:inline-flex; flex-direction:column; gap:2px; vertical-align:middle; }
+.portfolio-line-primary { display:inline-flex; flex-direction:column; gap:2px; vertical-align:middle; }
+.portfolio-line-primary strong { color:#0f2742; }
+.portfolio-line-secondary { color:#64748b; font-size:.88em; font-weight:500; }
+.portfolio-row-index { display:inline-block; min-width:28px; margin-right:8px; color:#64748b; font-weight:800; }
+.portfolio-size-badge { display:inline-block; min-width:32px; padding:2px 7px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:.78em; font-weight:800; text-align:center; }
 .project-child-row td { background:#f8fafc !important; border-top:0; }
 .project-child-box { margin:4px 0 8px 24px; border:1px solid #dbeafe; border-radius:8px; overflow:hidden; background:#fff; }
 .project-child-title { padding:10px 12px; background:#eff6ff; color:#1d4ed8; font-weight:800; font-size:.95em; }
+.portfolio-nested-scroll { overflow-x:auto; }
+.portfolio-request-table { min-width:1280px; }
+.portfolio-budget-table { min-width:1500px; }
+.portfolio-invoice-table { min-width:1180px; }
 .project-child-box .dfm-table { font-size:.95em !important; }
 .project-child-box .dfm-table th { font-size:.88em !important; padding:8px 10px !important; }
 .project-child-box .dfm-table td { font-size:.92em !important; padding:8px 10px !important; }
+.portfolio-request-table th { background:#548235 !important; color:#fff !important; }
 .portfolio-request-row td { background:#fbfff7 !important; border-top:1px solid #d9ead3; }
 .portfolio-nested-row td { background:#fff !important; }
 .portfolio-nested-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:8px; }
 .portfolio-budget-shell { border:1px solid #f4b183; border-radius:6px; overflow:hidden; margin:4px 0 10px; }
+.portfolio-level-caption { padding:8px 12px; font-size:.82em; font-weight:800; letter-spacing:0; }
+.portfolio-budget-shell .portfolio-level-caption { background:#f4b183; color:#7c2d12; }
 .portfolio-budget-shell .dfm-table th { background:#fff4e8 !important; color:#8a4b12 !important; border-bottom:1px solid #f4b183; }
-.portfolio-invoice-shell { border:1px solid #f4b183; margin:6px 14px 8px; overflow:hidden; }
+.portfolio-invoice-shell { border:1px solid #c55a11; margin:6px 14px 8px; overflow:hidden; }
+.portfolio-invoice-shell .portfolio-level-caption { background:#c55a11; color:#fff; }
 .portfolio-invoice-shell .dfm-table th { background:#fff8ef !important; color:#8a4b12 !important; }
 .portfolio-empty { padding:10px 14px; color:#94a3b8; font-style:italic; text-align:center; }
 .portfolio-project-search { min-width:260px; max-width:360px; }
+.portfolio-edit-btn { padding:2px 8px; font-size:.78em; font-weight:700; }
+.portfolio-edit-btn i { margin-right:3px; }
 .tree-hidden { display:none !important; }
 .pet-status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.75em; font-weight:700; white-space:nowrap; }
 .st-draft    { background:#f1f5f9; color:#475569; }
@@ -111,20 +135,30 @@
 <div class="card-panel panel-spend-request">
     <div class="card-panel-hdr"><i class="bi bi-table"></i> Project Portfolio</div>
     <div class="card-panel-body ux-table-wrap" style="padding:0;">
+        <div class="portfolio-structure">
+            <span>Table Structure:</span>
+            <span class="chip"><i class="bi bi-folder2-open"></i> Project</span>
+            <span>&rarr;</span>
+            <span class="chip spend"><i class="bi bi-file-earmark-text"></i> Spend Request</span>
+            <span>&rarr;</span>
+            <span class="chip lines"><i class="bi bi-cash-stack"></i> Spend Line Items</span>
+            <span>&rarr;</span>
+            <span class="chip invoice"><i class="bi bi-receipt"></i> Budget Invoice</span>
+        </div>
         <table class="dfm-table portfolio-project-table" style="width:100%;">
             <thead>
                 <tr>
-                    <th class="col-project-id">Project ID</th>
-                    <th class="col-project-name">Project Name</th>
+                    <th class="col-project-main">Project</th>
                     <th class="col-project-type">Project Type</th>
                     <th class="col-lead">Accountable Exec Lead</th>
                     <th class="col-lead">SME Lead</th>
+                    <th class="col-size">Size</th>
                     <th class="col-manager">Project Manager</th>
                     <th class="col-requestor">Requestor</th>
                     <th class="col-status">Status</th>
-                    <th class="col-date">Created Date</th>
-                    <th class="col-count">Spend Requests</th>
-                    <th class="col-amount">Requested (AED)</th>
+                    <th class="col-date">Created</th>
+                    <th class="col-count">Requests</th>
+                    <th class="col-amount">AED</th>
                     <th class="col-action">Action</th>
                 </tr>
             </thead>
@@ -512,10 +546,21 @@ function prOpenProject(projectId) {
     return false;
 }
 function prOpenSpendRequest(petId, projectId) {
-    var frame = document.getElementById('projectSpendRequestFrame');
     var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1';
     if (petId) url += '&id=' + encodeURIComponent(petId);
     else if (projectId) url += '&project=' + encodeURIComponent(projectId);
+    return prOpenSpendRequestUrl(url);
+}
+function prOpenSpendBudget(petId, budgetLineId) {
+    var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1&id=' + encodeURIComponent(petId) + '&tab=budget&budgetLine=' + encodeURIComponent(budgetLineId);
+    return prOpenSpendRequestUrl(url);
+}
+function prOpenSpendInvoice(petId, budgetLineId, invoiceId) {
+    var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1&id=' + encodeURIComponent(petId) + '&tab=budget&invoiceLine=' + encodeURIComponent(budgetLineId) + '&invoiceId=' + encodeURIComponent(invoiceId);
+    return prOpenSpendRequestUrl(url);
+}
+function prOpenSpendRequestUrl(url) {
+    var frame = document.getElementById('projectSpendRequestFrame');
     frame.src = url;
     jQuery('#projectSpendRequestModal').modal('show');
     return false;
