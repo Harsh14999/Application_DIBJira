@@ -1470,7 +1470,7 @@ namespace DFM_BPM.Forms
             if (invoices == null) return -1;
             for (int i = 0; i < invoices.Rows.Count; i++)
             {
-                if (GetInt(invoices.Rows[i], "InvoiceID") == invoiceId)
+                if (invoices.Rows[i]["InvoiceID"] != DBNull.Value && Convert.ToInt32(invoices.Rows[i]["InvoiceID"]) == invoiceId)
                     return i;
             }
             return -1;
