@@ -221,8 +221,10 @@
                         <td class="val">
                             <asp:DropDownList ID="ddlProject" runat="server" CssClass="form-control select2-enable"
                                 AutoPostBack="true" OnSelectedIndexChanged="ddlProject_Changed" />
+                            <% if (!IsProjectLocked) { %>
                             <small style="color:#64748b;">Not seeing your project?
                                 <a href="<%= ResolveUrl("~/Forms/ProjectRegistration.aspx") %>" target="_blank">Register it first</a>.</small>
+                            <% } %>
                         </td>
                         <td class="lbl"><i class="bi bi-file-earmark-text"></i>Project Name</td>
                         <td class="val">
@@ -1293,6 +1295,18 @@ window.addEventListener('load', function() {
     if (typeof jQuery !== 'undefined' && jQuery.fn && jQuery.fn.select2) {
         jQuery('.select2-enable').select2({ width: '100%' });
     }
+
+    <% if (HostCloseOnInnerModalClose) { %>
+    if (typeof jQuery !== 'undefined') {
+        jQuery('#budgetLineModal,#invoiceModal').on('hidden.bs.modal', function () {
+            try {
+                if (window.parent && window.parent !== window && window.parent.jQuery) {
+                    window.parent.jQuery('#projectSpendRequestModal').modal('hide');
+                }
+            } catch (e) { }
+        });
+    }
+    <% } %>
 });
 
 // Project Sizing: pre-save — copies radio values to hidden fields for server read

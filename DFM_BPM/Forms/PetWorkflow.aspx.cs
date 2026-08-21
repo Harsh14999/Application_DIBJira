@@ -36,6 +36,16 @@ namespace DFM_BPM.Forms
         /// <summary>Only the original Requestor (or an Admin) can add/edit/delete Budget Lines &amp; Invoices, and only once Approved.</summary>
         protected bool CanManageBudget { get; private set; }
 
+        protected bool IsProjectLocked
+        {
+            get { return Request.QueryString["lockProject"] == "1" && !string.IsNullOrEmpty(Request.QueryString["project"]); }
+        }
+
+        protected bool HostCloseOnInnerModalClose
+        {
+            get { return Request.QueryString["hostClose"] == "1"; }
+        }
+
         /// <summary>Delete Spend Request button/action is only available while the request is still Draft or
         /// Pending Review/Approval — once Approved (or Rejected/Sent Back/Deleted) it can no longer be deleted.</summary>
         protected bool CanDeletePet
@@ -180,6 +190,7 @@ namespace DFM_BPM.Forms
                 }
                 LoadCurrencies();
             }
+            ApplyHeaderEditableState();
         }
 
         /// <summary>
@@ -217,7 +228,7 @@ namespace DFM_BPM.Forms
         /// <summary>Greys out (disables) the header fields whenever the form is not editable by the current user.</summary>
         private void ApplyHeaderEditableState()
         {
-            ddlProject.Enabled      = IsEditable;
+            ddlProject.Enabled      = IsEditable && !IsProjectLocked;
             ddlType.Enabled         = IsEditable;
             ddlBudgetSource.Enabled = IsEditable;
             ddlReviewer.Enabled     = IsEditable;
@@ -698,7 +709,8 @@ namespace DFM_BPM.Forms
 
         protected void btnSaveHeader_Click(object sender, EventArgs e)
         {
-            string projectId = ddlProject.SelectedValue;
+            string lockedProject = Request.QueryString["project"];
+            string projectId = IsProjectLocked && !string.IsNullOrEmpty(lockedProject) ? lockedProject : ddlProject.SelectedValue;
             if (string.IsNullOrEmpty(projectId))
             {
                 ShowMsg("A registered Project is required. Register it first via the Project Registration page.");

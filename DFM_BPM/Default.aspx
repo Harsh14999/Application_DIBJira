@@ -41,11 +41,11 @@
 .project-parent-row { background:#fff; }
 .project-parent-row.has-requests { cursor:pointer; }
 .project-parent-row:hover { background:#f8fafc; }
-.registered-project-table { table-layout:fixed; min-width:1320px; }
+.registered-project-table { table-layout:fixed; min-width:1420px; }
 .registered-project-table th, .registered-project-table td { word-break:normal; overflow-wrap:break-word; }
-.registered-project-table .col-project-id { width:108px; white-space:nowrap; overflow-wrap:normal; word-break:keep-all; text-align:left; }
+.registered-project-table .col-project-id { width:170px; white-space:normal; overflow-wrap:anywhere; word-break:normal; text-align:left; }
 .registered-project-table .project-id-cell { display:inline-block; vertical-align:middle; }
-.registered-project-table .project-id-link { color:#1a3c5e; text-decoration:none; display:inline-block; white-space:nowrap; }
+.registered-project-table .project-id-link { color:#1a3c5e; text-decoration:none; display:inline-block; max-width:100%; white-space:normal; overflow-wrap:anywhere; line-height:1.25; }
 .registered-project-table .project-id-link:hover { color:#2563eb; text-decoration:underline; }
 .registered-project-table .col-project-name { width:170px; }
 .registered-project-table .col-project-type { width:76px; }
@@ -765,7 +765,7 @@ function dfmOpenSpendRequest(petId, projectId) {
     var frame = document.getElementById('dashboardSpendRequestFrame');
     var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1';
     if (petId) url += '&id=' + encodeURIComponent(petId);
-    else if (projectId) url += '&project=' + encodeURIComponent(projectId);
+    else if (projectId) url += '&project=' + encodeURIComponent(projectId) + '&lockProject=1';
     frame.src = url;
     jQuery('#dashboardSpendRequestModal').modal('show');
     return false;

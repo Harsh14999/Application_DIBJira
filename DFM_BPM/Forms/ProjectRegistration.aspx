@@ -44,7 +44,7 @@
 .portfolio-project-table th.col-action { background:#1a3c5e !important; color:#fff !important; z-index:4; }
 .portfolio-project-table td.col-action { background:#fff; }
 .portfolio-project-table tr:nth-child(even) td.col-action { background:#f8fafc; }
-.portfolio-project-table tr:hover td.col-action { background:#eff6ff !important; }
+.portfolio-project-table tr:hover td.col-action { background:#f8fbff !important; }
 .portfolio-project-table .gv-acts { display:flex; gap:5px; align-items:center; flex-wrap:nowrap; }
 .portfolio-project-table .gv-acts .btn { margin-right:0; }
 .project-parent-row td { border-top:2px solid #bfdbfe !important; }
@@ -56,19 +56,21 @@
 .portfolio-line-secondary { color:#64748b; font-size:.88em; font-weight:500; }
 .portfolio-row-index { display:inline-block; min-width:28px; margin-right:8px; color:#64748b; font-weight:800; }
 .portfolio-size-badge { display:inline-block; min-width:32px; padding:2px 7px; border-radius:999px; background:#eef2ff; color:#3730a3; font-size:.78em; font-weight:800; text-align:center; }
-.project-child-row td { background:#f8fafc !important; border-top:0; }
+.project-child-row td { background:#f8fbff !important; border-top:0; }
 .project-child-box { margin:4px 0 8px 24px; border:1px solid #dbeafe; border-radius:8px; overflow:hidden; background:#fff; }
 .project-child-title { padding:10px 12px; background:#eff6ff; color:#1d4ed8; font-weight:800; font-size:.95em; }
 .portfolio-nested-scroll { overflow-x:auto; }
 .portfolio-request-table { min-width:1280px; }
 .portfolio-budget-table { min-width:1500px; }
 .portfolio-invoice-table { min-width:1180px; }
-.project-child-box .dfm-table { font-size:.95em !important; }
-.project-child-box .dfm-table th { font-size:.88em !important; padding:8px 10px !important; }
-.project-child-box .dfm-table td { font-size:.92em !important; padding:8px 10px !important; }
+.project-child-box .dfm-table { font-size:13px !important; }
+.project-child-box .dfm-table th { font-size:12px !important; padding:9px 12px !important; }
+.project-child-box .dfm-table td { font-size:13px !important; padding:9px 12px !important; line-height:1.35; }
 .card-panel.panel-spend-request .portfolio-request-table th { background:#2f5597 !important; color:#fff !important; }
-.portfolio-request-row td { background:#fbfff7 !important; border-top:1px solid #d9ead3; }
+.portfolio-request-row td { background:#fff !important; border-top:1px solid #dbeafe; }
+.portfolio-request-row:hover td { background:#f8fbff !important; }
 .portfolio-nested-row td { background:#fff !important; }
+.portfolio-nested-row:hover td { background:#fff !important; }
 .portfolio-nested-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:8px; }
 .portfolio-budget-shell { border:1px solid #f4b183; border-radius:6px; overflow:hidden; margin:4px 0 10px; }
 .portfolio-level-caption { padding:8px 12px; font-size:.82em; font-weight:800; letter-spacing:0; }
@@ -85,6 +87,7 @@
 .portfolio-edit-btn i { margin-right:3px; }
 .tree-hidden { display:none !important; }
 .pet-status { display:inline-block; padding:2px 8px; border-radius:10px; font-size:.75em; font-weight:700; white-space:nowrap; }
+.project-child-box .pet-status { font-size:11px; padding:3px 9px; }
 .st-draft    { background:#f1f5f9; color:#475569; }
 .st-pending  { background:#fef3c7; color:#92400e; }
 .st-review   { background:#dbeafe; color:#1d4ed8; }
@@ -96,6 +99,11 @@
 .spend-frame-modal .modal-dialog { width:95%; max-width:1180px; }
 .spend-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
 .spend-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
+.spend-frame-modal.detail-edit-frame .modal-header { height:0; padding:0; border:0; overflow:visible; background:transparent !important; }
+.spend-frame-modal.detail-edit-frame .modal-title { display:none; }
+.spend-frame-modal.detail-edit-frame .modal-header .close { position:absolute; right:10px; top:8px; z-index:20; color:#fff; opacity:.95; text-shadow:none; }
+.spend-frame-modal.detail-edit-frame .modal-content { border:0; box-shadow:none; background:transparent; }
+.spend-frame-modal.detail-edit-frame .modal-body { height:86vh; background:transparent; }
 .portfolio-toolbar { display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
 </style>
 </asp:Content>
@@ -550,26 +558,34 @@ function prOpenProject(projectId) {
 function prOpenSpendRequest(petId, projectId) {
     var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1';
     if (petId) url += '&id=' + encodeURIComponent(petId);
-    else if (projectId) url += '&project=' + encodeURIComponent(projectId);
+    else if (projectId) url += '&project=' + encodeURIComponent(projectId) + '&lockProject=1';
     return prOpenSpendRequestUrl(url);
 }
 function prOpenSpendBudget(petId, budgetLineId) {
-    var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1&id=' + encodeURIComponent(petId) + '&tab=budget&budgetLine=' + encodeURIComponent(budgetLineId);
+    var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1&id=' + encodeURIComponent(petId) + '&tab=budget&budgetLine=' + encodeURIComponent(budgetLineId) + '&hostClose=1';
     return prOpenSpendRequestUrl(url);
 }
 function prOpenSpendInvoice(petId, budgetLineId, invoiceId) {
-    var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1&id=' + encodeURIComponent(petId) + '&tab=budget&invoiceLine=' + encodeURIComponent(budgetLineId) + '&invoiceId=' + encodeURIComponent(invoiceId);
+    var url = '<%= ResolveUrl("~/Forms/PetWorkflow.aspx") %>?embed=1&id=' + encodeURIComponent(petId) + '&tab=budget&invoiceLine=' + encodeURIComponent(budgetLineId) + '&invoiceId=' + encodeURIComponent(invoiceId) + '&hostClose=1';
     return prOpenSpendRequestUrl(url);
 }
 function prOpenSpendRequestUrl(url) {
     var frame = document.getElementById('projectSpendRequestFrame');
+    var modal = jQuery('#projectSpendRequestModal');
+    var isDetailEdit = url.indexOf('budgetLine=') >= 0 || url.indexOf('invoiceLine=') >= 0;
+    modal.toggleClass('detail-edit-frame', isDetailEdit);
+    frame.setAttribute('data-refresh-on-close', url.indexOf('project=') >= 0 ? '1' : '0');
     frame.src = url;
-    jQuery('#projectSpendRequestModal').modal('show');
+    modal.modal('show');
     return false;
 }
 jQuery('#projectSpendRequestModal').on('hidden.bs.modal', function () {
-    document.getElementById('projectSpendRequestFrame').src = 'about:blank';
-    window.location.reload();
+    var frame = document.getElementById('projectSpendRequestFrame');
+    var refreshOnClose = frame.getAttribute('data-refresh-on-close') === '1';
+    frame.src = 'about:blank';
+    frame.removeAttribute('data-refresh-on-close');
+    jQuery(this).removeClass('detail-edit-frame');
+    if (refreshOnClose) window.location.reload();
 });
 </script>
 
