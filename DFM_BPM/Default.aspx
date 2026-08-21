@@ -232,7 +232,7 @@
 </div>
 
 <!-- ── REGISTERED PROJECTS ── -->
-<div class="dash-section" id="sec-projects">
+<div class="dash-section collapsed" id="sec-projects" data-dash-persist="1" data-default-collapsed="1">
     <div class="dash-sec-hdr" onclick="dfmSecTog('sec-projects')">
         <span><i class="bi bi-folder2-open"></i> Registered Projects
             <span style="background:#93c5fd;color:#1e3a5f;border-radius:10px;padding:1px 8px;font-size:.8em;margin-left:6px;">

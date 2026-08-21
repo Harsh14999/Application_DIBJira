@@ -16,17 +16,23 @@ namespace DFM_BPM.App_Code.DAL
         /// underneath it (so clicking a manager shows their whole team's projects, not just an exact match).</summary>
         public static DataTable GetProjects(string search = null, int? resourceId = null)
         {
-            string sql = @"SELECT p.ProjectID, p.ProjectName, p.IsNonJiraProject, p.ProjectManager,
+            string sql = @"SELECT p.ProjectID,
+                                  COALESCE(NULLIF(LTRIM(RTRIM(p.ProjectName)),''), j.Summary) AS ProjectName,
+                                  p.IsNonJiraProject,
+                                  COALESCE(NULLIF(LTRIM(RTRIM(p.ProjectManager)),''), j.AssignedProjectManager, j.Assignee) AS ProjectManager,
                                   p.ResourceID, r.ResourceName AS PortfolioName, p.IsActive,
                                   p.CreatedBy, p.CreatedDate, p.ModifiedBy, p.ModifiedDate,
-                                  p.AccountableExecLead, p.SmeLead, p.ProjectSize
+                                  COALESCE(NULLIF(LTRIM(RTRIM(p.AccountableExecLead)),''), j.AccountableExecLead) AS AccountableExecLead,
+                                  COALESCE(NULLIF(LTRIM(RTRIM(p.SmeLead)),''), j.SmeLead) AS SmeLead,
+                                  p.ProjectSize
                            FROM dbo.Project p
                            LEFT JOIN dbo.PortfolioResource r ON r.ResourceID = p.ResourceID
+                           LEFT JOIN dbo.JiraIssues j ON j.JiraID = p.ProjectID AND p.IsNonJiraProject = 0
                            WHERE 1=1";
             var ps = new System.Collections.Generic.List<System.Data.SqlClient.SqlParameter>();
             if (!string.IsNullOrWhiteSpace(search))
             {
-                sql += " AND (p.ProjectID LIKE @s OR p.ProjectName LIKE @s OR p.AccountableExecLead LIKE @s OR p.SmeLead LIKE @s OR p.ProjectManager LIKE @s OR p.CreatedBy LIKE @s)";
+                sql += " AND (p.ProjectID LIKE @s OR p.ProjectName LIKE @s OR j.Summary LIKE @s OR p.AccountableExecLead LIKE @s OR j.AccountableExecLead LIKE @s OR p.SmeLead LIKE @s OR j.SmeLead LIKE @s OR p.ProjectManager LIKE @s OR j.AssignedProjectManager LIKE @s OR p.CreatedBy LIKE @s)";
                 ps.Add(Db.P("@s", "%" + search.Trim() + "%"));
             }
             if (resourceId.HasValue)

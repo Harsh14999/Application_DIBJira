@@ -66,17 +66,19 @@
 .project-child-box .dfm-table { font-size:.95em !important; }
 .project-child-box .dfm-table th { font-size:.88em !important; padding:8px 10px !important; }
 .project-child-box .dfm-table td { font-size:.92em !important; padding:8px 10px !important; }
-.portfolio-request-table th { background:#548235 !important; color:#fff !important; }
+.card-panel.panel-spend-request .portfolio-request-table th { background:#2f5597 !important; color:#fff !important; }
 .portfolio-request-row td { background:#fbfff7 !important; border-top:1px solid #d9ead3; }
 .portfolio-nested-row td { background:#fff !important; }
 .portfolio-nested-toggle { cursor:pointer; color:#2563eb; font-size:1.05em; margin-right:8px; }
 .portfolio-budget-shell { border:1px solid #f4b183; border-radius:6px; overflow:hidden; margin:4px 0 10px; }
 .portfolio-level-caption { padding:8px 12px; font-size:.82em; font-weight:800; letter-spacing:0; }
-.portfolio-budget-shell .portfolio-level-caption { background:#f4b183; color:#7c2d12; }
-.portfolio-budget-shell .dfm-table th { background:#fff4e8 !important; color:#8a4b12 !important; border-bottom:1px solid #f4b183; }
+.card-panel.panel-spend-request .portfolio-budget-shell .portfolio-level-caption { background:#fff7ed; color:#9a3412; border-bottom:1px solid #fed7aa; }
+.card-panel.panel-spend-request .portfolio-budget-shell .dfm-table th { background:#ffedd5 !important; color:#7c2d12 !important; border-bottom:1px solid #fed7aa; }
+.card-panel.panel-spend-request .portfolio-budget-shell .dfm-table td { color:#1f2937; }
 .portfolio-invoice-shell { border:1px solid #c55a11; margin:6px 14px 8px; overflow:hidden; }
-.portfolio-invoice-shell .portfolio-level-caption { background:#c55a11; color:#fff; }
-.portfolio-invoice-shell .dfm-table th { background:#fff8ef !important; color:#8a4b12 !important; }
+.card-panel.panel-spend-request .portfolio-invoice-shell .portfolio-level-caption { background:#c55a11; color:#fff; }
+.card-panel.panel-spend-request .portfolio-invoice-shell .dfm-table th { background:#fff7ed !important; color:#7c2d12 !important; border-bottom:1px solid #fed7aa; }
+.card-panel.panel-spend-request .portfolio-invoice-shell .dfm-table td { color:#1f2937; }
 .portfolio-empty { padding:10px 14px; color:#94a3b8; font-style:italic; text-align:center; }
 .portfolio-project-search { min-width:260px; max-width:360px; }
 .portfolio-edit-btn { padding:2px 8px; font-size:.78em; font-weight:700; }
