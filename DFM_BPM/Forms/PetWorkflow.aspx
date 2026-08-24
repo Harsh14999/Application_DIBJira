@@ -156,6 +156,17 @@
 .workflow-frame-modal .modal-body { padding:0; height:78vh; overflow:hidden; }
 .workflow-frame-modal iframe { width:100%; height:100%; border:0; display:block; background:#fff; }
 
+<% if (HostCloseOnInnerModalClose) { %>
+html, body { background:transparent !important; overflow:hidden !important; }
+.ux-page-head,
+.workflow-breadcrumb,
+.pet-nav-tabs,
+.tab-content,
+.next-step-message,
+.next-step-toast { display:none !important; }
+.modal-dialog { margin-top:44px; }
+<% } %>
+
 .dfm-table tr:nth-child(even) td { background:#ffffff; }
 .dfm-table tr:hover td { background:#eff6ff; }
 .dfm-table td.text-right { text-align:right; font-weight:600; color:#1e3a5f; }
