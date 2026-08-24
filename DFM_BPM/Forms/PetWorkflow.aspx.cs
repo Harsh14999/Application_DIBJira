@@ -1291,7 +1291,11 @@ namespace DFM_BPM.Forms
 
         protected void btnSaveBudgetLine_Click(object sender, EventArgs e)
         {
-            if (!CanManageBudget) return;
+            if (!CanManageBudget)
+            {
+                if (HostCloseOnInnerModalClose) RegisterCloseHostFrameScript();
+                return;
+            }
             if (CurrentPetFormId == 0) { ShowMsg("Save the PET header first."); return; }
             decimal cost = Dec(txtBgtCost.Text);
             string vendor = txtBgtVendor.Text.Trim();
@@ -1321,6 +1325,11 @@ namespace DFM_BPM.Forms
             hfEditBudgetLineId.Value = "";
             ActiveTab = "budget"; hfActiveTab.Value = "budget";
             BindBudgetLines(CurrentPetFormId);
+            if (HostCloseOnInnerModalClose)
+            {
+                RegisterCloseHostFrameScript();
+                return;
+            }
             ShowNextStep("Budget row saved. Next: add or update invoice details for this budget line when available.");
         }
 
@@ -1366,8 +1375,15 @@ namespace DFM_BPM.Forms
             {
                 ActiveTab = "budget";
                 hfActiveTab.Value = "budget";
-                if (CanManageBudget) OpenBudgetLineEditor(budgetLineId);
+                if (!CanManageBudget || !OpenBudgetLineEditor(budgetLineId))
+                    RegisterCloseHostFrameScript();
             }
+        }
+
+        private void RegisterCloseHostFrameScript()
+        {
+            ScriptManager.RegisterStartupScript(this, GetType(), "closeHostFrame",
+                "(function(){ try { if (window.parent && window.parent !== window && window.parent.prCloseDetailFrame) { window.parent.prCloseDetailFrame(); } else if (window.parent && window.parent !== window && window.parent.jQuery) { window.parent.jQuery('#projectSpendRequestModal').modal('hide'); } } catch (e) { } })();", true);
         }
 
         private int QueryInt(params string[] names)
@@ -1381,10 +1397,10 @@ namespace DFM_BPM.Forms
             return 0;
         }
 
-        private void OpenBudgetLineEditor(int budgetLineId)
+        private bool OpenBudgetLineEditor(int budgetLineId)
         {
             DataRow r = WorkflowDAL.GetBudgetLine(budgetLineId);
-            if (r == null) return;
+            if (r == null) return false;
 
             hfEditBudgetLineId.Value = budgetLineId.ToString();
             litBudgetModalTitle.Text = "Edit Budget Row #" + (r["SerialNo"] == DBNull.Value ? budgetLineId.ToString() : r["SerialNo"].ToString());
@@ -1403,6 +1419,7 @@ namespace DFM_BPM.Forms
 
             ScriptManager.RegisterStartupScript(this, GetType(), "showBudgetModal",
                 "$(function(){ $('#budgetLineModal').modal('show'); });", true);
+            return true;
         }
 
         protected void gvBudgetLines_RowEditing(object sender, GridViewEditEventArgs e)
