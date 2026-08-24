@@ -1375,7 +1375,7 @@ namespace DFM_BPM.Forms
             {
                 ActiveTab = "budget";
                 hfActiveTab.Value = "budget";
-                if (!CanManageBudget || !OpenBudgetLineEditor(budgetLineId))
+                if (!OpenBudgetLineEditor(budgetLineId))
                     RegisterCloseHostFrameScript();
             }
         }
@@ -1403,7 +1403,7 @@ namespace DFM_BPM.Forms
             if (r == null) return false;
 
             hfEditBudgetLineId.Value = budgetLineId.ToString();
-            litBudgetModalTitle.Text = "Edit Budget Row #" + (r["SerialNo"] == DBNull.Value ? budgetLineId.ToString() : r["SerialNo"].ToString());
+            litBudgetModalTitle.Text = (CanManageBudget ? "Edit" : "View") + " Budget Row #" + (r["SerialNo"] == DBNull.Value ? budgetLineId.ToString() : r["SerialNo"].ToString());
             txtBgtVendor.Text = r["VendorName"] == DBNull.Value ? "" : r["VendorName"].ToString();
             txtBgtJustification.Text = r["Justification"] == DBNull.Value ? "" : r["Justification"].ToString();
             txtBgtCost.Text = Dec(r, "Cost").ToString("N2");
@@ -1416,10 +1416,29 @@ namespace DFM_BPM.Forms
             txtBgtLpoRequest.Text   = r["LpoRequest"]  == DBNull.Value ? "" : r["LpoRequest"].ToString();
             txtBgtLpoStatus.Text    = r["LpoStatus"]   == DBNull.Value ? "" : r["LpoStatus"].ToString();
             txtBgtLpoComments.Text  = r["LpoComments"] == DBNull.Value ? "" : r["LpoComments"].ToString();
+            ApplyBudgetLineModalEditableState();
 
             ScriptManager.RegisterStartupScript(this, GetType(), "showBudgetModal",
                 "$(function(){ $('#budgetLineModal').modal('show'); });", true);
             return true;
+        }
+
+        private void ApplyBudgetLineModalEditableState()
+        {
+            bool editable = CanManageBudget;
+            txtBgtVendor.ReadOnly = !editable;
+            txtBgtJustification.ReadOnly = !editable;
+            txtBgtCost.ReadOnly = !editable;
+            ddlBgtCcy.Enabled = editable;
+            txtBgtGL.ReadOnly = !editable;
+            txtBgtPetRef.ReadOnly = !editable;
+            txtBgtCamId.ReadOnly = !editable;
+            txtBgtCamStatus.ReadOnly = !editable;
+            txtBgtCamComments.ReadOnly = !editable;
+            txtBgtLpoRequest.ReadOnly = !editable;
+            txtBgtLpoStatus.ReadOnly = !editable;
+            txtBgtLpoComments.ReadOnly = !editable;
+            btnSaveBudgetLine.Visible = editable;
         }
 
         protected void gvBudgetLines_RowEditing(object sender, GridViewEditEventArgs e)
